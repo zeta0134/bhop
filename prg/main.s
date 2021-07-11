@@ -1,5 +1,6 @@
         .setcpu "6502"
 
+        .include "bhop.inc"
         .include "nes.inc"
         .include "ppu.inc"
         .include "word_util.inc"
@@ -18,6 +19,7 @@ nmi_counter: .byte $00
         .export start, nmi, irq
 
 .proc start
+        jsr bhop_init
 
 gameloop:
         jmp gameloop ; forever
