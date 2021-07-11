@@ -1,0 +1,5 @@
+build
+*.nes
+*.sav
+*.o
+*.dbg
