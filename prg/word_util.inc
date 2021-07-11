@@ -46,6 +46,15 @@ no_carry:
         sta addr+1
 .endmacro
 
+; for when the value to add is already in a (clobbers a)
+.macro add16a addr
+        adc addr
+        sta addr
+        lda #0
+        adc addr+1
+        sta addr+1
+.endmacro
+
 ; signed
 .macro sadd16 addr, value
 .scope

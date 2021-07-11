@@ -32,6 +32,7 @@ loop:
         sta PPUCTRL ; and NMI
 
         ; do init things; right now that's just the music engine
+        lda #0 ; song index
         jsr bhop_init
 
         ; re-enable graphics and NMI
