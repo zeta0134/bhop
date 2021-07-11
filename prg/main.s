@@ -18,10 +18,31 @@ nmi_counter: .byte $00
         .segment "PRG3_E000"
         .export start, nmi, irq
 
+.proc wait_for_nmi
+        lda nmi_counter
+loop:
+        cmp nmi_counter
+        beq loop
+        rts
+.endproc
+
 .proc start
+        lda #$00
+        sta PPUMASK ; disable rendering
+        sta PPUCTRL ; and NMI
+
+        ; do init things; right now that's just the music engine
         jsr bhop_init
 
+        ; re-enable graphics and NMI
+        lda #$1E
+        sta PPUMASK
+        lda #(VBLANK_NMI | OBJ_1000 | BG_0000)
+        sta PPUCTRL
+
 gameloop:
+        jsr wait_for_nmi
+        jsr bhop_play
         jmp gameloop ; forever
 
         .endproc
