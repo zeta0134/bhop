@@ -15,6 +15,10 @@ song_ptr: .word $0000
 frame_ptr: .word $0000
 
 pulse1_pattern_ptr: .word $0000
+pulse2_pattern_ptr: .word $0000
+triangle_pattern_ptr: .word $0000
+noise_pattern_ptr: .word $0000
+dpcm_pattern_ptr: .word $0000
 
         .segment "PRG0_8000"
         .export bhop_init, bhop_play
@@ -23,7 +27,7 @@ MUSIC_BASE = $A000
 SONG_LIST = MUSIC_BASE
 
 .struct SongInfo
-        frame_ptr .word
+        frame_list_ptr .word
         frame_count .byte
         pattern_length .byte
         speed .byte
@@ -78,6 +82,11 @@ SONG_LIST = MUSIC_BASE
         lda (bhop_ptr), y
         sta tempo
 
+        ; initialize at the first frame, and prime our pattern pointers
+        ldx #0
+        jsr jump_to_frame
+        jsr load_frame_patterns
+
         rts
 .endproc
 
@@ -91,9 +100,76 @@ loop:
         rts
 .endproc
 
-; frame number goes on the stack
+; frame number goes in x
 .proc jump_to_frame
+        ; load the frame pointer list from the song data; we're going to rewrite
+        ; frame_ptr here anyway, so use it as temp storage
         prepare_ptr song_ptr
+        ldy #SongInfo::frame_list_ptr
+        lda (bhop_ptr), y
+        sta frame_ptr
+        iny
+        lda (bhop_ptr), y
+        sta frame_ptr+1
+        ; now add our target frame number to that
+        txa
+        clc
+        add16a frame_ptr
+        ; twice
+        txa
+        clc
+        add16a frame_ptr
+        ; now use this to load the actual frame pointer from the list
+        prepare_ptr frame_ptr
+        ldy #0
+        lda (bhop_ptr), y
+        sta frame_ptr
+        iny
+        lda (bhop_ptr), y
+        sta frame_ptr+1
+        rts
+.endproc
+
+.proc load_frame_patterns
+        ;initialize all the pattern rows from the current frame pointer
+        prepare_ptr frame_ptr
+        ldy #0
+
+        lda (bhop_ptr), y
+        sta pulse1_pattern_ptr
+        iny
+        lda (bhop_ptr), y
+        sta pulse1_pattern_ptr+1
+        iny
+
+        lda (bhop_ptr), y
+        sta pulse2_pattern_ptr
+        iny
+        lda (bhop_ptr), y
+        sta pulse2_pattern_ptr+1
+        iny
+
+        lda (bhop_ptr), y
+        sta triangle_pattern_ptr
+        iny
+        lda (bhop_ptr), y
+        sta triangle_pattern_ptr+1
+        iny
+
+        lda (bhop_ptr), y
+        sta noise_pattern_ptr
+        iny
+        lda (bhop_ptr), y
+        sta noise_pattern_ptr+1
+        iny
+
+        lda (bhop_ptr), y
+        sta dpcm_pattern_ptr
+        iny
+        lda (bhop_ptr), y
+        sta dpcm_pattern_ptr+1
+        iny
+        rts
 .endproc
 
 .proc bhop_play
