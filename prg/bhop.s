@@ -23,8 +23,15 @@ triangle_pattern_ptr: .word $0000
 noise_pattern_ptr: .word $0000
 dpcm_pattern_ptr: .word $0000
 
+pulse1_base_note: .byte $00
+pulse1_base_frequency: .word $0000
+pulse1_relative_frequency: .word $0000
+pulse1_detuned_frequency: .word $0000
+
         .segment "PRG0_8000"
         .export bhop_init, bhop_play
+
+.include "midi_lut.inc"
 
 MUSIC_BASE = $A000
 SONG_LIST = MUSIC_BASE
