@@ -9,7 +9,10 @@ bhop_ptr: .word $0000 ; used for all sorts of indirect reads
 tempo_counter: .word $0000
 tempo_cmp: .word $0000
 tempo: .byte $00
-
+row_counter: .byte $00
+row_cmp: .byte $00
+frame_counter: .byte $00
+frame_cmp: .byte $00
 
 song_ptr: .word $0000
 frame_ptr: .word $0000
@@ -56,6 +59,8 @@ SONG_LIST = MUSIC_BASE
         lda #00
         sta tempo_counter
         sta tempo_counter+1
+        sta row_counter
+        sta frame_counter
 
         ; switch to the requested song
         lda SONG_LIST
@@ -81,11 +86,18 @@ SONG_LIST = MUSIC_BASE
         ldy #SongInfo::tempo
         lda (bhop_ptr), y
         sta tempo
+        ldy #SongInfo::frame_count
+        lda (bhop_ptr), y
+        sta frame_cmp
+        ldy #SongInfo::pattern_length
+        lda (bhop_ptr), y
+        sta row_cmp
 
         ; initialize at the first frame, and prime our pattern pointers
         ldx #0
         jsr jump_to_frame
         jsr load_frame_patterns
+
 
         rts
 .endproc
@@ -172,7 +184,60 @@ loop:
         rts
 .endproc
 
+.proc tick_frame_counter
+        add16 tempo_counter, tempo
+        ; have we exceeded the tempo_counter?
+        lda tempo_counter+1
+        cmp tempo_cmp+1
+        bcc done_advancing_rows ; counter is lower than threshold (high byte)
+        bne advance_row  ; should be impossible to take, because we only add 255 or less?
+        lda tempo_counter
+        cmp tempo_cmp
+        bcc done_advancing_rows
+        ; is either the same or higher; do the thing
+advance_row:
+        jsr advance_pattern_rows
+        ; subtract tempo_cmp from tempo_counter
+        sec
+        lda tempo_counter
+        sbc tempo_cmp
+        sta tempo_counter
+        lda tempo_counter+1
+        sbc tempo_cmp+1
+        sta tempo_counter+1
+        ; advance the row counter and, if necessary, move to the next frame
+        inc row_counter
+        lda row_counter
+        cmp row_cmp
+        bcc done_advancing_rows
+        ; row is equal or greater to max
+        jsr advance_frame
+        lda #0
+        sta row_counter
+done_advancing_rows:
+        rts
+.endproc
+
+.proc advance_pattern_rows
+        rts
+.endproc
+
+.proc advance_frame
+        inc frame_counter
+        lda frame_counter
+        cmp frame_cmp
+        bcc no_wrap
+        lda #0
+        sta frame_counter
+no_wrap:
+        ldx frame_counter
+        jsr jump_to_frame
+        jsr load_frame_patterns
+        rts
+.endproc
+
 .proc bhop_play
+        jsr tick_frame_counter
         ; D:
         rts
 .endproc
