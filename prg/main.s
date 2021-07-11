@@ -11,6 +11,9 @@
         .segment "RAM"
 nmi_counter: .byte $00
 
+        .segment "PRG1_A000"
+        .include "../ftm/yakra.asm"
+
         .segment "PRG3_E000"
         .export start, nmi, irq
 
