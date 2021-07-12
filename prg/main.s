@@ -26,6 +26,22 @@ loop:
         rts
 .endproc
 
+.macro debug_color flags
+        lda #(BG_ON | OBJ_ON | BG_CLIP | OBJ_CLIP | flags)
+        sta PPUMASK
+.endmacro
+
+.proc burn_a_bunch_of_time
+        ldx #$FF
+loop:
+        .repeat 4
+        nop
+        .endrep
+        dex
+        bne loop
+        rts
+.endproc
+
 .proc start
         lda #$00
         sta PPUMASK ; disable rendering
@@ -43,7 +59,10 @@ loop:
 
 gameloop:
         jsr wait_for_nmi
+        jsr burn_a_bunch_of_time
+        debug_color TINT_R
         jsr bhop_play
+        debug_color 0
         jmp gameloop ; forever
 
         .endproc
