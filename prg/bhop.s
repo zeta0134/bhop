@@ -521,16 +521,29 @@ tick_pulse1:
         ora #%00110000 ; set a duty, disable length counter and envelope
         sta $4000
 
-        ; disable the volume envelope though
+        ; disable the sweep unit
+        lda #$08
+        sta $4001
 
         lda pulse1_state + ChannelState::base_frequency
         sta $4002
 
+        ; If we triggered this frame, write unconditionally
+        lda pulse1_state + ChannelState::status
+        and #CHANNEL_TRIGGERED
+        bne write_pulse1
+
+        ; otherwise, to avoid resetting the sequence counter, only
+        ; write if the high byte has changed since the last time
         lda pulse1_state + ChannelState::base_frequency + 1
         cmp shadow_pulse1_freq_hi
         beq tick_pulse2
-        sta $4003
+
+write_pulse1:
+        lda pulse1_state + ChannelState::base_frequency + 1
         sta shadow_pulse1_freq_hi
+        ora #%11111000
+        sta $4003
 
 tick_pulse2:
         lda pulse2_state + ChannelState::status
@@ -547,14 +560,29 @@ tick_pulse2:
         ora #%00110000 ; set a duty, disable length counter and envelope
         sta $4004
 
+        ; disable the sweep unit
+        lda #$08
+        sta $4005
+
         lda pulse2_state + ChannelState::base_frequency
         sta $4006
 
+        ; If we triggered this frame, write unconditionally
+        lda pulse2_state + ChannelState::status
+        and #CHANNEL_TRIGGERED
+        bne write_pulse2
+
+        ; otherwise, to avoid resetting the sequence counter, only
+        ; write if the high byte has changed since the last time
         lda pulse2_state + ChannelState::base_frequency + 1
         cmp shadow_pulse2_freq_hi
         beq tick_triangle
-        sta $4007
+
+write_pulse2:
+        lda pulse2_state + ChannelState::base_frequency + 1
         sta shadow_pulse2_freq_hi
+        ora #%11111000
+        sta $4007
 
 tick_triangle:
         lda triangle_state + ChannelState::status
@@ -576,6 +604,19 @@ tick_triangle:
 cleanup:
         lda apu_status_shadow
         sta $4015
+
+        ; clear the triggered flag from every instrument
+        lda pulse1_state + ChannelState::status
+        and #($FF - CHANNEL_TRIGGERED)
+        sta pulse1_state + ChannelState::status
+
+        lda pulse2_state + ChannelState::status
+        and #($FF - CHANNEL_TRIGGERED)
+        sta pulse2_state + ChannelState::status
+
+        lda triangle_state + ChannelState::status
+        and #($FF - CHANNEL_TRIGGERED)
+        sta triangle_state + ChannelState::status
 
         rts
 .endproc
