@@ -1,37 +1,10 @@
+.include "commands.inc"
 .include "nes.inc"
 .include "word_util.inc"
 
+.macpack longbranch
+
 .scope BHOP
-        .zeropage
-bhop_ptr: .word $0000 ; used for all sorts of indirect reads
-
-        .segment "RAM"
-tempo_counter: .word $0000
-tempo_cmp: .word $0000
-tempo: .byte $00
-row_counter: .byte $00
-row_cmp: .byte $00
-frame_counter: .byte $00
-frame_cmp: .byte $00
-
-song_ptr: .word $0000
-frame_ptr: .word $0000
-
-pulse1_pattern_ptr: .word $0000
-pulse2_pattern_ptr: .word $0000
-triangle_pattern_ptr: .word $0000
-noise_pattern_ptr: .word $0000
-dpcm_pattern_ptr: .word $0000
-
-pulse1_base_note: .byte $00
-pulse1_base_frequency: .word $0000
-pulse1_relative_frequency: .word $0000
-pulse1_detuned_frequency: .word $0000
-
-        .segment "PRG0_8000"
-        .export bhop_init, bhop_play
-
-.include "midi_lut.inc"
 
 MUSIC_BASE = $A000
 SONG_LIST = MUSIC_BASE
@@ -45,6 +18,60 @@ SONG_LIST = MUSIC_BASE
         groove_position .byte
         initial_bank .byte
 .endstruct
+
+; various status flags
+CHANNEL_MUTED           = %10000000
+CHANNEL_GLOBAL_DURATION = %01000000
+CHANNEL_TRIGGERED       = %00100000
+
+.struct ChannelState
+        pattern_ptr .word
+        status .word
+        global_duration .word
+        row_delay_counter .byte
+        base_note .byte
+        base_frequency .byte
+        relative_frequency .byte
+        detuned_frequency .byte
+        channel_volume .byte
+        effective_volume .byte
+        selected_instrument .byte
+.endstruct
+
+        .zeropage
+; scratch ptr, used for all sorts of indirect reads
+bhop_ptr: .word $0000 
+; pattern pointers, read repeatedly when updating
+; rows in a loop, we'll want access to these to be quick
+pattern_ptr: .word $0000
+channel_ptr: .word $0000
+
+        .segment "RAM"
+tempo_counter: .word $0000
+tempo_cmp: .word $0000
+tempo: .byte $00
+row_counter: .byte $00
+row_cmp: .byte $00
+frame_counter: .byte $00
+frame_cmp: .byte $00
+
+song_ptr: .word $0000
+frame_ptr: .word $0000
+
+pulse1_state: .tag ChannelState
+pulse2_state: .tag ChannelState
+triangle_state: .tag ChannelState
+noise_state: .tag ChannelState
+dpcm_state: .tag ChannelState
+
+shadow_pulse1_freq_hi: .byte $00
+shadow_pulse2_freq_hi: .byte $00
+apu_status_shadow: .byte $00
+
+        .segment "PRG0_8000"
+        .export bhop_init, bhop_play
+
+.include "midi_lut.inc"
 
 .macro prepare_ptr address
         lda address
@@ -155,39 +182,48 @@ loop:
         ldy #0
 
         lda (bhop_ptr), y
-        sta pulse1_pattern_ptr
+        sta pulse1_state + ChannelState::pattern_ptr
         iny
         lda (bhop_ptr), y
-        sta pulse1_pattern_ptr+1
+        sta pulse1_state + ChannelState::pattern_ptr + 1
         iny
 
         lda (bhop_ptr), y
-        sta pulse2_pattern_ptr
+        sta pulse2_state + ChannelState::pattern_ptr
         iny
         lda (bhop_ptr), y
-        sta pulse2_pattern_ptr+1
+        sta pulse2_state + ChannelState::pattern_ptr + 1
         iny
 
         lda (bhop_ptr), y
-        sta triangle_pattern_ptr
+        sta triangle_state + ChannelState::pattern_ptr
         iny
         lda (bhop_ptr), y
-        sta triangle_pattern_ptr+1
+        sta triangle_state + ChannelState::pattern_ptr + 1
         iny
 
         lda (bhop_ptr), y
-        sta noise_pattern_ptr
+        sta noise_state + ChannelState::pattern_ptr
         iny
         lda (bhop_ptr), y
-        sta noise_pattern_ptr+1
+        sta noise_state + ChannelState::pattern_ptr + 1
         iny
 
         lda (bhop_ptr), y
-        sta dpcm_pattern_ptr
+        sta dpcm_state + ChannelState::pattern_ptr
         iny
         lda (bhop_ptr), y
-        sta dpcm_pattern_ptr+1
-        iny
+        sta dpcm_state + ChannelState::pattern_ptr + 1
+        iny ; unnecessary?
+
+        ; reset all the row counters to 0
+        lda #0
+        sta pulse1_state + ChannelState::row_delay_counter
+        sta pulse2_state + ChannelState::row_delay_counter
+        sta triangle_state + ChannelState::row_delay_counter
+        sta noise_state + ChannelState::row_delay_counter
+        sta dpcm_state + ChannelState::row_delay_counter
+
         rts
 .endproc
 
@@ -225,7 +261,204 @@ done_advancing_rows:
         rts
 .endproc
 
+.macro fetch_pattern_byte
+.scope
+        ldy #0
+        lda (pattern_ptr), y
+        inc pattern_ptr
+        bne done
+        inc pattern_ptr+1
+done:
+.endscope
+.endmacro
+
+; prep: channel_ptr points to channel structure
+.proc advance_channel_row
+        ldy #ChannelState::row_delay_counter
+        lda (channel_ptr), y
+        cmp #0
+        jne skip
+
+        ; prep the pattern pointer for reading
+        ldy #ChannelState::pattern_ptr
+        lda (channel_ptr), y
+        sta pattern_ptr
+        iny
+        lda (channel_ptr), y
+        sta pattern_ptr+1
+        
+        ; continue reading bytecode, processing one command at a time,
+        ; until a note is encountered. Any note command breaks out of the loop and
+        ; signals the end of processing for this row.
+bytecode_loop:
+        fetch_pattern_byte
+        cmp #0 ; needed to set negative flag based on command byte currently in a
+        bpl handle_note ; if the low byte is clear, this is some kind of note
+        tay ; preserve
+        ; check for quick commands
+        and #$F0
+        cmp #$F0
+        beq quick_volume_change
+        cmp #$E0
+        beq quick_instrument_change
+process_extended_command:
+        ; it's a *proper* command, restore the full command byte
+        tya
+        ; now use that to jump into the command procesisng table
+        jsr handle_extended_command
+        jmp bytecode_loop
+
+quick_volume_change:
+        tya ; un-preserve
+        and #$0F ; a now contains new channel volume
+        ldy #ChannelState::channel_volume
+        sta (channel_ptr), y
+        ; ready to process the next bytecode
+        jmp bytecode_loop
+
+quick_instrument_change:
+        tya ; un-preserve
+        and #$0F ; a now contains instrument index
+        ldy #ChannelState::selected_instrument
+        sta (channel_ptr), y
+        ; ready to process the next bytecode
+        jmp bytecode_loop
+
+handle_note:
+        cmp #$00 ; note rest
+        beq done_with_bytecode
+        cmp #$7F ; note off
+        bne note_trigger
+        ; a note off immediately mutes the channel
+        ldy #ChannelState::status
+        lda (channel_ptr), y
+        ora #CHANNEL_MUTED
+        sta (channel_ptr), y
+        jmp done_with_bytecode
+note_trigger:
+        ; a contains the selected note at this point
+        ldy #ChannelState::base_note
+        sta (channel_ptr), y
+        ; use a to read the LUT and apply base_frequency
+        tax
+        lda ntsc_period_low, x
+        ldy #ChannelState::base_frequency
+        sta (channel_ptr), y
+        lda ntsc_period_high, x
+        iny
+        sta (channel_ptr), y
+        ; finally, set the channel status as triggered
+        ; (this will be cleared after effects are processed)
+        ldy #ChannelState::status
+        lda (channel_ptr), y
+        ora #CHANNEL_TRIGGERED
+        ; also, un-mute the channel
+        and #($FF - CHANNEL_MUTED)
+        sta (channel_ptr), y
+        ; fall through to done_with_bytecode
+done_with_bytecode:
+        ; If we're still in global duration mode at this point,
+        ; apply that to the row counter
+        ldy #ChannelState::status
+        lda (channel_ptr), y
+        and #CHANNEL_GLOBAL_DURATION
+        beq read_duration_from_pattern
+
+        ldy #ChannelState::global_duration
+        lda (channel_ptr), y
+        ldy #ChannelState::row_delay_counter
+        sta (channel_ptr), y
+        jmp cleanup_channel_ptr
+
+read_duration_from_pattern:
+        fetch_pattern_byte
+        ldy #ChannelState::row_delay_counter
+        sta (channel_ptr), y
+        ; fall through to channel_cleanup_ptr
+cleanup_channel_ptr:
+        ; preserve pattern_ptr back to the channel status
+        ldy #ChannelState::pattern_ptr
+        lda pattern_ptr
+        sta (channel_ptr), y
+        iny
+        lda pattern_ptr+1
+        sta (channel_ptr), y
+
+        ; finally done with this channel
+        jmp done
+skip:
+        ; conveniently carry is already set
+        ; a contains the counter
+        sbc #1 ; decrement that counter
+        sta (channel_ptr), y ; write it back to row_delay_counter
+done:
+        rts
+.endproc
+
+; setup: 
+;   channel_ptr points to channel structure
+;   pattern_ptr points to byte following command byte
+;   a contains command byte
+.proc handle_extended_command
+        ; TODO: handle this more gracefully, I guess as a jump table?
+        ; for now we just have a handful of special cases though
+
+        ; command byte has the high bit set, which is not needed; eliminate it here
+        and #$7F
+
+        ; duration commands
+        cmp #CommandBytes::CMD_SET_DURATION
+        bne not_set_duration
+        fetch_pattern_byte
+        ldy #ChannelState::global_duration
+        sta (channel_ptr), y
+        ldy #ChannelState::status
+        lda (channel_ptr), y
+        ora #CHANNEL_GLOBAL_DURATION
+        sta (channel_ptr), y
+        jmp done_with_commands
+
+not_set_duration:
+        cmp #CommandBytes::CMD_SET_DURATION
+        bne not_reset_duration
+        ldy #ChannelState::status
+        lda (channel_ptr), y
+        and #($FF - CHANNEL_GLOBAL_DURATION)
+        sta (channel_ptr), y
+        jmp done_with_commands
+
+        ; the following commands aren't handled yet, but we do need to
+        ; detect them and intentionally not skip a parameter byte
+not_reset_duration:
+        cmp #CommandBytes::CMD_HOLD
+        beq done_with_commands
+        cmp #CommandBytes::CMD_EFF_CLEAR
+        beq done_with_commands
+        cmp #CommandBytes::CMD_EFF_RESET_PITCH
+        beq done_with_commands
+        ; for every other command, still ignore it, but read one pattern
+        ; byte and throw it away
+        fetch_pattern_byte
+        ; all done!
+done_with_commands:
+        rts
+.endproc
+
 .proc advance_pattern_rows
+        ; PULSE 1
+        lda #<pulse1_state
+        sta channel_ptr
+        lda #>pulse1_state
+        sta channel_ptr+1
+        jsr advance_channel_row
+
+        ; PULSE 2
+        lda #<pulse2_state
+        sta channel_ptr
+        lda #>pulse2_state
+        sta channel_ptr+1
+        jsr advance_channel_row
+
         rts
 .endproc
 
@@ -243,8 +476,72 @@ no_wrap:
         rts
 .endproc
 
+.proc tick_instruments
+tick_pulse1:
+        ; we would mute all the channels
+        lda #0
+        sta apu_status_shadow
+
+        ; completely hacky "let's hear the frequency" thing
+        lda pulse1_state + ChannelState::status
+        and #CHANNEL_MUTED
+        bne tick_pulse2
+
+        lda apu_status_shadow
+        ora #%00000001
+        sta apu_status_shadow
+
+        ; for now let's use the channel volume? (sure why not)
+        lda pulse1_state + ChannelState::channel_volume
+        and #$0F
+        ora #%00110000 ; set a duty, disable length counter and envelope
+        sta $4000
+
+        ; disable the volume envelope though
+
+        lda pulse1_state + ChannelState::base_frequency
+        sta $4002
+
+        lda pulse1_state + ChannelState::base_frequency + 1
+        cmp shadow_pulse1_freq_hi
+        beq tick_pulse2
+        sta $4003
+        sta shadow_pulse1_freq_hi
+
+tick_pulse2:
+        lda pulse2_state + ChannelState::status
+        and #CHANNEL_MUTED
+        bne cleanup
+
+        lda apu_status_shadow
+        ora #%00000010
+        sta apu_status_shadow
+
+        ; for now let's use the channel volume? (sure why not)
+        lda pulse2_state + ChannelState::channel_volume
+        and #$0F
+        ora #%00110000 ; set a duty, disable length counter and envelope
+        sta $4004
+
+        lda pulse2_state + ChannelState::base_frequency
+        sta $4006
+
+        lda pulse2_state + ChannelState::base_frequency + 1
+        cmp shadow_pulse2_freq_hi
+        beq cleanup
+        sta $4007
+        sta shadow_pulse2_freq_hi
+
+cleanup:
+        lda apu_status_shadow
+        sta $4015
+
+        rts
+.endproc
+
 .proc bhop_play
         jsr tick_frame_counter
+        jsr tick_instruments
         ; D:
         rts
 .endproc
