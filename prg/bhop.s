@@ -419,7 +419,7 @@ done:
         jmp done_with_commands
 
 not_set_duration:
-        cmp #CommandBytes::CMD_SET_DURATION
+        cmp #CommandBytes::CMD_RESET_DURATION
         bne not_reset_duration
         ldy #ChannelState::status
         lda (channel_ptr), y
@@ -476,6 +476,13 @@ done_with_commands:
         sta channel_ptr+1
         jsr advance_channel_row
 
+        ; TRIANGLE
+        lda #<triangle_state
+        sta channel_ptr
+        lda #>triangle_state
+        sta channel_ptr+1
+        jsr advance_channel_row
+
         rts
 .endproc
 
@@ -528,7 +535,7 @@ tick_pulse1:
 tick_pulse2:
         lda pulse2_state + ChannelState::status
         and #CHANNEL_MUTED
-        bne cleanup
+        bne tick_triangle
 
         lda apu_status_shadow
         ora #%00000010
@@ -545,9 +552,26 @@ tick_pulse2:
 
         lda pulse2_state + ChannelState::base_frequency + 1
         cmp shadow_pulse2_freq_hi
-        beq cleanup
+        beq tick_triangle
         sta $4007
         sta shadow_pulse2_freq_hi
+
+tick_triangle:
+        lda triangle_state + ChannelState::status
+        and #CHANNEL_MUTED
+        bne cleanup
+
+        lda apu_status_shadow
+        ora #%00000100
+        sta apu_status_shadow
+
+        lda #$FF
+        sta $4008 ; timers to max
+
+        lda triangle_state + ChannelState::base_frequency
+        sta $400A
+        lda triangle_state + ChannelState::base_frequency + 1
+        sta $400B
 
 cleanup:
         lda apu_status_shadow
