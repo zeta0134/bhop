@@ -427,9 +427,26 @@ not_set_duration:
         sta (channel_ptr), y
         jmp done_with_commands
 
+        ; our test song uses Bxx and it's somewhat important that we don't ignore
+        ; it, so implement that here
+not_reset_duration:
+        cmp #CommandBytes::CMD_EFF_JUMP
+        bne not_frame_jump
+        fetch_pattern_byte
+        sta frame_counter ; target frame counter
+        lda row_cmp
+        sta row_counter ; target row (so we immediately advance)
+        ; but we haven't incremented either pointer yet! So decrement them
+        ; both by 1, this way when we are done ticking rows, we end up where
+        ; we want on the next one
+        dec frame_counter ; the effect encodes target+1, we want target...
+        dec frame_counter ; ... and one _less_ than target
+        dec row_counter
+        jmp done_with_commands
+
+not_frame_jump:
         ; the following commands aren't handled yet, but we do need to
         ; detect them and intentionally not skip a parameter byte
-not_reset_duration:
         cmp #CommandBytes::CMD_HOLD
         beq done_with_commands
         cmp #CommandBytes::CMD_EFF_CLEAR
