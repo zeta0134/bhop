@@ -40,7 +40,7 @@ def pretty_print_table(table_name, ca65_byte_literals):
 
 # Put it all together and write it to stdout
 def generate_lookup_table(base_frequency_hz, ca65_byte_converter):
-  return [ca65_byte_converter(pulse_period(base_frequency_hz, midi_frequency(midi_index))) for midi_index in range(0, 128)]
+  return [ca65_byte_converter(pulse_period(base_frequency_hz, midi_frequency(midi_index + 24 - 1))) for midi_index in range(0, 128)]
 
 pretty_print_table("ntsc_period_low", generate_lookup_table(NTSC_CPU_FREQUENCY_HZ, ca65_low_byte_literal))
 pretty_print_table("ntsc_period_high", generate_lookup_table(NTSC_CPU_FREQUENCY_HZ, ca65_high_byte_literal))
