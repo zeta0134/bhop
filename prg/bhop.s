@@ -131,6 +131,12 @@ shadow_pulse2_freq_hi: .byte $00
         jsr jump_to_frame
         jsr load_frame_patterns
 
+        ; initialize every channel's volume to 15 (some songs seem to rely on this)
+        lda #$0F
+        sta pulse1_state + ChannelState::channel_volume
+        sta pulse2_state + ChannelState::channel_volume
+        sta triangle_state + ChannelState::channel_volume
+        sta dpcm_state + ChannelState::channel_volume
 
         rts
 .endproc
