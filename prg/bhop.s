@@ -66,7 +66,6 @@ dpcm_state: .tag ChannelState
 
 shadow_pulse1_freq_hi: .byte $00
 shadow_pulse2_freq_hi: .byte $00
-apu_status_shadow: .byte $00
 
         .segment "PRG0_8000"
         .export bhop_init, bhop_play
@@ -502,18 +501,28 @@ no_wrap:
 
 .proc tick_instruments
 tick_pulse1:
-        ; we would mute all the channels
+        ; first, check for muted channels and adjust the status register
+        ; (this must come first, otherwise writes to individual registers
+        ; for new note triggers are ignored)
         lda #0
-        sta apu_status_shadow
+        bit pulse1_state + ChannelState::status
+        bmi pulse1_muted
+        ora #%00000001
+pulse1_muted:
+        bit pulse2_state + ChannelState::status
+        bmi pulse2_muted
+        ora #%00000010
+pulse2_muted:
+        bit triangle_state + ChannelState::status
+        bmi triangle_muted
+        ora #%00000100
+triangle_muted:
+        sta $4015
 
         ; completely hacky "let's hear the frequency" thing
         lda pulse1_state + ChannelState::status
         and #CHANNEL_MUTED
         bne tick_pulse2
-
-        lda apu_status_shadow
-        ora #%00000001
-        sta apu_status_shadow
 
         ; for now let's use the channel volume? (sure why not)
         lda pulse1_state + ChannelState::channel_volume
@@ -550,10 +559,6 @@ tick_pulse2:
         and #CHANNEL_MUTED
         bne tick_triangle
 
-        lda apu_status_shadow
-        ora #%00000010
-        sta apu_status_shadow
-
         ; for now let's use the channel volume? (sure why not)
         lda pulse2_state + ChannelState::channel_volume
         and #$0F
@@ -589,10 +594,6 @@ tick_triangle:
         and #CHANNEL_MUTED
         bne cleanup
 
-        lda apu_status_shadow
-        ora #%00000100
-        sta apu_status_shadow
-
         lda #$FF
         sta $4008 ; timers to max
 
@@ -602,9 +603,6 @@ tick_triangle:
         sta $400B
 
 cleanup:
-        lda apu_status_shadow
-        sta $4015
-
         ; clear the triggered flag from every instrument
         lda pulse1_state + ChannelState::status
         and #($FF - CHANNEL_TRIGGERED)
