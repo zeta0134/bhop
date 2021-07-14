@@ -38,6 +38,22 @@ CHANNEL_TRIGGERED       = %00100000
         selected_instrument .byte
 .endstruct
 
+.struct InstrumentHeader
+        type .byte
+        sequences_enabled .byte
+        ; Note: there are 0-5 sequence pointers, based on the
+        ; contents of sequences_enabled. This address is used
+        ; as a starting point.
+        sequence_ptr .word
+.endstruct
+
+.struct SequenceHeader
+        length .byte
+        loop_point .byte ; $FF disables loops
+        release_point .byte ; $00 disables release points
+        mode .byte ; various meanings depending on sequence type
+.endstruct
+
         .zeropage
 ; scratch ptr, used for all sorts of indirect reads
 bhop_ptr: .word $0000 
