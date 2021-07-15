@@ -7,7 +7,17 @@
 .scope BHOP
 
 MUSIC_BASE = $A000
-SONG_LIST = MUSIC_BASE
+
+.struct FtModuleHeader
+        song_list .word
+        instrument_list .word
+        sample_list .word
+        samples .word
+        groove_list .word
+        flags .byte
+        ntsc_speed .word
+        pal_speed .word
+.endstruct
 
 .struct SongInfo
         frame_list_ptr .word
@@ -24,6 +34,12 @@ CHANNEL_MUTED           = %10000000
 CHANNEL_GLOBAL_DURATION = %01000000
 CHANNEL_TRIGGERED       = %00100000
 
+SEQUENCE_VOLUME  = %00000001
+SEQUENCE_ARP     = %00000010
+SEQUENCE_PITCH   = %00000100
+SEQUENCE_HIPITCH = %00001000
+SEQUENCE_DUTY    = %00010000
+
 .struct ChannelState
         pattern_ptr .word
         status .word
@@ -36,6 +52,17 @@ CHANNEL_TRIGGERED       = %00100000
         channel_volume .byte
         effective_volume .byte
         selected_instrument .byte
+        sequences_enabled .byte
+        volume_sequence_ptr .word
+        volume_sequence_index .byte
+        arpeggio_sequence_ptr .word
+        arpeggio_sequence_index .byte
+        pitch_sequence_ptr .word
+        pitch_sequence_index .byte
+        hipitch_sequence_ptr .word
+        hipitch_sequence_index .byte
+        duty_sequence_ptr .word
+        duty_sequence_index .byte
 .endstruct
 
 .struct InstrumentHeader
@@ -112,10 +139,7 @@ shadow_pulse2_freq_hi: .byte $00
         sta frame_counter
 
         ; switch to the requested song
-        lda SONG_LIST
-        sta bhop_ptr
-        lda SONG_LIST+1
-        sta bhop_ptr+1
+        prepare_ptr MUSIC_BASE + FtModuleHeader::song_list
 
         pla
         asl ; song list is made of words
@@ -342,6 +366,7 @@ quick_instrument_change:
         and #$0F ; a now contains instrument index
         ldy #ChannelState::selected_instrument
         sta (channel_ptr), y
+        jsr load_instrument
         ; ready to process the next bytecode
         jmp bytecode_loop
 
@@ -376,6 +401,8 @@ note_trigger:
         ; also, un-mute the channel
         and #($FF - CHANNEL_MUTED)
         sta (channel_ptr), y
+        ; finally, reset the instrument envelopes to the beginning
+        jsr reset_instrument
         ; fall through to done_with_bytecode
 done_with_bytecode:
         ; If we're still in global duration mode at this point,
@@ -521,6 +548,134 @@ no_wrap:
         rts
 .endproc
 
+; Initializes channel state for playback of a particular instrument.
+; Loads sequence pointers (if enabled) and clears pointers to begin
+; sequence playback from the beginning
+; setup: 
+;   channel_ptr points to channel structure
+;   ChannelState::selected_instrument contains desired instrument index
+.proc load_instrument
+        prepare_ptr MUSIC_BASE + FtModuleHeader::instrument_list
+        ldy ChannelState::selected_instrument
+        lda (channel_ptr), y
+        asl ; select one word
+        tay
+
+        ; set bhop_ptr to the selected index
+        lda (bhop_ptr), y
+        tax
+        iny
+        lda (bhop_ptr), y
+        sta bhop_ptr+1
+        stx bhop_ptr
+
+        ; bhop_ptr now addresses the selected InstrumentHeader
+        ldy InstrumentHeader::sequences_enabled
+        lda (bhop_ptr), y
+        ldy ChannelState::sequences_enabled
+        sta (channel_ptr), y
+        tax ; stash
+
+        ; for every enabled sequence, load the appropriate pointer
+        add16 bhop_ptr, InstrumentHeader::sequence_ptr
+        txa ; unstash
+check_volume:
+        lsr
+        bcc check_arp
+
+        tax ; stash
+        ldy #0
+        lda (bhop_ptr), y
+        ldy ChannelState::volume_sequence_ptr
+        sta (channel_ptr), y
+        ldy #1
+        lda (bhop_ptr), y
+        ldy ChannelState::volume_sequence_ptr + 1
+        sta (channel_ptr), y
+        txa ; unstash
+check_arp:
+        lsr
+        bcc check_pitch
+
+        tax ; stash
+        ldy #0
+        lda (bhop_ptr), y
+        ldy ChannelState::arpeggio_sequence_ptr
+        sta (channel_ptr), y
+        ldy #1
+        lda (bhop_ptr), y
+        ldy ChannelState::arpeggio_sequence_ptr + 1
+        sta (channel_ptr), y
+        txa ; unstash
+
+check_pitch:
+        lsr
+        bcc check_hipitch
+
+        tax ; stash
+        ldy #0
+        lda (bhop_ptr), y
+        ldy ChannelState::pitch_sequence_ptr
+        sta (channel_ptr), y
+        ldy #1
+        lda (bhop_ptr), y
+        ldy ChannelState::pitch_sequence_ptr + 1
+        sta (channel_ptr), y
+        txa ; unstash
+
+check_hipitch:
+        lsr
+        bcc check_duty
+
+        tax ; stash
+        ldy #0
+        lda (bhop_ptr), y
+        ldy ChannelState::hipitch_sequence_ptr
+        sta (channel_ptr), y
+        ldy #1
+        lda (bhop_ptr), y
+        ldy ChannelState::hipitch_sequence_ptr + 1
+        sta (channel_ptr), y
+        txa ; unstash
+
+check_duty:
+        lsr
+        bcc done_loading_sequences
+
+        ; no more need to stash
+        ldy #0
+        lda (bhop_ptr), y
+        ldy ChannelState::duty_sequence_ptr
+        sta (channel_ptr), y
+        ldy #1
+        lda (bhop_ptr), y
+        ldy ChannelState::duty_sequence_ptr + 1
+        sta (channel_ptr), y
+
+done_loading_sequences:
+        jsr reset_instrument
+        rts
+.endproc
+
+; Re-initializes sequence pointers back to the beginning of their
+; respective envelopes
+; setup: 
+;   channel_ptr points to channel structure
+.proc reset_instrument
+        lda #4
+        ldy #ChannelState::volume_sequence_index
+        sta (channel_ptr), y
+        ldy #ChannelState::arpeggio_sequence_index
+        sta (channel_ptr), y
+        ldy #ChannelState::pitch_sequence_index
+        sta (channel_ptr), y
+        ldy #ChannelState::hipitch_sequence_index
+        sta (channel_ptr), y
+        ldy #ChannelState::duty_sequence_index
+        sta (channel_ptr), y
+        rts
+.endproc
+
 .proc tick_instruments
 tick_pulse1:
         ; first, check for muted channels and adjust the status register
@@ -647,6 +802,24 @@ cleanup:
         ; D:
         rts
 .endproc
+
+volume_table:
+        .byte $0, $0, $0, $0, $0, $0, $0, $0, $0, $0, $0, $0, $0, $0, $0, $0
+        .byte $0, $1, $1, $1, $1, $1, $1, $1, $1, $1, $1, $1, $1, $1, $1, $1
+        .byte $0, $1, $1, $1, $1, $1, $1, $1, $1, $1, $1, $1, $1, $1, $1, $2
+        .byte $0, $1, $1, $1, $1, $1, $1, $1, $1, $1, $2, $2, $2, $2, $2, $3
+        .byte $0, $1, $1, $1, $1, $1, $1, $1, $2, $2, $2, $2, $3, $3, $3, $4
+        .byte $0, $1, $1, $1, $1, $1, $2, $2, $2, $3, $3, $3, $4, $4, $4, $5
+        .byte $0, $1, $1, $1, $1, $2, $2, $2, $3, $3, $4, $4, $4, $5, $5, $6
+        .byte $0, $1, $1, $1, $1, $2, $2, $3, $3, $4, $4, $5, $5, $6, $6, $7
+        .byte $0, $1, $1, $1, $2, $2, $3, $3, $4, $4, $5, $5, $6, $6, $7, $8 
+        .byte $0, $1, $1, $1, $2, $3, $3, $4, $4, $5, $6, $6, $7, $7, $8, $9 
+        .byte $0, $1, $1, $2, $2, $3, $4, $4, $5, $6, $6, $7, $8, $8, $9, $A 
+        .byte $0, $1, $1, $2, $2, $3, $4, $5, $5, $6, $7, $8, $8, $9, $A, $B 
+        .byte $0, $1, $1, $2, $3, $4, $4, $5, $6, $7, $8, $8, $9, $A, $B, $C 
+        .byte $0, $1, $1, $2, $3, $4, $5, $6, $6, $7, $8, $9, $A, $B, $C, $D 
+        .byte $0, $1, $1, $2, $3, $4, $5, $6, $7, $8, $9, $A, $B, $C, $D, $E
+        .byte $0, $1, $2, $3, $4, $5, $6, $7, $8, $9, $A, $B, $C, $D, $E, $F
 
 .endscope
 
