@@ -498,6 +498,33 @@ not_reset_duration:
         dec frame_counter ; the effect encodes target+1, we want target...
         dec frame_counter ; ... and one _less_ than target
         dec row_counter
+        ; important: new frames expect to begin with global duration disabled;
+        ; ordinarily the last note in a frame fixes this, but if we jump mid-way
+        ; through a frame, we'll be in an inconsistent state. Fix it *now*, for
+        ; *all* channels
+        lda pulse1_state + ChannelState::status
+        and #($FF - CHANNEL_GLOBAL_DURATION)
+        sta pulse1_state + ChannelState::status
+
+        lda pulse2_state + ChannelState::status
+        and #($FF - CHANNEL_GLOBAL_DURATION)
+        sta pulse2_state + ChannelState::status
+
+        lda triangle_state + ChannelState::status
+        and #($FF - CHANNEL_GLOBAL_DURATION)
+        sta triangle_state + ChannelState::status
+
+        lda noise_state + ChannelState::status
+        and #($FF - CHANNEL_GLOBAL_DURATION)
+        sta noise_state + ChannelState::status
+
+        lda dpcm_state + ChannelState::status
+        and #($FF - CHANNEL_GLOBAL_DURATION)
+        sta dpcm_state + ChannelState::status
+
+        sta (channel_ptr), y
+
+
         jmp done_with_commands
 
 not_frame_jump:
