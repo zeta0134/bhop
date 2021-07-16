@@ -221,7 +221,7 @@ positive:
         sta pulse1_state + ChannelState::channel_volume
         sta pulse2_state + ChannelState::channel_volume
         sta triangle_state + ChannelState::channel_volume
-        sta dpcm_state + ChannelState::channel_volume
+        sta noise_state + ChannelState::channel_volume
 
         ; disable any active effects
         lda #0
