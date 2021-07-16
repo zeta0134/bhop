@@ -565,6 +565,18 @@ not_reset_duration:
         jmp done_with_commands
 
 not_frame_jump:
+        cmp #CommandBytes::CMD_INSTRUMENT
+        bne not_full_instrument
+        fetch_pattern_byte
+        ; of *course* this is pre-shifted, so un-do that:
+        lsr
+        ; store the instrument and load it up
+        ldy #ChannelState::selected_instrument
+        sta (channel_ptr), y
+        jsr load_instrument
+        jmp done_with_commands
+
+not_full_instrument:
         ; the following commands aren't handled yet, but we do need to
         ; detect them and intentionally not skip a parameter byte
         cmp #CommandBytes::CMD_HOLD
