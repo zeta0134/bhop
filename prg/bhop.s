@@ -40,15 +40,26 @@ SEQUENCE_PITCH   = %00000100
 SEQUENCE_HIPITCH = %00001000
 SEQUENCE_DUTY    = %00010000
 
+; for active effects (mostly unimplemented)
+PITCH_EFFECT_ARP          = %00000001
+PITCH_EFFECT_UP           = %00000010
+PITCH_EFFECT_DOWN         = %00000100
+PITCH_EFFECT_PORTAMENTO   = %00001000
+
+ARP_MODE_ABSOLUTE = $00
+ARP_MODE_FIXED =    $01
+ARP_MODE_RELATIVE = $02
+ARP_MODE_SCHEME =   $03
+
 .struct ChannelState
         pattern_ptr .word
         status .word
         global_duration .word
         row_delay_counter .byte
         base_note .byte
-        base_frequency .byte
-        relative_frequency .byte
-        detuned_frequency .byte
+        base_frequency .word        
+        relative_frequency .word
+        detuned_frequency .word
         channel_volume .byte
         instrument_volume .byte
         instrument_duty .byte
@@ -65,6 +76,7 @@ SEQUENCE_DUTY    = %00010000
         hipitch_sequence_index .byte
         duty_sequence_ptr .word
         duty_sequence_index .byte
+        pitch_effects_active .byte
 .endstruct
 
 .struct InstrumentHeader
@@ -180,6 +192,14 @@ scratch_byte: .byte $00
         sta pulse2_state + ChannelState::channel_volume
         sta triangle_state + ChannelState::channel_volume
         sta dpcm_state + ChannelState::channel_volume
+
+        ; disable any active effects
+        lda #0
+        sta pulse1_state   + ChannelState::pitch_effects_active
+        sta pulse2_state   + ChannelState::pitch_effects_active
+        sta triangle_state + ChannelState::pitch_effects_active
+        sta noise_state    + ChannelState::pitch_effects_active
+        sta dpcm_state     + ChannelState::pitch_effects_active
 
         rts
 .endproc
@@ -396,6 +416,23 @@ note_trigger:
         lda ntsc_period_high, x
         iny
         sta (channel_ptr), y
+
+        ; if we do NOT have a portamento affect active, then also write
+        ; to relative_frequency
+        
+        ldy #ChannelState::pitch_effects_active
+        lda (channel_ptr), y
+        and #($FF - PITCH_EFFECT_PORTAMENTO)
+        bne portamento_active
+
+        lda ntsc_period_low, x
+        ldy #ChannelState::relative_frequency
+        sta (channel_ptr), y
+        lda ntsc_period_high, x
+        iny
+        sta (channel_ptr), y
+
+portamento_active:
         ; finally, set the channel status as triggered
         ; (this will be cleared after effects are processed)
         ldy #ChannelState::status
@@ -577,6 +614,7 @@ done_with_commands:
         sta channel_ptr+1
         jsr tick_volume_envelope
         jsr tick_duty_envelope
+        jsr tick_arp_envelope
 
         ; PULSE 2
         lda #<pulse2_state
@@ -585,6 +623,7 @@ done_with_commands:
         sta channel_ptr+1
         jsr tick_volume_envelope
         jsr tick_duty_envelope
+        jsr tick_arp_envelope
 
         ; TRIANGLE
         lda #<triangle_state
@@ -592,6 +631,7 @@ done_with_commands:
         lda #>triangle_state
         sta channel_ptr+1
         jsr tick_volume_envelope
+        jsr tick_arp_envelope
 
         rts
 .endproc
@@ -876,6 +916,125 @@ done:
         rts
 .endproc
 
+; If this channel has an arp envelope active, process that
+; envelope. Upon return, base_note and relative_frequency are set
+; setup: 
+;   channel_ptr points to channel structure
+.proc tick_arp_envelope
+        ldy #ChannelState::sequences_active
+        lda (channel_ptr), y
+        and #SEQUENCE_ARP
+        beq early_exit ; if sequence isn't enabled, bail fast
+
+        ; prepare the arp pointer for reading
+        ldy #ChannelState::arpeggio_sequence_ptr
+        lda (channel_ptr), y
+        sta bhop_ptr
+        iny
+        lda (channel_ptr), y
+        sta bhop_ptr + 1
+
+        ; For arps, we need to "reset" the channel if the envelope finishes, so we're doing
+        ; the length check first thing
+
+        ldy #ChannelState::arpeggio_sequence_index
+        lda (channel_ptr), y
+        sta scratch_byte
+        ; have we reached the end of the sequence?
+        ldy #SequenceHeader::length
+        lda (bhop_ptr), y
+        cmp scratch_byte
+        bne end_not_reached
+        
+        ; this sequence is finished! Disable the sequence flag
+        ldy #ChannelState::sequences_active
+        lda (channel_ptr), y
+        and #($FF - SEQUENCE_ARP)
+        sta (channel_ptr), y
+
+        ; now apply the current base note as the channel frequency,
+        ; then exit:
+        ldy #ChannelState::base_note
+        lda (channel_ptr), y
+        tax
+        lda ntsc_period_low, x
+        ldy #ChannelState::relative_frequency
+        sta (channel_ptr), y
+        lda ntsc_period_high, x
+        iny
+        sta (channel_ptr), y
+early_exit:
+        rts
+
+end_not_reached:
+        ; read the current sequence byte, and set instrument_volume to this
+        ldy #ChannelState::arpeggio_sequence_index
+        lda (channel_ptr), y
+        pha ; stash for later
+        ; for reading the sequence, +4
+        clc
+        adc #4
+        tay
+        lda (bhop_ptr), y
+        sta scratch_byte ; will affect the note, depending on mode
+        clc
+
+        ; what we actually *do* with the arp byte depends on the mode
+        ldy #SequenceHeader::mode
+        lda (bhop_ptr), y
+        cmp #ARP_MODE_ABSOLUTE
+        beq arp_absolute
+        cmp #ARP_MODE_RELATIVE
+        beq arp_relative
+        cmp #ARP_MODE_FIXED
+        beq arp_fixed
+        ; ARP SCHEME, unimplemented! for now, treat this just like absolute
+arp_absolute:
+        ; arp is an offset from base note to apply each frame
+        ldy #ChannelState::base_note
+        lda (channel_ptr), y
+        clc
+        adc scratch_byte
+        tax
+        jmp apply_arp
+arp_relative:
+        ; arp accumulates an offset each frame, from the previous frame
+        ldy #ChannelState::base_note
+        lda (channel_ptr), y
+        clc
+        adc scratch_byte
+        sta (channel_ptr), y
+        tax
+        jmp apply_arp
+arp_fixed:
+        ; the arp value *is* the note to apply
+        lda scratch_byte
+        tax
+        ; fall through to apply_arp
+apply_arp:
+        lda ntsc_period_low, x
+        ldy #ChannelState::relative_frequency
+        sta (channel_ptr), y
+        lda ntsc_period_high, x
+        iny
+        sta (channel_ptr), y
+
+done_applying_arp:
+        pla ; unstash the sequence counter
+        tax ; move into x, which tick_sequence_counter expects
+
+        ; tick the sequence counter and exit
+        jsr tick_sequence_counter
+
+        ; write the new sequence index (should still be in x)
+        ldy #ChannelState::arpeggio_sequence_index
+        txa
+        sta (channel_ptr), y
+
+done:
+        rts
+.endproc
+
 ; setup:
 ;   channel_ptr points to channel structure
 ;   bhop_ptr points to start of sequence data
@@ -904,7 +1063,6 @@ end_reached_without_loop:
         ; do nothing, and exit; the calling function will check to see if
         ; the sequence pointer is at the end, and deactivate the sequence
         rts
-
 
 end_not_reached:
         ; have we reached the release point?
@@ -987,7 +1145,7 @@ triangle_muted:
         lda #$08
         sta $4001
 
-        lda pulse1_state + ChannelState::base_frequency
+        lda pulse1_state + ChannelState::relative_frequency
         sta $4002
 
         ; If we triggered this frame, write unconditionally
@@ -997,12 +1155,12 @@ triangle_muted:
 
         ; otherwise, to avoid resetting the sequence counter, only
         ; write if the high byte has changed since the last time
-        lda pulse1_state + ChannelState::base_frequency + 1
+        lda pulse1_state + ChannelState::relative_frequency + 1
         cmp shadow_pulse1_freq_hi
         beq tick_pulse2
 
 write_pulse1:
-        lda pulse1_state + ChannelState::base_frequency + 1
+        lda pulse1_state + ChannelState::relative_frequency + 1
         sta shadow_pulse1_freq_hi
         ora #%11111000
         sta $4003
@@ -1031,7 +1189,7 @@ tick_pulse2:
         lda #$08
         sta $4005
 
-        lda pulse2_state + ChannelState::base_frequency
+        lda pulse2_state + ChannelState::relative_frequency
         sta $4006
 
         ; If we triggered this frame, write unconditionally
@@ -1041,12 +1199,12 @@ tick_pulse2:
 
         ; otherwise, to avoid resetting the sequence counter, only
         ; write if the high byte has changed since the last time
-        lda pulse2_state + ChannelState::base_frequency + 1
+        lda pulse2_state + ChannelState::relative_frequency + 1
         cmp shadow_pulse2_freq_hi
         beq tick_triangle
 
 write_pulse2:
-        lda pulse2_state + ChannelState::base_frequency + 1
+        lda pulse2_state + ChannelState::relative_frequency + 1
         sta shadow_pulse2_freq_hi
         ora #%11111000
         sta $4007
@@ -1059,9 +1217,9 @@ tick_triangle:
         lda #$FF
         sta $4008 ; timers to max
 
-        lda triangle_state + ChannelState::base_frequency
+        lda triangle_state + ChannelState::relative_frequency
         sta $400A
-        lda triangle_state + ChannelState::base_frequency + 1
+        lda triangle_state + ChannelState::relative_frequency + 1
         sta $400B
 
 cleanup:
