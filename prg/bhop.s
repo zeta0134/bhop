@@ -1115,6 +1115,14 @@ done:
         cmp #PITCH_MODE_RELATIVE
         beq relative_pitch_mode
 absolute_pitch_mode:
+        ; additional guard: if we are currently running an arp
+        ; envelope, then temporarily pretend to be in relative_pitch mode
+        ; (otherwise we cancel out the arp)
+        ldy #ChannelState::sequences_active
+        lda (channel_ptr), y
+        and #SEQUENCE_ARP
+        bne relative_pitch_mode
+
         ; in absolute mode, reset to base_frequency before
         ; performing the addition
         ldy #ChannelState::base_frequency
