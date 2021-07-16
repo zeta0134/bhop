@@ -51,6 +51,9 @@ ARP_MODE_FIXED =    $01
 ARP_MODE_RELATIVE = $02
 ARP_MODE_SCHEME =   $03
 
+PITCH_MODE_RELATIVE = $00
+PITCH_MODE_ABSOLUTE = $01
+
 .struct ChannelState
         pattern_ptr .word
         status .word
@@ -135,6 +138,33 @@ scratch_byte: .byte $00
         sta bhop_ptr
         lda address+1
         sta bhop_ptr+1
+.endmacro
+
+; add a signed byte, stored in value, to a 16bit word
+; addressed by (bhop_ptr), y
+; this is used in a few places, notably pitch bend effects
+; clobbers a, flags
+; does *not* clobber y
+.macro sadd16_ptr_y ptr, value
+.scope
+        ; handle the low byte normally
+        clc
+        lda value
+        adc (ptr), y
+        sta (ptr), y
+        iny
+        ; sign-extend the high bit into the high byte
+        lda value
+        and #$80 ;extract the high bit
+        beq positive
+        lda #$FF ; the high bit was high, so set high byte to 0xFF, then add that plus carry 
+        ; note: unless a signed overflow occurred, carry will usually be *set* in this case
+positive:
+        ; the high bit was low; a contains #$00, so add that plus carry
+        adc (ptr), y
+        sta (ptr), y
+        dey
+.endscope
 .endmacro
 
 ; TODO: I believe the convention is to pick a song here?
@@ -627,6 +657,7 @@ done_with_commands:
         jsr tick_volume_envelope
         jsr tick_duty_envelope
         jsr tick_arp_envelope
+        jsr tick_pitch_envelope
 
         ; PULSE 2
         lda #<pulse2_state
@@ -636,6 +667,7 @@ done_with_commands:
         jsr tick_volume_envelope
         jsr tick_duty_envelope
         jsr tick_arp_envelope
+        jsr tick_pitch_envelope
 
         ; TRIANGLE
         lda #<triangle_state
@@ -644,6 +676,7 @@ done_with_commands:
         sta channel_ptr+1
         jsr tick_volume_envelope
         jsr tick_arp_envelope
+        jsr tick_pitch_envelope
 
         rts
 .endproc
@@ -1040,6 +1073,84 @@ done_applying_arp:
 
         ; write the new sequence index (should still be in x)
         ldy #ChannelState::arpeggio_sequence_index
+        txa
+        sta (channel_ptr), y
+
+done:
+        rts
+.endproc
+
+; If this channel has a pitch envelope active, process that
+; envelope. Upon return, relative_pitch is set
+; setup: 
+;   channel_ptr points to channel structure
+.proc tick_pitch_envelope
+        ldy #ChannelState::sequences_active
+        lda (channel_ptr), y
+        and #SEQUENCE_PITCH
+        beq done ; if sequence isn't enabled, bail fast
+
+        ; prepare the pitch pointer for reading
+        ldy #ChannelState::pitch_sequence_ptr
+        lda (channel_ptr), y
+        sta bhop_ptr
+        iny
+        lda (channel_ptr), y
+        sta bhop_ptr + 1
+
+        ; read the current sequence byte, and set instrument_volume to this
+        ldy #ChannelState::pitch_sequence_index
+        lda (channel_ptr), y
+        tax ; stash for later
+        ; for reading the sequence, +4
+        clc
+        adc #4
+        tay
+        lda (bhop_ptr), y
+        sta scratch_byte
+
+        ; what we do here depends on the mode
+        ldy #SequenceHeader::mode
+        lda (bhop_ptr), y
+        cmp #PITCH_MODE_RELATIVE
+        beq relative_pitch_mode
+absolute_pitch_mode:
+        ; in absolute mode, reset to base_frequency before
+        ; performing the addition
+        ldy #ChannelState::base_frequency
+        lda (channel_ptr), y
+        ldy #ChannelState::relative_frequency
+        sta (channel_ptr), y
+        ldy #ChannelState::base_frequency + 1
+        lda (channel_ptr), y
+        ldy #ChannelState::relative_frequency + 1
+        sta (channel_ptr), y
+relative_pitch_mode:
+        ; add this data to relative_pitch
+        ldy #ChannelState::relative_frequency
+        sadd16_ptr_y channel_ptr, scratch_byte
+
+done_applying_pitch:
+        ; tick the sequence counter and exit
+        jsr tick_sequence_counter
+
+        ; have we reached the end of the sequence?
+        ldy #SequenceHeader::length
+        lda (bhop_ptr), y
+        sta scratch_byte
+        cpx scratch_byte
+        bne end_not_reached
+        
+        ; this sequence is finished! Disable the sequence flag and exit
+        ldy #ChannelState::sequences_active
+        lda (channel_ptr), y
+        and #($FF - SEQUENCE_PITCH)
+        sta (channel_ptr), y
+        rts
+
+end_not_reached:
+        ; write the new sequence index (should still be in x)
+        ldy #ChannelState::pitch_sequence_index
         txa
         sta (channel_ptr), y
 
