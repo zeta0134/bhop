@@ -645,6 +645,25 @@ done_with_commands:
         sta channel_ptr+1
         jsr advance_channel_row
 
+        ; NOISE
+        lda #<noise_state
+        sta channel_ptr
+        lda #>noise_state
+        sta channel_ptr+1
+        jsr advance_channel_row
+        jsr fix_noise_freq
+
+        rts
+.endproc
+
+.proc fix_noise_freq
+        lda noise_state + ChannelState::status
+        cmp #($FF - CHANNEL_TRIGGERED)
+        beq done
+        lda noise_state + ChannelState::base_note
+        sta noise_state + ChannelState::base_frequency
+        sta noise_state + ChannelState::relative_frequency
+done:
         rts
 .endproc
 
@@ -676,6 +695,15 @@ done_with_commands:
         sta channel_ptr+1
         jsr tick_volume_envelope
         jsr tick_arp_envelope
+        jsr tick_pitch_envelope
+
+        ; NOISE
+        lda #<noise_state
+        sta channel_ptr
+        lda #>noise_state
+        sta channel_ptr+1
+        jsr tick_volume_envelope
+        jsr tick_noise_arp_envelope
         jsr tick_pitch_envelope
 
         rts
@@ -1080,6 +1108,117 @@ done:
         rts
 .endproc
 
+; We need a special variant of this just for noise, which uses a different
+; means of frequency to base_note mapping
+; setup: 
+;   channel_ptr points to channel structure
+.proc tick_noise_arp_envelope
+        ldy #ChannelState::sequences_active
+        lda (channel_ptr), y
+        and #SEQUENCE_ARP
+        beq early_exit ; if sequence isn't enabled, bail fast
+
+        ; prepare the arp pointer for reading
+        ldy #ChannelState::arpeggio_sequence_ptr
+        lda (channel_ptr), y
+        sta bhop_ptr
+        iny
+        lda (channel_ptr), y
+        sta bhop_ptr + 1
+
+        ; For arps, we need to "reset" the channel if the envelope finishes, so we're doing
+        ; the length check first thing
+
+        ldy #ChannelState::arpeggio_sequence_index
+        lda (channel_ptr), y
+        sta scratch_byte
+        ; have we reached the end of the sequence?
+        ldy #SequenceHeader::length
+        lda (bhop_ptr), y
+        cmp scratch_byte
+        bne end_not_reached
+        
+        ; this sequence is finished! Disable the sequence flag
+        ldy #ChannelState::sequences_active
+        lda (channel_ptr), y
+        and #($FF - SEQUENCE_ARP)
+        sta (channel_ptr), y
+
+        ; now apply the current base note as the channel frequency,
+        ; then exit:
+        ldy #ChannelState::base_note
+        lda (channel_ptr), y
+        ldy #ChannelState::relative_frequency
+        sta (channel_ptr), y
+early_exit:
+        rts
+
+end_not_reached:
+        ; read the current sequence byte, and set instrument_volume to this
+        ldy #ChannelState::arpeggio_sequence_index
+        lda (channel_ptr), y
+        pha ; stash for later
+        ; for reading the sequence, +4
+        clc
+        adc #4
+        tay
+        lda (bhop_ptr), y
+        sta scratch_byte ; will affect the note, depending on mode
+        clc
+
+        ; what we actually *do* with the arp byte depends on the mode
+        ldy #SequenceHeader::mode
+        lda (bhop_ptr), y
+        cmp #ARP_MODE_ABSOLUTE
+        beq arp_absolute
+        cmp #ARP_MODE_RELATIVE
+        beq arp_relative
+        cmp #ARP_MODE_FIXED
+        beq arp_fixed
+        ; ARP SCHEME, unimplemented! for now, treat this just like absolute
+arp_absolute:
+        ; arp is an offset from base note to apply each frame
+        ldy #ChannelState::base_note
+        lda (channel_ptr), y
+        clc
+        adc scratch_byte
+        tax
+        jmp apply_arp
+arp_relative:
+        ; arp accumulates an offset each frame, from the previous frame
+        ldy #ChannelState::base_note
+        lda (channel_ptr), y
+        clc
+        adc scratch_byte
+        sta (channel_ptr), y
+        tax
+        jmp apply_arp
+arp_fixed:
+        ; the arp value *is* the note to apply
+        lda scratch_byte
+        tax
+        ; fall through to apply_arp
+apply_arp:
+        txa ; for noise, we'll use the value directly
+        ldy #ChannelState::relative_frequency
+        sta (channel_ptr), y
+
+done_applying_arp:
+        pla ; unstash the sequence counter
+        tax ; move into x, which tick_sequence_counter expects
+
+        ; tick the sequence counter and exit
+        jsr tick_sequence_counter
+
+        ; write the new sequence index (should still be in x)
+        ldy #ChannelState::arpeggio_sequence_index
+        txa
+        sta (channel_ptr), y
+
+done:
+        rts
+.endproc
+
 ; If this channel has a pitch envelope active, process that
 ; envelope. Upon return, relative_pitch is set
 ; setup: 
@@ -1250,6 +1389,10 @@ pulse2_muted:
         beq triangle_muted
         ora #%00000100
 triangle_muted:
+        bit noise_state + ChannelState::status
+        bmi noise_muted
+        ora #%00001000
+noise_muted:
         sta $4015
 
         ; completely hacky "let's hear the frequency" thing
@@ -1343,7 +1486,7 @@ write_pulse2:
 tick_triangle:
         lda triangle_state + ChannelState::status
         and #CHANNEL_MUTED
-        bne cleanup
+        bne tick_noise
 
         lda #$FF
         sta $4008 ; timers to max
@@ -1352,6 +1495,48 @@ tick_triangle:
         sta $400A
         lda triangle_state + ChannelState::relative_frequency + 1
         sta $400B
+
+tick_noise:
+        lda noise_state + ChannelState::status
+        and #CHANNEL_MUTED
+        bne cleanup
+
+        ; apply the combined channel and instrument volume
+        lda noise_state + ChannelState::channel_volume
+        asl
+        asl
+        asl
+        asl
+        ora noise_state + ChannelState::instrument_volume
+        tax
+        lda volume_table, x
+
+        ora #%00110000 ; disable length counter and envelope
+        sta $400C
+
+        ; the low 4 bits of relative_frequency become the
+        ; noise period
+        lda noise_state + ChannelState::relative_frequency
+        and #%00001111
+        ; of *course* it's inverted
+        sta scratch_byte
+        lda #$0F
+        sec
+        sbc scratch_byte
+        sta scratch_byte
+
+        ; the low bit of channel duty becomes mode bit 1
+        lda noise_state + ChannelState::instrument_duty
+        asl
+        and #%10000000 ; safety mask
+        ora scratch_byte
+
+        sta $400E
+
+        ; finally, ensure the note is actually playing with a length
+        ; counter that is not zero
+        lda #%11111000
+        sta $400F        
 
 cleanup:
         ; clear the triggered flag from every instrument

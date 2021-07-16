@@ -13,10 +13,10 @@
 nmi_counter: .byte $00
 
         .segment "PRG1_A000"
-        ;.include "../ftm/yakra.asm"
+        .include "../ftm/yakra.asm"
         ;.include "../ftm/sanctuary.asm"
         ;.include "../ftm/bark.asm"
-        .include "../ftm/bah.asm"
+        ;.include "../ftm/bah.asm"
         ;.include "../ftm/1-1.asm"
 
         .segment "PRG3_E000"
