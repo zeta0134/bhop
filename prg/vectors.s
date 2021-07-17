@@ -22,6 +22,16 @@ loop:
 .endscope
 .endmacro
 
+.proc clear_internal_ram
+        clear_page $0200
+        clear_page $0300
+        clear_page $0400
+        clear_page $0500
+        clear_page $0600
+        clear_page $0700
+        rts
+.endproc
+
         .import start, nmi, irq
 reset:
         sei            ; Disable interrupts
@@ -36,6 +46,9 @@ reset:
         ; Initialize zero page and stack
         clear_page $0000
         clear_page $0100
+        ; now that the stack is usable, clear internal ram with a jsr
+        jsr clear_internal_ram
+        
 
         ; Jump to main
         jmp start
