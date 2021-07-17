@@ -231,6 +231,10 @@ positive:
         sta noise_state    + ChannelState::pitch_effects_active
         sta dpcm_state     + ChannelState::pitch_effects_active
 
+        ; finally, enable all channels except DMC
+        lda #%00001111
+        sta $4015
+
         rts
 .endproc
 
@@ -652,6 +656,13 @@ done_with_commands:
         sta channel_ptr+1
         jsr advance_channel_row
         jsr fix_noise_freq
+
+        ; DPCM
+        lda #<dpcm_state
+        sta channel_ptr
+        lda #>dpcm_state
+        sta channel_ptr+1
+        jsr advance_channel_row
 
         rts
 .endproc
@@ -1366,39 +1377,8 @@ done:
 
 .proc tick_instruments
 tick_pulse1:
-        ; first, check for muted channels and adjust the status register
-        ; (this must come first, otherwise writes to individual registers
-        ; for new note triggers are ignored)
-        lda #0
         bit pulse1_state + ChannelState::status
         bmi pulse1_muted
-        ora #%00000001
-pulse1_muted:
-        bit pulse2_state + ChannelState::status
-        bmi pulse2_muted
-        ora #%00000010
-pulse2_muted:
-        bit triangle_state + ChannelState::status
-        bmi triangle_muted
-        ; triangle additionally should mute here if either channel volume,
-        ; or instrument volume is zero
-        ; (but don't clobber a)
-        ldx triangle_state + ChannelState::channel_volume
-        beq triangle_muted
-        ldx triangle_state + ChannelState::instrument_volume
-        beq triangle_muted
-        ora #%00000100
-triangle_muted:
-        bit noise_state + ChannelState::status
-        bmi noise_muted
-        ora #%00001000
-noise_muted:
-        sta $4015
-
-        ; completely hacky "let's hear the frequency" thing
-        lda pulse1_state + ChannelState::status
-        and #CHANNEL_MUTED
-        bne tick_pulse2
 
         ; apply the combined channel and instrument volume
         lda pulse1_state + ChannelState::channel_volume
@@ -1438,11 +1418,16 @@ write_pulse1:
         sta shadow_pulse1_freq_hi
         ora #%11111000
         sta $4003
+        jmp tick_pulse2
+pulse1_muted:
+        ; if the channel is muted, little else matters, but ensure
+        ; we set the volume to 0
+        lda #%00110000
+        sta $4000
 
 tick_pulse2:
-        lda pulse2_state + ChannelState::status
-        and #CHANNEL_MUTED
-        bne tick_triangle
+        bit pulse2_state + ChannelState::status
+        bmi pulse2_muted
 
         ; apply the combined channel and instrument volume
         lda pulse2_state + ChannelState::channel_volume
@@ -1482,11 +1467,23 @@ write_pulse2:
         sta shadow_pulse2_freq_hi
         ora #%11111000
         sta $4007
+        jmp tick_triangle
+pulse2_muted:
+        ; if the channel is muted, little else matters, but ensure
+        ; we set the volume to 0
+        lda #%00110000
+        sta $4004
 
 tick_triangle:
-        lda triangle_state + ChannelState::status
-        and #CHANNEL_MUTED
-        bne tick_noise
+        bit triangle_state + ChannelState::status
+        bmi triangle_muted
+        ; triangle additionally should mute here if either channel volume,
+        ; or instrument volume is zero
+        ; (but don't clobber a)
+        ldx triangle_state + ChannelState::channel_volume
+        beq triangle_muted
+        ldx triangle_state + ChannelState::instrument_volume
+        beq triangle_muted
 
         lda #$FF
         sta $4008 ; timers to max
@@ -1495,11 +1492,18 @@ tick_triangle:
         sta $400A
         lda triangle_state + ChannelState::relative_frequency + 1
         sta $400B
+        jmp tick_noise
+triangle_muted:
+        ; since triangle has no volume, we'll instead choose to mute it by
+        ; setting the length counter to 0 and forcing an immediate reload.
+        ; This will delay the mute by up to 1/4 of a frame, but this is the
+        ; best we can do without conflicting with the DMC channel
+        lda #$80
+        sta $4008
 
 tick_noise:
-        lda noise_state + ChannelState::status
-        and #CHANNEL_MUTED
-        bne cleanup
+        bit noise_state + ChannelState::status
+        bmi noise_muted
 
         ; apply the combined channel and instrument volume
         lda noise_state + ChannelState::channel_volume
@@ -1536,9 +1540,17 @@ tick_noise:
         ; finally, ensure the note is actually playing with a length
         ; counter that is not zero
         lda #%11111000
-        sta $400F        
+        sta $400F  
+        jmp cleanup
+noise_muted:
+        ; if the channel is muted, little else matters, but ensure
+        ; we set the volume to 0
+        lda #%00110000
+        sta $400C
 
 cleanup:
+        jsr play_dpcm_samples
+
         ; clear the triggered flag from every instrument
         lda pulse1_state + ChannelState::status
         and #($FF - CHANNEL_TRIGGERED)
@@ -1551,6 +1563,83 @@ cleanup:
         lda triangle_state + ChannelState::status
         and #($FF - CHANNEL_TRIGGERED)
         sta triangle_state + ChannelState::status
+
+        lda noise_state + ChannelState::status
+        and #($FF - CHANNEL_TRIGGERED)
+        sta noise_state + ChannelState::status
+
+        lda dpcm_state + ChannelState::status
+        and #($FF - CHANNEL_TRIGGERED)
+        sta dpcm_state + ChannelState::status
+
+        rts
+.endproc
+
+.proc play_dpcm_samples
+        bit dpcm_state + ChannelState::status
+        bmi dpcm_muted
+
+        lda dpcm_state + ChannelState::status
+        and #CHANNEL_TRIGGERED
+        beq done
+
+        ; using the current note, read the sample table
+        prepare_ptr MUSIC_BASE + FtModuleHeader::sample_list
+        lda dpcm_state + ChannelState::base_note
+        ; if this is the special value $7E, then this is a note release; immediately halt the channel,
+        ; but do not set the delta counter
+        cmp #$7E
+        beq dpcm_muted
+        sta scratch_byte
+        dec scratch_byte ; notes start at 1, list is indexed at 0
+        ; multiply by 3
+        lda #0
+        clc
+        adc scratch_byte
+        adc scratch_byte
+        adc scratch_byte
+        tay
+        ; in order, the sample_list should contain:
+        ; - LL..RRRR - Loop, playback Rate
+        ; - EDDDDDDD - delta Enabled, Delta counter
+        ; - nnnnnnnn - iNdex into sample table
+        lda (bhop_ptr), y
+        iny
+        and #%01111111 ; do NOT enable IRQs
+        sta $4010      ; write rate and loop enable
+        lda (bhop_ptr), y
+        iny
+        bpl no_delta_set
+        sta $4011
+no_delta_set:
+        lda (bhop_ptr), y
+        ; this is the index into the samples table, here it is pre-multiplied
+        ; so we can use it directly
+        tay
+        prepare_ptr MUSIC_BASE + FtModuleHeader::samples
+        ; the sample table should contain, in order:
+        ; - location byte
+        ; - size byte
+        ; - bank to switch in (which we'll ignore for now)
+        lda (bhop_ptr), y
+        iny
+        sta $4012
+        lda (bhop_ptr), y
+        sta $4013
+        ; finally, briefly disable the sample channel to set bytes_remaining in the memory
+        ; reader to 0, then start it again to initiate playback
+        lda #$0F
+        sta $4015
+        lda #$1F
+        sta $4015
+done:
+        rts
+
+dpcm_muted:
+        ; simply disable the channel and exit (whatever is in the sample playback buffer will
+        ; finish, up to 8 bits, there is no way to disable this)
+        lda #%00001111
+        sta $4015
 
         rts
 .endproc
