@@ -291,7 +291,7 @@ gameloop:
 
         ; set scroll registers
         lda PPUSTATUS
-        set_ppuaddr $2000
+        set_ppuaddr #$2000
         lda #0
         sta PPUSCROLL
         sta PPUSCROLL

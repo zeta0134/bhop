@@ -1,4 +1,3 @@
-
 .enum CommandBytes
     CMD_INSTRUMENT
     CMD_HOLD
@@ -49,3 +48,5 @@
     CMD_EFF_S5B_ENV_RATE_LO
     CMD_EFF_S5B_NOISE
 .endenum
+
+.import command_table

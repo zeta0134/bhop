@@ -1,3 +1,5 @@
+.include "bhop.inc"
+.include "bhop_internal.inc"
 .include "commands.inc"
 .include "nes.inc"
 .include "word_util.inc"
@@ -6,98 +8,6 @@
 
 .scope BHOP
 
-MUSIC_BASE = $A000
-
-.struct FtModuleHeader
-        song_list .word
-        instrument_list .word
-        sample_list .word
-        samples .word
-        groove_list .word
-        flags .byte
-        ntsc_speed .word
-        pal_speed .word
-.endstruct
-
-.struct SongInfo
-        frame_list_ptr .word
-        frame_count .byte
-        pattern_length .byte
-        speed .byte
-        tempo .byte
-        groove_position .byte
-        initial_bank .byte
-.endstruct
-
-; various status flags
-CHANNEL_MUTED           = %10000000
-CHANNEL_GLOBAL_DURATION = %01000000
-CHANNEL_TRIGGERED       = %00100000
-
-SEQUENCE_VOLUME  = %00000001
-SEQUENCE_ARP     = %00000010
-SEQUENCE_PITCH   = %00000100
-SEQUENCE_HIPITCH = %00001000
-SEQUENCE_DUTY    = %00010000
-
-; for active effects (mostly unimplemented)
-PITCH_EFFECT_ARP          = %00000001
-PITCH_EFFECT_UP           = %00000010
-PITCH_EFFECT_DOWN         = %00000100
-PITCH_EFFECT_PORTAMENTO   = %00001000
-
-ARP_MODE_ABSOLUTE = $00
-ARP_MODE_FIXED =    $01
-ARP_MODE_RELATIVE = $02
-ARP_MODE_SCHEME =   $03
-
-PITCH_MODE_RELATIVE = $00
-PITCH_MODE_ABSOLUTE = $01
-
-.struct ChannelState
-        pattern_ptr .word
-        status .word
-        global_duration .word
-        row_delay_counter .byte
-        base_note .byte
-        base_frequency .word        
-        relative_frequency .word
-        detuned_frequency .word
-        channel_volume .byte
-        instrument_volume .byte
-        instrument_duty .byte
-        selected_instrument .byte
-        sequences_enabled .byte
-        sequences_active .byte
-        volume_sequence_ptr .word
-        volume_sequence_index .byte
-        arpeggio_sequence_ptr .word
-        arpeggio_sequence_index .byte
-        pitch_sequence_ptr .word
-        pitch_sequence_index .byte
-        hipitch_sequence_ptr .word
-        hipitch_sequence_index .byte
-        duty_sequence_ptr .word
-        duty_sequence_index .byte
-        pitch_effects_active .byte
-.endstruct
-
-.struct InstrumentHeader
-        type .byte
-        sequences_enabled .byte
-        ; Note: there are 0-5 sequence pointers, based on the
-        ; contents of sequences_enabled. This address is used
-        ; as a starting point.
-        sequence_ptr .word
-.endstruct
-
-.struct SequenceHeader
-        length .byte
-        loop_point .byte ; $FF disables loops
-        release_point .byte ; $00 disables release points
-        mode .byte ; various meanings depending on sequence type
-.endstruct
-
         .zeropage
 ; scratch ptr, used for all sorts of indirect reads
 bhop_ptr: .word $0000 
@@ -105,6 +15,8 @@ bhop_ptr: .word $0000
 ; rows in a loop, we'll want access to these to be quick
 pattern_ptr: .word $0000
 channel_ptr: .word $0000
+
+.exportzp bhop_ptr, channel_ptr, pattern_ptr
 
         .segment "RAM"
 tempo_counter: .word $0000
@@ -128,8 +40,14 @@ shadow_pulse1_freq_hi: .byte $00
 shadow_pulse2_freq_hi: .byte $00
 scratch_byte: .byte $00
 
+.export pulse1_state, pulse2_state, triangle_state, noise_state, dpcm_state
+.export row_counter, row_cmp, frame_counter, frame_cmp
+
         .segment "PRG0_8000"
+        ; global
         .export bhop_init, bhop_play
+        ; internal
+        .export load_instrument
 
 .include "midi_lut.inc"
 
@@ -363,17 +281,6 @@ done_advancing_rows:
         rts
 .endproc
 
-.macro fetch_pattern_byte
-.scope
-        ldy #0
-        lda (pattern_ptr), y
-        inc pattern_ptr
-        bne done
-        inc pattern_ptr+1
-done:
-.endscope
-.endmacro
-
 ; prep: channel_ptr points to channel structure
 .proc advance_channel_row
         ldy #ChannelState::row_delay_counter
@@ -407,7 +314,7 @@ process_extended_command:
         ; it's a *proper* command, restore the full command byte
         tya
         ; now use that to jump into the command procesisng table
-        jsr handle_extended_command
+        jsr dispatch_command
         jmp bytecode_loop
 
 quick_volume_change:
@@ -519,111 +426,6 @@ skip:
         sbc #1 ; decrement that counter
         sta (channel_ptr), y ; write it back to row_delay_counter
 done:
-        rts
-.endproc
-
-; setup: 
-;   channel_ptr points to channel structure
-;   pattern_ptr points to byte following command byte
-;   a contains command byte
-.proc handle_extended_command
-        ; TODO: handle this more gracefully, I guess as a jump table?
-        ; for now we just have a handful of special cases though
-
-        ; command byte has the high bit set, which is not needed; eliminate it here
-        and #$7F
-
-        ; duration commands
-        cmp #CommandBytes::CMD_SET_DURATION
-        bne not_set_duration
-        fetch_pattern_byte
-        ldy #ChannelState::global_duration
-        sta (channel_ptr), y
-        ldy #ChannelState::status
-        lda (channel_ptr), y
-        ora #CHANNEL_GLOBAL_DURATION
-        sta (channel_ptr), y
-        jmp done_with_commands
-
-not_set_duration:
-        cmp #CommandBytes::CMD_RESET_DURATION
-        bne not_reset_duration
-        ldy #ChannelState::status
-        lda (channel_ptr), y
-        and #($FF - CHANNEL_GLOBAL_DURATION)
-        sta (channel_ptr), y
-        jmp done_with_commands
-
-        ; our test song uses Bxx and it's somewhat important that we don't ignore
-        ; it, so implement that here
-not_reset_duration:
-        cmp #CommandBytes::CMD_EFF_JUMP
-        bne not_frame_jump
-        fetch_pattern_byte
-        sta frame_counter ; target frame counter
-        lda row_cmp
-        sta row_counter ; target row (so we immediately advance)
-        ; but we haven't incremented either pointer yet! So decrement them
-        ; both by 1, this way when we are done ticking rows, we end up where
-        ; we want on the next one
-        dec frame_counter ; the effect encodes target+1, we want target...
-        dec frame_counter ; ... and one _less_ than target
-        dec row_counter
-        ; important: new frames expect to begin with global duration disabled;
-        ; ordinarily the last note in a frame fixes this, but if we jump mid-way
-        ; through a frame, we'll be in an inconsistent state. Fix it *now*, for
-        ; *all* channels
-        lda pulse1_state + ChannelState::status
-        and #($FF - CHANNEL_GLOBAL_DURATION)
-        sta pulse1_state + ChannelState::status
-
-        lda pulse2_state + ChannelState::status
-        and #($FF - CHANNEL_GLOBAL_DURATION)
-        sta pulse2_state + ChannelState::status
-
-        lda triangle_state + ChannelState::status
-        and #($FF - CHANNEL_GLOBAL_DURATION)
-        sta triangle_state + ChannelState::status
-
-        lda noise_state + ChannelState::status
-        and #($FF - CHANNEL_GLOBAL_DURATION)
-        sta noise_state + ChannelState::status
-
-        lda dpcm_state + ChannelState::status
-        and #($FF - CHANNEL_GLOBAL_DURATION)
-        sta dpcm_state + ChannelState::status
-
-        sta (channel_ptr), y
-
-
-        jmp done_with_commands
-
-not_frame_jump:
-        cmp #CommandBytes::CMD_INSTRUMENT
-        bne not_full_instrument
-        fetch_pattern_byte
-        ; of *course* this is pre-shifted, so un-do that:
-        lsr
-        ; store the instrument and load it up
-        ldy #ChannelState::selected_instrument
-        sta (channel_ptr), y
-        jsr load_instrument
-        jmp done_with_commands
-
-not_full_instrument:
-        ; the following commands aren't handled yet, but we do need to
-        ; detect them and intentionally not skip a parameter byte
-        cmp #CommandBytes::CMD_HOLD
-        beq done_with_commands
-        cmp #CommandBytes::CMD_EFF_CLEAR
-        beq done_with_commands
-        cmp #CommandBytes::CMD_EFF_RESET_PITCH
-        beq done_with_commands
-        ; for every other command, still ignore it, but read one pattern
-        ; byte and throw it away
-        fetch_pattern_byte
-        ; all done!
-done_with_commands:
         rts
 .endproc
 
