@@ -61,18 +61,18 @@ PITCH_MODE_ABSOLUTE = $01
         instrument_volume .byte
         instrument_duty .byte
         selected_instrument .byte
-        sequences_enabled .byte
-        sequences_active .byte
-        volume_sequence_ptr .word
-        volume_sequence_index .byte
-        arpeggio_sequence_ptr .word
-        arpeggio_sequence_index .byte
-        pitch_sequence_ptr .word
-        pitch_sequence_index .byte
-        hipitch_sequence_ptr .word
-        hipitch_sequence_index .byte
-        duty_sequence_ptr .word
-        duty_sequence_index .byte
+        ;sequences_enabled .byte
+        ;sequences_active .byte
+        ;volume_sequence_ptr .word
+        ;volume_sequence_index .byte
+        ;arpeggio_sequence_ptr .word
+        ;arpeggio_sequence_index .byte
+        ;pitch_sequence_ptr .word
+        ;pitch_sequence_index .byte
+        ;hipitch_sequence_ptr .word
+        ;hipitch_sequence_index .byte
+        ;duty_sequence_ptr .word
+        ;duty_sequence_index .byte
         pitch_effects_active .byte
 .endstruct
 
@@ -107,6 +107,24 @@ done:
 .importzp bhop_ptr, channel_ptr, pattern_ptr
 .import pulse1_state, pulse2_state, triangle_state, noise_state, dpcm_state
 .import row_counter, row_cmp, frame_counter, frame_cmp
+
+.import sequences_enabled
+.import sequences_active
+.import volume_sequence_ptr_low
+.import volume_sequence_ptr_high
+.import volume_sequence_index
+.import arpeggio_sequence_ptr_low
+.import arpeggio_sequence_ptr_high
+.import arpeggio_sequence_index
+.import pitch_sequence_ptr_low
+.import pitch_sequence_ptr_high
+.import pitch_sequence_index
+.import hipitch_sequence_ptr_low
+.import hipitch_sequence_ptr_high
+.import hipitch_sequence_index
+.import duty_sequence_ptr_low
+.import duty_sequence_ptr_high
+.import duty_sequence_index
 
 ; various methods, mostly used by commands
 .import load_instrument, dispatch_command

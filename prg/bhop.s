@@ -15,8 +15,9 @@ bhop_ptr: .word $0000
 ; rows in a loop, we'll want access to these to be quick
 pattern_ptr: .word $0000
 channel_ptr: .word $0000
+channel_index: .byte $00
 
-.exportzp bhop_ptr, channel_ptr, pattern_ptr
+.exportzp bhop_ptr, channel_ptr, pattern_ptr, channel_index
 
         .segment "RAM"
 tempo_counter: .word $0000
@@ -39,6 +40,25 @@ dpcm_state: .tag ChannelState
 shadow_pulse1_freq_hi: .byte $00
 shadow_pulse2_freq_hi: .byte $00
 scratch_byte: .byte $00
+
+; channel state tables, each 5 bytes in length
+sequences_enabled: .res 5
+sequences_active: .res 5
+volume_sequence_ptr_low: .res 5
+volume_sequence_ptr_high: .res 5
+volume_sequence_index: .res 5
+arpeggio_sequence_ptr_low: .res 5
+arpeggio_sequence_ptr_high: .res 5
+arpeggio_sequence_index: .res 5
+pitch_sequence_ptr_low: .res 5
+pitch_sequence_ptr_high: .res 5
+pitch_sequence_index: .res 5
+hipitch_sequence_ptr_low: .res 5
+hipitch_sequence_ptr_high: .res 5
+hipitch_sequence_index: .res 5
+duty_sequence_ptr_low: .res 5
+duty_sequence_ptr_high: .res 5
+duty_sequence_index: .res 5
 
 .export pulse1_state, pulse2_state, triangle_state, noise_state, dpcm_state
 .export row_counter, row_cmp, frame_counter, frame_cmp
@@ -435,6 +455,8 @@ done:
         sta channel_ptr
         lda #>pulse1_state
         sta channel_ptr+1
+        lda #0
+        sta channel_index
         jsr advance_channel_row
 
         ; PULSE 2
@@ -442,6 +464,8 @@ done:
         sta channel_ptr
         lda #>pulse2_state
         sta channel_ptr+1
+        lda #1
+        sta channel_index
         jsr advance_channel_row
 
         ; TRIANGLE
@@ -449,6 +473,8 @@ done:
         sta channel_ptr
         lda #>triangle_state
         sta channel_ptr+1
+        lda #2
+        sta channel_index
         jsr advance_channel_row
 
         ; NOISE
@@ -456,6 +482,8 @@ done:
         sta channel_ptr
         lda #>noise_state
         sta channel_ptr+1
+        lda #3
+        sta channel_index
         jsr advance_channel_row
         jsr fix_noise_freq
 
@@ -464,6 +492,8 @@ done:
         sta channel_ptr
         lda #>dpcm_state
         sta channel_ptr+1
+        lda #4
+        sta channel_index
         jsr advance_channel_row
 
         rts
@@ -486,6 +516,8 @@ done:
         sta channel_ptr
         lda #>pulse1_state
         sta channel_ptr+1
+        lda #0
+        sta channel_index
         jsr tick_volume_envelope
         jsr tick_duty_envelope
         jsr tick_arp_envelope
@@ -496,6 +528,8 @@ done:
         sta channel_ptr
         lda #>pulse2_state
         sta channel_ptr+1
+        lda #1
+        sta channel_index
         jsr tick_volume_envelope
         jsr tick_duty_envelope
         jsr tick_arp_envelope
@@ -506,6 +540,8 @@ done:
         sta channel_ptr
         lda #>triangle_state
         sta channel_ptr+1
+        lda #2
+        sta channel_index
         jsr tick_volume_envelope
         jsr tick_arp_envelope
         jsr tick_pitch_envelope
@@ -515,6 +551,8 @@ done:
         sta channel_ptr
         lda #>noise_state
         sta channel_ptr+1
+        lda #3
+        sta channel_index
         jsr tick_volume_envelope
         jsr tick_noise_arp_envelope
         jsr tick_pitch_envelope
@@ -560,94 +598,67 @@ no_wrap:
         ; bhop_ptr now addresses the selected InstrumentHeader
         ldy #InstrumentHeader::sequences_enabled
         lda (bhop_ptr), y
-        ldy #ChannelState::sequences_enabled
-        sta (channel_ptr), y
-        tax ; stash
+        ldx channel_index
+        sta sequences_enabled, x
+        sta scratch_byte ; we'll shift bits out of this later
 
         ; for every enabled sequence, load the appropriate pointer
         clc
-        add16 bhop_ptr, #InstrumentHeader::sequence_ptr
-        txa ; unstash
+        ldy #InstrumentHeader::sequence_ptr
 check_volume:
-        lsr
+        lsr scratch_byte
         bcc check_arp
 
-        tax ; stash
-        ldy #0
         lda (bhop_ptr), y
-        ldy #ChannelState::volume_sequence_ptr
-        sta (channel_ptr), y
-        ldy #1
+        sta volume_sequence_ptr_low, x
+        iny
         lda (bhop_ptr), y
-        ldy #ChannelState::volume_sequence_ptr + 1
-        sta (channel_ptr), y
-        clc
-        add16 bhop_ptr, #2 ; advance one word
-        txa ; unstash
+        sta volume_sequence_ptr_high, x
+        iny
+
 check_arp:
-        lsr
+        lsr scratch_byte
         bcc check_pitch
 
-        tax ; stash
-        ldy #0
         lda (bhop_ptr), y
-        ldy #ChannelState::arpeggio_sequence_ptr
-        sta (channel_ptr), y
-        ldy #1
+        sta arpeggio_sequence_ptr_low, x
+        iny
         lda (bhop_ptr), y
-        ldy #ChannelState::arpeggio_sequence_ptr + 1
-        sta (channel_ptr), y
-        clc
-        add16 bhop_ptr, #2 ; advance one word
-        txa ; unstash
+        sta arpeggio_sequence_ptr_high, x
+        iny
 
 check_pitch:
-        lsr
+        lsr scratch_byte
         bcc check_hipitch
 
-        tax ; stash
-        ldy #0
         lda (bhop_ptr), y
-        ldy #ChannelState::pitch_sequence_ptr
-        sta (channel_ptr), y
-        ldy #1
+        sta pitch_sequence_ptr_low, x
+        iny
         lda (bhop_ptr), y
-        ldy #ChannelState::pitch_sequence_ptr + 1
-        sta (channel_ptr), y
-        clc
-        add16 bhop_ptr, #2 ; advance one word
-        txa ; unstash
+        sta pitch_sequence_ptr_high, x
+        iny
 
 check_hipitch:
-        lsr
+        lsr scratch_byte
         bcc check_duty
 
-        tax ; stash
-        ldy #0
         lda (bhop_ptr), y
-        ldy #ChannelState::hipitch_sequence_ptr
-        sta (channel_ptr), y
-        ldy #1
+        sta hipitch_sequence_ptr_low, x
+        iny
         lda (bhop_ptr), y
-        ldy #ChannelState::hipitch_sequence_ptr + 1
-        sta (channel_ptr), y
-        clc
-        add16 bhop_ptr, #2 ; advance one word
-        txa ; unstash
+        sta hipitch_sequence_ptr_high, x
+        iny
 
 check_duty:
-        lsr
+        lsr scratch_byte
         bcc done_loading_sequences
 
-        ; no more need to stash
-        ldy #0
         lda (bhop_ptr), y
-        ldy #ChannelState::duty_sequence_ptr
-        sta (channel_ptr), y
-        ldy #1
+        sta duty_sequence_ptr_low, x
+        iny
         lda (bhop_ptr), y
-        ldy #ChannelState::duty_sequence_ptr + 1
-        sta (channel_ptr), y
+        sta duty_sequence_ptr_high, x
+        ; no more need to iny
 
 done_loading_sequences:
         jsr reset_instrument
@@ -659,24 +670,36 @@ done_loading_sequences:
 ; setup: 
 ;   channel_ptr points to channel structure
 .proc reset_instrument
+        ldy channel_index
         lda #0
-        ldy #ChannelState::volume_sequence_index
-        sta (channel_ptr), y
-        ldy #ChannelState::arpeggio_sequence_index
-        sta (channel_ptr), y
-        ldy #ChannelState::pitch_sequence_index
-        sta (channel_ptr), y
-        ldy #ChannelState::hipitch_sequence_index
-        sta (channel_ptr), y
-        ldy #ChannelState::duty_sequence_index
-        sta (channel_ptr), y
+        sta volume_sequence_index, y
+        sta arpeggio_sequence_index, y
+        sta pitch_sequence_index, y
+        sta hipitch_sequence_index, y
+        sta duty_sequence_index, y
+
+
+        ;ldy #ChannelState::volume_sequence_index
+        ;sta (channel_ptr), y
+        ;ldy #ChannelState::arpeggio_sequence_index
+        ;sta (channel_ptr), y
+        ;ldy #ChannelState::pitch_sequence_index
+        ;sta (channel_ptr), y
+        ;ldy #ChannelState::hipitch_sequence_index
+        ;sta (channel_ptr), y
+        ;ldy #ChannelState::duty_sequence_index
+        ;sta (channel_ptr), y
 
         ; when a sequence ends it terminates itself in sequences_active, so re-initialize
         ; that byte here
-        ldy #ChannelState::sequences_enabled
-        lda (channel_ptr), y
-        ldy #ChannelState::sequences_active
-        sta (channel_ptr), y
+
+        lda sequences_enabled, y
+        sta sequences_active, y
+
+        ;ldy #ChannelState::sequences_enabled
+        ;lda (channel_ptr), y
+        ;ldy #ChannelState::sequences_active
+        ;sta (channel_ptr), y
 
         rts
 .endproc
@@ -687,22 +710,19 @@ done_loading_sequences:
 ; setup: 
 ;   channel_ptr points to channel structure
 .proc tick_volume_envelope
-        ldy #ChannelState::sequences_active
-        lda (channel_ptr), y
+        ldy channel_index
+        lda sequences_active, y
         and #SEQUENCE_VOLUME
         beq done ; if volume sequence isn't enabled, bail fast
 
         ; prepare the volume pointer for reading
-        ldy #ChannelState::volume_sequence_ptr
-        lda (channel_ptr), y
+        lda volume_sequence_ptr_low, y
         sta bhop_ptr
-        iny
-        lda (channel_ptr), y
+        lda volume_sequence_ptr_high, y
         sta bhop_ptr + 1
 
         ; read the current sequence byte, and set instrument_volume to this
-        ldy #ChannelState::volume_sequence_index
-        lda (channel_ptr), y
+        lda volume_sequence_index, y
         tax ; stash for later
         ; for reading the sequence, +4
         clc
@@ -723,17 +743,17 @@ done_loading_sequences:
         bne end_not_reached
 
         ; this sequence is finished! Disable the sequence flag and exit
-        ldy #ChannelState::sequences_active
-        lda (channel_ptr), y
+        ldy channel_index
+        lda sequences_active, y
         and #($FF - SEQUENCE_VOLUME)
-        sta (channel_ptr), y
+        sta sequences_active, y
         rts
 
 end_not_reached:
         ; write the new sequence index (should be in x)
-        ldy #ChannelState::volume_sequence_index
+        ldy channel_index
         txa
-        sta (channel_ptr), y
+        sta volume_sequence_index, y
 
 done:
         rts
@@ -744,22 +764,19 @@ done:
 ; setup: 
 ;   channel_ptr points to channel structure
 .proc tick_duty_envelope
-        ldy #ChannelState::sequences_active
-        lda (channel_ptr), y
+        ldy channel_index
+        lda sequences_active, y
         and #SEQUENCE_DUTY
         beq done ; if sequence isn't enabled, bail fast
 
         ; prepare the duty pointer for reading
-        ldy #ChannelState::duty_sequence_ptr
-        lda (channel_ptr), y
+        lda duty_sequence_ptr_low, y
         sta bhop_ptr
-        iny
-        lda (channel_ptr), y
+        lda duty_sequence_ptr_high, y
         sta bhop_ptr + 1
 
         ; read the current sequence byte, and set instrument_volume to this
-        ldy #ChannelState::duty_sequence_index
-        lda (channel_ptr), y
+        lda duty_sequence_index, y
         tax ; stash for later
         ; for reading the sequence, +4
         clc
@@ -786,17 +803,17 @@ done:
         bne end_not_reached
         
         ; this sequence is finished! Disable the sequence flag and exit
-        ldy #ChannelState::sequences_active
-        lda (channel_ptr), y
+        ldy channel_index
+        lda sequences_active, y
         and #($FF - SEQUENCE_DUTY)
-        sta (channel_ptr), y
+        sta sequences_active, y
         rts
 
 end_not_reached:
         ; write the new sequence index (should still be in x)
-        ldy #ChannelState::duty_sequence_index
+        ldy channel_index
         txa
-        sta (channel_ptr), y
+        sta duty_sequence_index, y
 
 done:
         rts
@@ -807,24 +824,21 @@ done:
 ; setup: 
 ;   channel_ptr points to channel structure
 .proc tick_arp_envelope
-        ldy #ChannelState::sequences_active
-        lda (channel_ptr), y
+        ldy channel_index
+        lda sequences_active, y
         and #SEQUENCE_ARP
         beq early_exit ; if sequence isn't enabled, bail fast
 
         ; prepare the arp pointer for reading
-        ldy #ChannelState::arpeggio_sequence_ptr
-        lda (channel_ptr), y
+        lda arpeggio_sequence_ptr_low, y
         sta bhop_ptr
-        iny
-        lda (channel_ptr), y
+        lda arpeggio_sequence_ptr_high, y
         sta bhop_ptr + 1
 
         ; For arps, we need to "reset" the channel if the envelope finishes, so we're doing
         ; the length check first thing
 
-        ldy #ChannelState::arpeggio_sequence_index
-        lda (channel_ptr), y
+        lda arpeggio_sequence_index, y
         sta scratch_byte
         ; have we reached the end of the sequence?
         ldy #SequenceHeader::length
@@ -833,10 +847,10 @@ done:
         bne end_not_reached
         
         ; this sequence is finished! Disable the sequence flag
-        ldy #ChannelState::sequences_active
-        lda (channel_ptr), y
+        ldy channel_index
+        lda sequences_active, y
         and #($FF - SEQUENCE_ARP)
-        sta (channel_ptr), y
+        sta sequences_active, y
 
         ; now apply the current base note as the channel frequency,
         ; then exit:
@@ -854,8 +868,8 @@ early_exit:
 
 end_not_reached:
         ; read the current sequence byte, and set instrument_volume to this
-        ldy #ChannelState::arpeggio_sequence_index
-        lda (channel_ptr), y
+        ldy channel_index
+        lda arpeggio_sequence_index, y
         pha ; stash for later
         ; for reading the sequence, +4
         clc
@@ -913,9 +927,9 @@ done_applying_arp:
         jsr tick_sequence_counter
 
         ; write the new sequence index (should still be in x)
-        ldy #ChannelState::arpeggio_sequence_index
+        ldy channel_index
         txa
-        sta (channel_ptr), y
+        sta arpeggio_sequence_index, y
 
 done:
         rts
@@ -926,24 +940,21 @@ done:
 ; setup: 
 ;   channel_ptr points to channel structure
 .proc tick_noise_arp_envelope
-        ldy #ChannelState::sequences_active
-        lda (channel_ptr), y
+        ldy channel_index
+        lda sequences_active, y
         and #SEQUENCE_ARP
         beq early_exit ; if sequence isn't enabled, bail fast
 
         ; prepare the arp pointer for reading
-        ldy #ChannelState::arpeggio_sequence_ptr
-        lda (channel_ptr), y
+        lda arpeggio_sequence_ptr_low, y
         sta bhop_ptr
-        iny
-        lda (channel_ptr), y
+        lda arpeggio_sequence_ptr_high, y
         sta bhop_ptr + 1
 
         ; For arps, we need to "reset" the channel if the envelope finishes, so we're doing
         ; the length check first thing
 
-        ldy #ChannelState::arpeggio_sequence_index
-        lda (channel_ptr), y
+        lda arpeggio_sequence_index, y
         sta scratch_byte
         ; have we reached the end of the sequence?
         ldy #SequenceHeader::length
@@ -952,10 +963,10 @@ done:
         bne end_not_reached
         
         ; this sequence is finished! Disable the sequence flag
-        ldy #ChannelState::sequences_active
-        lda (channel_ptr), y
+        ldy channel_index
+        lda sequences_active, y
         and #($FF - SEQUENCE_ARP)
-        sta (channel_ptr), y
+        sta sequences_active, y
 
         ; now apply the current base note as the channel frequency,
         ; then exit:
@@ -968,8 +979,8 @@ early_exit:
 
 end_not_reached:
         ; read the current sequence byte, and set instrument_volume to this
-        ldy #ChannelState::arpeggio_sequence_index
-        lda (channel_ptr), y
+        ldy channel_index
+        lda arpeggio_sequence_index, y
         pha ; stash for later
         ; for reading the sequence, +4
         clc
@@ -1024,9 +1035,9 @@ done_applying_arp:
         jsr tick_sequence_counter
 
         ; write the new sequence index (should still be in x)
-        ldy #ChannelState::arpeggio_sequence_index
+        ldy channel_index
         txa
-        sta (channel_ptr), y
+        sta arpeggio_sequence_index, y
 
 done:
         rts
@@ -1037,22 +1048,19 @@ done:
 ; setup: 
 ;   channel_ptr points to channel structure
 .proc tick_pitch_envelope
-        ldy #ChannelState::sequences_active
-        lda (channel_ptr), y
+        ldy channel_index
+        lda sequences_active, y
         and #SEQUENCE_PITCH
         beq done ; if sequence isn't enabled, bail fast
 
         ; prepare the pitch pointer for reading
-        ldy #ChannelState::pitch_sequence_ptr
-        lda (channel_ptr), y
+        lda pitch_sequence_ptr_low, y
         sta bhop_ptr
-        iny
-        lda (channel_ptr), y
+        lda pitch_sequence_ptr_high, y
         sta bhop_ptr + 1
 
-        ; read the current sequence byte, and set instrument_volume to this
-        ldy #ChannelState::pitch_sequence_index
-        lda (channel_ptr), y
+        ; read the current sequence byte, and set instrument_volume to this        
+        lda pitch_sequence_index, y
         tax ; stash for later
         ; for reading the sequence, +4
         clc
@@ -1070,8 +1078,8 @@ absolute_pitch_mode:
         ; additional guard: if we are currently running an arp
         ; envelope, then temporarily pretend to be in relative_pitch mode
         ; (otherwise we cancel out the arp)
-        ldy #ChannelState::sequences_active
-        lda (channel_ptr), y
+        ldy channel_index
+        lda sequences_active, y
         and #SEQUENCE_ARP
         bne relative_pitch_mode
 
@@ -1102,17 +1110,17 @@ done_applying_pitch:
         bne end_not_reached
         
         ; this sequence is finished! Disable the sequence flag and exit
-        ldy #ChannelState::sequences_active
-        lda (channel_ptr), y
+        ldy channel_index
+        lda sequences_active, y
         and #($FF - SEQUENCE_PITCH)
-        sta (channel_ptr), y
+        sta sequences_active, y
         rts
 
 end_not_reached:
         ; write the new sequence index (should still be in x)
-        ldy #ChannelState::pitch_sequence_index
+        ldy channel_index
         txa
-        sta (channel_ptr), y
+        sta pitch_sequence_index, y
 
 done:
         rts
