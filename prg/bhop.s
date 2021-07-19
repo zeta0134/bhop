@@ -279,6 +279,15 @@ loop:
         bcc done_advancing_rows
         ; is either the same or higher; do the thing
 advance_row:
+        ; first off, have we reached the end of this pattern?
+        ; if so, advance to the next frame here:
+        lda row_counter
+        cmp row_cmp
+        bcc no_frame_advance
+        jsr advance_frame
+        lda #0
+        sta row_counter
+no_frame_advance:
         jsr advance_pattern_rows
         ; subtract tempo_cmp from tempo_counter
         sec
@@ -288,15 +297,15 @@ advance_row:
         lda tempo_counter+1
         sbc tempo_cmp+1
         sta tempo_counter+1
-        ; advance the row counter and, if necessary, move to the next frame
+        ; advance the row counter
         inc row_counter
-        lda row_counter
-        cmp row_cmp
-        bcc done_advancing_rows
+        ;lda row_counter
+        ;cmp row_cmp
+        ;bcc done_advancing_rows
         ; row is equal or greater to max
-        jsr advance_frame
-        lda #0
-        sta row_counter
+        ;jsr advance_frame
+        ;lda #0
+        ;sta row_counter
 done_advancing_rows:
         rts
 .endproc
@@ -668,7 +677,7 @@ done_loading_sequences:
 ; Re-initializes sequence pointers back to the beginning of their
 ; respective envelopes
 ; setup: 
-;   channel_ptr points to channel structure
+;   channel_index points to the active channel
 .proc reset_instrument
         ldy channel_index
         lda #0
@@ -678,28 +687,11 @@ done_loading_sequences:
         sta hipitch_sequence_index, y
         sta duty_sequence_index, y
 
-
-        ;ldy #ChannelState::volume_sequence_index
-        ;sta (channel_ptr), y
-        ;ldy #ChannelState::arpeggio_sequence_index
-        ;sta (channel_ptr), y
-        ;ldy #ChannelState::pitch_sequence_index
-        ;sta (channel_ptr), y
-        ;ldy #ChannelState::hipitch_sequence_index
-        ;sta (channel_ptr), y
-        ;ldy #ChannelState::duty_sequence_index
-        ;sta (channel_ptr), y
-
         ; when a sequence ends it terminates itself in sequences_active, so re-initialize
         ; that byte here
 
         lda sequences_enabled, y
         sta sequences_active, y
-
-        ;ldy #ChannelState::sequences_enabled
-        ;lda (channel_ptr), y
-        ;ldy #ChannelState::sequences_active
-        ;sta (channel_ptr), y
 
         rts
 .endproc
