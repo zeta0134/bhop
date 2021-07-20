@@ -608,6 +608,7 @@ done_with_note_delay:
         sta channel_index
         jsr tick_delayed_effects
         jsr tick_volume_envelope
+        jsr tick_duty_envelope
         jsr tick_noise_arp_envelope
         jsr tick_pitch_envelope
 
