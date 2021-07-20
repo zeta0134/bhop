@@ -60,6 +60,11 @@ duty_sequence_ptr_low: .res 5
 duty_sequence_ptr_high: .res 5
 duty_sequence_index: .res 5
 
+; memory for various effects
+effect_note_delay: .res 5
+
+.export effect_note_delay
+
 .export pulse1_state, pulse2_state, triangle_state, noise_state, dpcm_state
 .export row_counter, row_cmp, frame_counter, frame_cmp
 
@@ -168,6 +173,15 @@ positive:
         sta triangle_state + ChannelState::pitch_effects_active
         sta noise_state    + ChannelState::pitch_effects_active
         sta dpcm_state     + ChannelState::pitch_effects_active
+
+        ; clear out special effects
+        ldx #5
+effect_init_loop:
+        dex
+        sta effect_note_delay, x
+        sta sequences_enabled, x
+        sta sequences_active, x
+        bne effect_init_loop
 
         ; finally, enable all channels except DMC
         lda #%00001111
@@ -344,6 +358,14 @@ process_extended_command:
         tya
         ; now use that to jump into the command procesisng table
         jsr dispatch_command
+
+        ; did we activate a Gxx command? If we did, EXIT NOW.
+        ; Do NOT pass Go, do NOT collect $200
+        ldy channel_index
+        lda effect_note_delay, y
+        beq no_note_delay
+        jmp cleanup_channel_ptr
+no_note_delay:
         jmp bytecode_loop
 
 quick_volume_change:
@@ -519,7 +541,26 @@ done:
         rts
 .endproc
 
-.proc tick_envelopes
+.proc tick_delayed_effects
+        ldx channel_index
+        lda effect_note_delay, x
+        beq done_with_note_delay
+        dec effect_note_delay, x
+        bne done_with_note_delay
+        ; we just decremented the effect counter from 1 -> 0,
+        ; so apply a note delay. In this case, tick the bytecode reader
+        ; one time:
+        jsr advance_channel_row
+        ; if this is the noise channel, fix its frequency
+        lda channel_index
+        cmp #3
+        bne done_with_note_delay
+        jsr fix_noise_freq
+done_with_note_delay:
+        rts
+.endproc
+
+.proc tick_envelopes_and_effects
         ; PULSE 1
         lda #<pulse1_state
         sta channel_ptr
@@ -527,6 +568,7 @@ done:
         sta channel_ptr+1
         lda #0
         sta channel_index
+        jsr tick_delayed_effects
         jsr tick_volume_envelope
         jsr tick_duty_envelope
         jsr tick_arp_envelope
@@ -539,6 +581,7 @@ done:
         sta channel_ptr+1
         lda #1
         sta channel_index
+        jsr tick_delayed_effects
         jsr tick_volume_envelope
         jsr tick_duty_envelope
         jsr tick_arp_envelope
@@ -551,6 +594,7 @@ done:
         sta channel_ptr+1
         lda #2
         sta channel_index
+        jsr tick_delayed_effects
         jsr tick_volume_envelope
         jsr tick_arp_envelope
         jsr tick_pitch_envelope
@@ -562,9 +606,19 @@ done:
         sta channel_ptr+1
         lda #3
         sta channel_index
+        jsr tick_delayed_effects
         jsr tick_volume_envelope
         jsr tick_noise_arp_envelope
         jsr tick_pitch_envelope
+
+        ; DPCM
+        lda #<dpcm_state
+        sta channel_ptr
+        lda #>dpcm_state
+        sta channel_ptr+1
+        lda #4
+        sta channel_index
+        jsr tick_delayed_effects
 
         rts
 .endproc
@@ -1177,7 +1231,7 @@ done:
         rts
 .endproc
 
-.proc tick_instruments
+.proc tick_registers
 tick_pulse1:
         bit pulse1_state + ChannelState::status
         bmi pulse1_muted
@@ -1448,8 +1502,8 @@ dpcm_muted:
 
 .proc bhop_play
         jsr tick_frame_counter
-        jsr tick_envelopes
-        jsr tick_instruments
+        jsr tick_envelopes_and_effects
+        jsr tick_registers
         ; D:
         rts
 .endproc

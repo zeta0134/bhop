@@ -23,10 +23,10 @@ highest_performance: .word $0000
 
         .segment "PRG1_A000"
         ;.include "../ftm/yakra.asm"
-        ;.include "../ftm/sanctuary.asm"
+        .include "../ftm/sanctuary.asm"
         ;.include "../ftm/bark.asm"
         ;.include "../ftm/bah.asm"
-        .include "../ftm/1-1.asm"
+        ;.include "../ftm/1-1.asm"
         ;.include "../ftm/nary.asm"
 
         .segment "PRG3_E000"

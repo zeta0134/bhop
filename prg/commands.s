@@ -33,7 +33,7 @@ command_table:
     .word cmd_unimplemented        ;CMD_EFF_PITCH
     .word cmd_unimplemented_short  ;CMD_EFF_RESET_PITCH
     .word cmd_unimplemented        ;CMD_EFF_DUTY
-    .word cmd_unimplemented        ;CMD_EFF_DELAY
+    .word cmd_eff_delay            ;CMD_EFF_DELAY
     .word cmd_unimplemented        ;CMD_EFF_SWEEP
     .word cmd_unimplemented        ;CMD_EFF_DAC
     .word cmd_unimplemented        ;CMD_EFF_OFFSET
@@ -157,6 +157,21 @@ command_table:
         ldy #ChannelState::selected_instrument
         sta (channel_ptr), y
         jsr load_instrument
+        rts
+.endproc
+
+; Gxx
+.proc cmd_eff_delay
+        fetch_pattern_byte
+        ; here we want to store delay +1... but we can't do that to 
+        ; 0xFF or we'll wrap and break the "delay active" logic later. Excessively
+        ; large delay values don't make much sense anyway, so lop off the high bit
+        ; here to avoid this edge case
+        and #$7F
+        clc
+        adc #1
+        ldy channel_index
+        sta effect_note_delay, y
         rts
 .endproc
 
