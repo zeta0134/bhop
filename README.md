@@ -42,9 +42,13 @@ An exceptionally Work-In-Progress attempt to build a new music driver for NES / 
 
 # Usage Notes
 
-If you'd like to hear the project mangle your music in its current state, that's great! I'm here to help. Use the latest cc65 suite, and make sure your assembler is set up to compile all the `.s` files in /prg, and they can access the requisite `.inc` files on path, etc. You'll need every file _except_ `main.s`, which runs the testing harness for this repository.
+If you'd like to hear the project mangle your music in its current state, that's great! I'm here to help. 
 
-In `bhop.inc` locate the value for `MUSIC_BASE` and adjust accordingly. Make sure you `.incbin` your exported `music.asm` file at presicely this location; it can be anywhere in ROM or RAM, but the whole of `music.asm` needs to be paged in at once. If your project uses DPCM samples, place those starting at 0xC000; this is hard-coded for the moment. You'll either need a configured segment named DPCM, or you'll need to edit the segment name in "music.asm" so that the sample data ends up in the right place.
+First off, export your music using the FamiTracker UI, and select "Assembly Source" as the format. I use (Dn-FamiTracker)[https://github.com/Dn-Programming-Core-Management/Dn-FamiTracker] for testing, older versions of FamiTracker (including v0.4.6) seem to have some issues currently.
+
+Use the latest cc65 suite, and make sure your assembler is set up to compile all the `.s` files in /prg, and they can access the requisite `.inc` files on path, etc. You'll need every file _except_ `main.s`, which runs the testing harness for this repository.
+
+In `bhop.inc` locate the value for `MUSIC_BASE` and adjust accordingly. Make sure you `.include` your exported `music.asm` file at presicely this location; it can be anywhere in ROM or RAM, but the whole of `music.asm` needs to be paged in at once. If your project uses DPCM samples, place those starting at 0xC000; this is hard-coded for the moment. You'll either need a configured segment named DPCM, or you'll need to edit the segment name in "music.asm" so that the sample data ends up in the right place.
 
 Set the song index you want to play in `a` then `jsr bhop_init` to get things ready. In your update function, call `jsr bhop_play` once per frame. If you want to use a different engine speed, you'll need to handle the timing yourself and call `bhop_play` at the appropriate rate. Mind that engine speeds much faster than 120 Hz are highly impractical, and likely to cause lag.
 
