@@ -49,7 +49,6 @@ PITCH_MODE_RELATIVE = $00
 PITCH_MODE_ABSOLUTE = $01
 
 .struct ChannelState
-        pattern_ptr .word
         status .word
         global_duration .word
         row_delay_counter .byte

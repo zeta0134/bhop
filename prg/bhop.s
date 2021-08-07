@@ -8,6 +8,8 @@
 
 .scope BHOP
 
+NUM_CHANNELS = 5 ;  note: this might change with expansion support
+
         .zeropage
 ; scratch ptr, used for all sorts of indirect reads
 bhop_ptr: .word $0000 
@@ -41,27 +43,31 @@ shadow_pulse1_freq_hi: .byte $00
 shadow_pulse2_freq_hi: .byte $00
 scratch_byte: .byte $00
 
-; channel state tables, each 5 bytes in length
-sequences_enabled: .res 5
-sequences_active: .res 5
-volume_sequence_ptr_low: .res 5
-volume_sequence_ptr_high: .res 5
-volume_sequence_index: .res 5
-arpeggio_sequence_ptr_low: .res 5
-arpeggio_sequence_ptr_high: .res 5
-arpeggio_sequence_index: .res 5
-pitch_sequence_ptr_low: .res 5
-pitch_sequence_ptr_high: .res 5
-pitch_sequence_index: .res 5
-hipitch_sequence_ptr_low: .res 5
-hipitch_sequence_ptr_high: .res 5
-hipitch_sequence_index: .res 5
-duty_sequence_ptr_low: .res 5
-duty_sequence_ptr_high: .res 5
-duty_sequence_index: .res 5
+; channel state tables
+channel_pattern_ptr_low: .res NUM_CHANNELS
+channel_pattern_ptr_high: .res NUM_CHANNELS
+
+; sequence state tables
+sequences_enabled: .res NUM_CHANNELS
+sequences_active: .res NUM_CHANNELS
+volume_sequence_ptr_low: .res NUM_CHANNELS
+volume_sequence_ptr_high: .res NUM_CHANNELS
+volume_sequence_index: .res NUM_CHANNELS
+arpeggio_sequence_ptr_low: .res NUM_CHANNELS
+arpeggio_sequence_ptr_high: .res NUM_CHANNELS
+arpeggio_sequence_index: .res NUM_CHANNELS
+pitch_sequence_ptr_low: .res NUM_CHANNELS
+pitch_sequence_ptr_high: .res NUM_CHANNELS
+pitch_sequence_index: .res NUM_CHANNELS
+hipitch_sequence_ptr_low: .res NUM_CHANNELS
+hipitch_sequence_ptr_high: .res NUM_CHANNELS
+hipitch_sequence_index: .res NUM_CHANNELS
+duty_sequence_ptr_low: .res NUM_CHANNELS
+duty_sequence_ptr_high: .res NUM_CHANNELS
+duty_sequence_index: .res NUM_CHANNELS
 
 ; memory for various effects
-effect_note_delay: .res 5
+effect_note_delay: .res NUM_CHANNELS
 
 .export effect_note_delay
 
@@ -175,7 +181,7 @@ positive:
         sta dpcm_state     + ChannelState::pitch_effects_active
 
         ; clear out special effects
-        ldx #5
+        ldx #NUM_CHANNELS
 effect_init_loop:
         dex
         sta effect_note_delay, x
@@ -235,40 +241,45 @@ loop:
         prepare_ptr frame_ptr
         ldy #0
 
+        ; Pulse 1
         lda (bhop_ptr), y
-        sta pulse1_state + ChannelState::pattern_ptr
+        sta channel_pattern_ptr_low+0
         iny
         lda (bhop_ptr), y
-        sta pulse1_state + ChannelState::pattern_ptr + 1
-        iny
-
-        lda (bhop_ptr), y
-        sta pulse2_state + ChannelState::pattern_ptr
-        iny
-        lda (bhop_ptr), y
-        sta pulse2_state + ChannelState::pattern_ptr + 1
+        sta channel_pattern_ptr_high+0
         iny
 
+        ; Pulse 2
         lda (bhop_ptr), y
-        sta triangle_state + ChannelState::pattern_ptr
+        sta channel_pattern_ptr_low+1
         iny
         lda (bhop_ptr), y
-        sta triangle_state + ChannelState::pattern_ptr + 1
-        iny
-
-        lda (bhop_ptr), y
-        sta noise_state + ChannelState::pattern_ptr
-        iny
-        lda (bhop_ptr), y
-        sta noise_state + ChannelState::pattern_ptr + 1
+        sta channel_pattern_ptr_high+1
         iny
 
+        ; Triangle
         lda (bhop_ptr), y
-        sta dpcm_state + ChannelState::pattern_ptr
+        sta channel_pattern_ptr_low+2
         iny
         lda (bhop_ptr), y
-        sta dpcm_state + ChannelState::pattern_ptr + 1
-        iny ; unnecessary?
+        sta channel_pattern_ptr_high+2
+        iny
+
+        ; Noise
+        lda (bhop_ptr), y
+        sta channel_pattern_ptr_low+3
+        iny
+        lda (bhop_ptr), y
+        sta channel_pattern_ptr_high+3
+        iny
+
+        ; DPCM
+        lda (bhop_ptr), y
+        sta channel_pattern_ptr_low+4
+        iny
+        lda (bhop_ptr), y
+        sta channel_pattern_ptr_high+4
+        iny
 
         ; reset all the row counters to 0
         lda #0
@@ -324,7 +335,9 @@ done_advancing_rows:
         rts
 .endproc
 
-; prep: channel_ptr points to channel structure
+; prep: 
+; - channel_ptr points to desired channel structure
+; - channel_index is set to desired channel
 .proc advance_channel_row
         ldy #ChannelState::row_delay_counter
         lda (channel_ptr), y
@@ -332,11 +345,10 @@ done_advancing_rows:
         jne skip
 
         ; prep the pattern pointer for reading
-        ldy #ChannelState::pattern_ptr
-        lda (channel_ptr), y
+        ldx channel_index
+        lda channel_pattern_ptr_low, x
         sta pattern_ptr
-        iny
-        lda (channel_ptr), y
+        lda channel_pattern_ptr_high, x
         sta pattern_ptr+1
         
         ; continue reading bytecode, processing one command at a time,
@@ -462,12 +474,11 @@ read_duration_from_pattern:
         ; fall through to channel_cleanup_ptr
 cleanup_channel_ptr:
         ; preserve pattern_ptr back to the channel status
-        ldy #ChannelState::pattern_ptr
+        ldx channel_index
         lda pattern_ptr
-        sta (channel_ptr), y
-        iny
+        sta channel_pattern_ptr_low, x
         lda pattern_ptr+1
-        sta (channel_ptr), y
+        sta channel_pattern_ptr_high, x
 
         ; finally done with this channel
         jmp done
