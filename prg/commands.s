@@ -81,6 +81,10 @@ command_table:
 
 .export dispatch_command
 
+; Note: Every command begins with channel_index conveniently in x. This does
+; not need to be explicitly restored (calling code does that), but initialization
+; *can* be safely skipped.
+
 .proc cmd_unimplemented
         ; fetch the command argument and throw it away
         fetch_pattern_byte
@@ -94,20 +98,17 @@ command_table:
 
 .proc cmd_set_duration
         fetch_pattern_byte
-        ldy #ChannelState::global_duration
-        sta (channel_ptr), y
-        ldy #ChannelState::status
-        lda (channel_ptr), y
+        sta channel_global_duration, x
+        lda channel_status, x
         ora #CHANNEL_GLOBAL_DURATION
-        sta (channel_ptr), y
+        sta channel_status, x
         rts
 .endproc
 
 .proc cmd_reset_duration
-        ldy #ChannelState::status
-        lda (channel_ptr), y
+        lda channel_status, x
         and #($FF - CHANNEL_GLOBAL_DURATION)
-        sta (channel_ptr), y
+        sta channel_status, x
         rts
 .endproc
 
@@ -126,25 +127,25 @@ command_table:
         ; ordinarily the last note in a frame fixes this, but if we jump mid-way
         ; through a frame, we'll be in an inconsistent state. Fix it *now*, for
         ; *all* channels
-        lda pulse1_state + ChannelState::status
+        lda channel_status + PULSE_1_INDEX
         and #($FF - CHANNEL_GLOBAL_DURATION)
-        sta pulse1_state + ChannelState::status
+        sta channel_status + PULSE_1_INDEX
 
-        lda pulse2_state + ChannelState::status
+        lda channel_status + PULSE_2_INDEX
         and #($FF - CHANNEL_GLOBAL_DURATION)
-        sta pulse2_state + ChannelState::status
+        sta channel_status + PULSE_2_INDEX
 
-        lda triangle_state + ChannelState::status
+        lda channel_status + TRIANGLE_INDEX
         and #($FF - CHANNEL_GLOBAL_DURATION)
-        sta triangle_state + ChannelState::status
+        sta channel_status + TRIANGLE_INDEX
 
-        lda noise_state + ChannelState::status
+        lda channel_status + NOISE_INDEX
         and #($FF - CHANNEL_GLOBAL_DURATION)
-        sta noise_state + ChannelState::status
+        sta channel_status + NOISE_INDEX
 
-        lda dpcm_state + ChannelState::status
+        lda channel_status + DPCM_INDEX
         and #($FF - CHANNEL_GLOBAL_DURATION)
-        sta dpcm_state + ChannelState::status
+        sta channel_status + DPCM_INDEX
 
         rts
 .endproc

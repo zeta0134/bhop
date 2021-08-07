@@ -2,10 +2,10 @@ TODO - bhop
 ===========
 
 - [ ] Convert remaining struct members to LUTs for performance
-  - [ ] pattern_ptr
-  - [ ] status
-  - [ ] global_duration
-  - [ ] row_delay_counter
+  - [x] pattern_ptr
+  - [x] status
+  - [x] global_duration
+  - [x] row_delay_counter
   - [ ] base_note
   - [ ] base_frequency
   - [ ] relative_frequency

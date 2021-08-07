@@ -3,3 +3,4 @@ build
 *.sav
 *.o
 *.dbg
+audiodump.raw

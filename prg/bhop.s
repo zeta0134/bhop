@@ -29,6 +29,7 @@ row_counter: .byte $00
 row_cmp: .byte $00
 frame_counter: .byte $00
 frame_cmp: .byte $00
+.export row_counter, row_cmp, frame_counter, frame_cmp
 
 song_ptr: .word $0000
 frame_ptr: .word $0000
@@ -38,6 +39,7 @@ pulse2_state: .tag ChannelState
 triangle_state: .tag ChannelState
 noise_state: .tag ChannelState
 dpcm_state: .tag ChannelState
+.export pulse1_state, pulse2_state, triangle_state, noise_state, dpcm_state
 
 shadow_pulse1_freq_hi: .byte $00
 shadow_pulse2_freq_hi: .byte $00
@@ -46,6 +48,10 @@ scratch_byte: .byte $00
 ; channel state tables
 channel_pattern_ptr_low: .res NUM_CHANNELS
 channel_pattern_ptr_high: .res NUM_CHANNELS
+channel_status: .res NUM_CHANNELS
+channel_global_duration: .res NUM_CHANNELS
+channel_row_delay_counter: .res NUM_CHANNELS
+.export channel_status, channel_global_duration, channel_row_delay_counter
 
 ; sequence state tables
 sequences_enabled: .res NUM_CHANNELS
@@ -71,8 +77,6 @@ effect_note_delay: .res NUM_CHANNELS
 
 .export effect_note_delay
 
-.export pulse1_state, pulse2_state, triangle_state, noise_state, dpcm_state
-.export row_counter, row_cmp, frame_counter, frame_cmp
 
         .segment "PRG0_8000"
         ; global
@@ -283,11 +287,11 @@ loop:
 
         ; reset all the row counters to 0
         lda #0
-        sta pulse1_state + ChannelState::row_delay_counter
-        sta pulse2_state + ChannelState::row_delay_counter
-        sta triangle_state + ChannelState::row_delay_counter
-        sta noise_state + ChannelState::row_delay_counter
-        sta dpcm_state + ChannelState::row_delay_counter
+        sta channel_row_delay_counter + PULSE_1_INDEX
+        sta channel_row_delay_counter + PULSE_2_INDEX
+        sta channel_row_delay_counter + TRIANGLE_INDEX
+        sta channel_row_delay_counter + NOISE_INDEX
+        sta channel_row_delay_counter + DPCM_INDEX
 
         rts
 .endproc
@@ -339,17 +343,19 @@ done_advancing_rows:
 ; - channel_ptr points to desired channel structure
 ; - channel_index is set to desired channel
 .proc advance_channel_row
-        ldy #ChannelState::row_delay_counter
-        lda (channel_ptr), y
+        ldx channel_index
+        lda channel_row_delay_counter, x
         cmp #0
         jne skip
 
         ; prep the pattern pointer for reading
-        ldx channel_index
         lda channel_pattern_ptr_low, x
         sta pattern_ptr
         lda channel_pattern_ptr_high, x
         sta pattern_ptr+1
+
+        ; implementation note: x now holds channel_index, and lots of this code
+        ; assumes it will not be clobbered. Take care when refactoring.
         
         ; continue reading bytecode, processing one command at a time,
         ; until a note is encountered. Any note command breaks out of the loop and
@@ -373,8 +379,8 @@ process_extended_command:
 
         ; did we activate a Gxx command? If we did, EXIT NOW.
         ; Do NOT pass Go, do NOT collect $200
-        ldy channel_index
-        lda effect_note_delay, y
+        ldx channel_index ; un-clobber, since we don't know what dispatch_command did to x
+        lda effect_note_delay, x
         beq no_note_delay
         jmp cleanup_channel_ptr
 no_note_delay:
@@ -403,17 +409,16 @@ handle_note:
         cmp #$7F ; note off
         bne note_trigger
         ; a note off immediately mutes the channel
-        ldy #ChannelState::status
-        lda (channel_ptr), y
+        lda channel_status, x
         ora #CHANNEL_MUTED
-        sta (channel_ptr), y
+        sta channel_status, x
         jmp done_with_bytecode
 note_trigger:
         ; a contains the selected note at this point
         ldy #ChannelState::base_note
         sta (channel_ptr), y
         ; use a to read the LUT and apply base_frequency
-        tax
+        tax ; clobbers channel_index
         lda ntsc_period_low, x
         ldy #ChannelState::base_frequency
         sta (channel_ptr), y
@@ -439,12 +444,12 @@ note_trigger:
 portamento_active:
         ; finally, set the channel status as triggered
         ; (this will be cleared after effects are processed)
-        ldy #ChannelState::status
-        lda (channel_ptr), y
+        ldx channel_index ; un-clobber from above
+        lda channel_status, x
         ora #CHANNEL_TRIGGERED
         ; also, un-mute the channel
         and #($FF - CHANNEL_MUTED)
-        sta (channel_ptr), y
+        sta channel_status, x
         ; reset the instrument envelopes to the beginning
         jsr reset_instrument
         ; reset the instrument volume to 0xF (if this instrument has a volume
@@ -456,21 +461,18 @@ portamento_active:
 done_with_bytecode:
         ; If we're still in global duration mode at this point,
         ; apply that to the row counter
-        ldy #ChannelState::status
-        lda (channel_ptr), y
+        ldx channel_index
+        lda channel_status, x
         and #CHANNEL_GLOBAL_DURATION
         beq read_duration_from_pattern
 
-        ldy #ChannelState::global_duration
-        lda (channel_ptr), y
-        ldy #ChannelState::row_delay_counter
-        sta (channel_ptr), y
+        lda channel_global_duration, x
+        sta channel_row_delay_counter, x
         jmp cleanup_channel_ptr
 
 read_duration_from_pattern:
-        fetch_pattern_byte
-        ldy #ChannelState::row_delay_counter
-        sta (channel_ptr), y
+        fetch_pattern_byte ; does not clobber x
+        sta channel_row_delay_counter, x
         ; fall through to channel_cleanup_ptr
 cleanup_channel_ptr:
         ; preserve pattern_ptr back to the channel status
@@ -486,7 +488,7 @@ skip:
         ; conveniently carry is already set
         ; a contains the counter
         sbc #1 ; decrement that counter
-        sta (channel_ptr), y ; write it back to row_delay_counter
+        sta channel_row_delay_counter, x
 done:
         rts
 .endproc
@@ -497,7 +499,7 @@ done:
         sta channel_ptr
         lda #>pulse1_state
         sta channel_ptr+1
-        lda #0
+        lda #PULSE_1_INDEX
         sta channel_index
         jsr advance_channel_row
 
@@ -506,7 +508,7 @@ done:
         sta channel_ptr
         lda #>pulse2_state
         sta channel_ptr+1
-        lda #1
+        lda #PULSE_2_INDEX
         sta channel_index
         jsr advance_channel_row
 
@@ -515,7 +517,7 @@ done:
         sta channel_ptr
         lda #>triangle_state
         sta channel_ptr+1
-        lda #2
+        lda #TRIANGLE_INDEX
         sta channel_index
         jsr advance_channel_row
 
@@ -524,7 +526,7 @@ done:
         sta channel_ptr
         lda #>noise_state
         sta channel_ptr+1
-        lda #3
+        lda #NOISE_INDEX
         sta channel_index
         jsr advance_channel_row
         jsr fix_noise_freq
@@ -534,7 +536,7 @@ done:
         sta channel_ptr
         lda #>dpcm_state
         sta channel_ptr+1
-        lda #4
+        lda #DPCM_INDEX
         sta channel_index
         jsr advance_channel_row
 
@@ -542,7 +544,7 @@ done:
 .endproc
 
 .proc fix_noise_freq
-        lda noise_state + ChannelState::status
+        lda channel_status + NOISE_INDEX
         cmp #($FF - CHANNEL_TRIGGERED)
         beq done
         lda noise_state + ChannelState::base_note
@@ -1245,7 +1247,7 @@ done:
 
 .proc tick_registers
 tick_pulse1:
-        bit pulse1_state + ChannelState::status
+        bit channel_status + PULSE_1_INDEX
         bmi pulse1_muted
 
         ; apply the combined channel and instrument volume
@@ -1271,7 +1273,7 @@ tick_pulse1:
         sta $4002
 
         ; If we triggered this frame, write unconditionally
-        lda pulse1_state + ChannelState::status
+        lda channel_status + PULSE_1_INDEX
         and #CHANNEL_TRIGGERED
         bne write_pulse1
 
@@ -1294,7 +1296,7 @@ pulse1_muted:
         sta $4000
 
 tick_pulse2:
-        bit pulse2_state + ChannelState::status
+        bit channel_status + PULSE_2_INDEX
         bmi pulse2_muted
 
         ; apply the combined channel and instrument volume
@@ -1320,7 +1322,7 @@ tick_pulse2:
         sta $4006
 
         ; If we triggered this frame, write unconditionally
-        lda pulse2_state + ChannelState::status
+        lda channel_status + PULSE_2_INDEX
         and #CHANNEL_TRIGGERED
         bne write_pulse2
 
@@ -1343,7 +1345,7 @@ pulse2_muted:
         sta $4004
 
 tick_triangle:
-        bit triangle_state + ChannelState::status
+        bit channel_status + TRIANGLE_INDEX
         bmi triangle_muted
         ; triangle additionally should mute here if either channel volume,
         ; or instrument volume is zero
@@ -1370,7 +1372,7 @@ triangle_muted:
         sta $4008
 
 tick_noise:
-        bit noise_state + ChannelState::status
+        bit channel_status + NOISE_INDEX
         bmi noise_muted
 
         ; apply the combined channel and instrument volume
@@ -1420,34 +1422,34 @@ cleanup:
         jsr play_dpcm_samples
 
         ; clear the triggered flag from every instrument
-        lda pulse1_state + ChannelState::status
+        lda channel_status + PULSE_1_INDEX
         and #($FF - CHANNEL_TRIGGERED)
-        sta pulse1_state + ChannelState::status
+        sta channel_status + PULSE_1_INDEX
 
-        lda pulse2_state + ChannelState::status
+        lda channel_status + PULSE_2_INDEX
         and #($FF - CHANNEL_TRIGGERED)
-        sta pulse2_state + ChannelState::status
+        sta channel_status + PULSE_2_INDEX
 
-        lda triangle_state + ChannelState::status
+        lda channel_status + TRIANGLE_INDEX
         and #($FF - CHANNEL_TRIGGERED)
-        sta triangle_state + ChannelState::status
+        sta channel_status + TRIANGLE_INDEX
 
-        lda noise_state + ChannelState::status
+        lda channel_status + NOISE_INDEX
         and #($FF - CHANNEL_TRIGGERED)
-        sta noise_state + ChannelState::status
+        sta channel_status + NOISE_INDEX
 
-        lda dpcm_state + ChannelState::status
+        lda channel_status + DPCM_INDEX
         and #($FF - CHANNEL_TRIGGERED)
-        sta dpcm_state + ChannelState::status
+        sta channel_status + DPCM_INDEX
 
         rts
 .endproc
 
 .proc play_dpcm_samples
-        bit dpcm_state + ChannelState::status
+        bit channel_status + DPCM_INDEX
         bmi dpcm_muted
 
-        lda dpcm_state + ChannelState::status
+        lda channel_status + DPCM_INDEX
         and #CHANNEL_TRIGGERED
         beq done
 

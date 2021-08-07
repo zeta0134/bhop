@@ -23,6 +23,12 @@
         initial_bank .byte
 .endstruct
 
+PULSE_1_INDEX = 0
+PULSE_2_INDEX = 1
+TRIANGLE_INDEX = 2
+NOISE_INDEX = 3
+DPCM_INDEX = 4
+
 ; various status flags
 CHANNEL_MUTED           = %10000000
 CHANNEL_GLOBAL_DURATION = %01000000
@@ -49,9 +55,6 @@ PITCH_MODE_RELATIVE = $00
 PITCH_MODE_ABSOLUTE = $01
 
 .struct ChannelState
-        status .word
-        global_duration .word
-        row_delay_counter .byte
         base_note .byte
         base_frequency .word        
         relative_frequency .word
@@ -95,6 +98,7 @@ done:
 .importzp bhop_ptr, channel_ptr, pattern_ptr, channel_index
 .import pulse1_state, pulse2_state, triangle_state, noise_state, dpcm_state
 .import row_counter, row_cmp, frame_counter, frame_cmp
+.import channel_status, channel_global_duration, channel_row_delay_counter
 
 .import sequences_enabled
 .import sequences_active
