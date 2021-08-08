@@ -23,6 +23,8 @@
         initial_bank .byte
 .endstruct
 
+NUM_CHANNELS = 5 ;  note: this might change with expansion support
+
 PULSE_1_INDEX = 0
 PULSE_2_INDEX = 1
 TRIANGLE_INDEX = 2

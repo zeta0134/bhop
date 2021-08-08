@@ -8,8 +8,6 @@
 
 .scope BHOP
 
-NUM_CHANNELS = 5 ;  note: this might change with expansion support
-
         .zeropage
 ; scratch ptr, used for all sorts of indirect reads
 bhop_ptr: .word $0000 
@@ -39,46 +37,46 @@ shadow_pulse2_freq_hi: .byte $00
 scratch_byte: .byte $00
 
 ; channel state tables
-channel_pattern_ptr_low: .res NUM_CHANNELS
-channel_pattern_ptr_high: .res NUM_CHANNELS
-channel_status: .res NUM_CHANNELS
-channel_global_duration: .res NUM_CHANNELS
-channel_row_delay_counter: .res NUM_CHANNELS
-channel_base_note: .res NUM_CHANNELS
-channel_base_frequency_low: .res NUM_CHANNELS
-channel_base_frequency_high: .res NUM_CHANNELS
-channel_relative_frequency_low: .res NUM_CHANNELS
-channel_relative_frequency_high: .res NUM_CHANNELS
-channel_detuned_frequency_low: .res NUM_CHANNELS
-channel_detuned_frequency_high: .res NUM_CHANNELS
-channel_volume: .res NUM_CHANNELS
-channel_instrument_volume: .res NUM_CHANNELS
-channel_instrument_duty: .res NUM_CHANNELS
-channel_selected_instrument: .res NUM_CHANNELS
-channel_pitch_effects_active: .res NUM_CHANNELS
+channel_pattern_ptr_low: .res ::NUM_CHANNELS
+channel_pattern_ptr_high: .res ::NUM_CHANNELS
+channel_status: .res ::NUM_CHANNELS
+channel_global_duration: .res ::NUM_CHANNELS
+channel_row_delay_counter: .res ::NUM_CHANNELS
+channel_base_note: .res ::NUM_CHANNELS
+channel_base_frequency_low: .res ::NUM_CHANNELS
+channel_base_frequency_high: .res ::NUM_CHANNELS
+channel_relative_frequency_low: .res ::NUM_CHANNELS
+channel_relative_frequency_high: .res ::NUM_CHANNELS
+channel_detuned_frequency_low: .res ::NUM_CHANNELS
+channel_detuned_frequency_high: .res ::NUM_CHANNELS
+channel_volume: .res ::NUM_CHANNELS
+channel_instrument_volume: .res ::NUM_CHANNELS
+channel_instrument_duty: .res ::NUM_CHANNELS
+channel_selected_instrument: .res ::NUM_CHANNELS
+channel_pitch_effects_active: .res ::NUM_CHANNELS
 .export channel_status, channel_global_duration, channel_row_delay_counter, channel_selected_instrument
 
 ; sequence state tables
-sequences_enabled: .res NUM_CHANNELS
-sequences_active: .res NUM_CHANNELS
-volume_sequence_ptr_low: .res NUM_CHANNELS
-volume_sequence_ptr_high: .res NUM_CHANNELS
-volume_sequence_index: .res NUM_CHANNELS
-arpeggio_sequence_ptr_low: .res NUM_CHANNELS
-arpeggio_sequence_ptr_high: .res NUM_CHANNELS
-arpeggio_sequence_index: .res NUM_CHANNELS
-pitch_sequence_ptr_low: .res NUM_CHANNELS
-pitch_sequence_ptr_high: .res NUM_CHANNELS
-pitch_sequence_index: .res NUM_CHANNELS
-hipitch_sequence_ptr_low: .res NUM_CHANNELS
-hipitch_sequence_ptr_high: .res NUM_CHANNELS
-hipitch_sequence_index: .res NUM_CHANNELS
-duty_sequence_ptr_low: .res NUM_CHANNELS
-duty_sequence_ptr_high: .res NUM_CHANNELS
-duty_sequence_index: .res NUM_CHANNELS
+sequences_enabled: .res ::NUM_CHANNELS
+sequences_active: .res ::NUM_CHANNELS
+volume_sequence_ptr_low: .res ::NUM_CHANNELS
+volume_sequence_ptr_high: .res ::NUM_CHANNELS
+volume_sequence_index: .res ::NUM_CHANNELS
+arpeggio_sequence_ptr_low: .res ::NUM_CHANNELS
+arpeggio_sequence_ptr_high: .res ::NUM_CHANNELS
+arpeggio_sequence_index: .res ::NUM_CHANNELS
+pitch_sequence_ptr_low: .res ::NUM_CHANNELS
+pitch_sequence_ptr_high: .res ::NUM_CHANNELS
+pitch_sequence_index: .res ::NUM_CHANNELS
+hipitch_sequence_ptr_low: .res ::NUM_CHANNELS
+hipitch_sequence_ptr_high: .res ::NUM_CHANNELS
+hipitch_sequence_index: .res ::NUM_CHANNELS
+duty_sequence_ptr_low: .res ::NUM_CHANNELS
+duty_sequence_ptr_high: .res ::NUM_CHANNELS
+duty_sequence_index: .res ::NUM_CHANNELS
 
 ; memory for various effects
-effect_note_delay: .res NUM_CHANNELS
+effect_note_delay: .res ::NUM_CHANNELS
 
 .export effect_note_delay
 
