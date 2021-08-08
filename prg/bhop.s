@@ -61,7 +61,8 @@ channel_detuned_frequency_high: .res NUM_CHANNELS
 channel_volume: .res NUM_CHANNELS
 channel_instrument_volume: .res NUM_CHANNELS
 channel_instrument_duty: .res NUM_CHANNELS
-.export channel_status, channel_global_duration, channel_row_delay_counter
+channel_selected_instrument: .res NUM_CHANNELS
+.export channel_status, channel_global_duration, channel_row_delay_counter, channel_selected_instrument
 
 ; sequence state tables
 sequences_enabled: .res NUM_CHANNELS
@@ -454,8 +455,7 @@ quick_volume_change:
 quick_instrument_change:
         tya ; un-preserve
         and #$0F ; a now contains instrument index
-        ldy #ChannelState::selected_instrument
-        sta (channel_ptr), y
+        sta channel_selected_instrument, x
         jsr load_instrument
         ; ready to process the next bytecode
         jmp bytecode_loop
@@ -709,8 +709,8 @@ no_wrap:
 ;   ChannelState::selected_instrument contains desired instrument index
 .proc load_instrument
         prepare_ptr MUSIC_BASE + FtModuleHeader::instrument_list
-        ldy #ChannelState::selected_instrument
-        lda (channel_ptr), y
+        ldx channel_index
+        lda channel_selected_instrument, x
         asl ; select one word
         tay
 

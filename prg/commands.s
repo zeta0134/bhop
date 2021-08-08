@@ -155,8 +155,7 @@ command_table:
         ; of *course* this is pre-shifted, so un-do that:
         lsr
         ; store the instrument and load it up
-        ldy #ChannelState::selected_instrument
-        sta (channel_ptr), y
+        sta channel_selected_instrument, x
         jsr load_instrument
         rts
 .endproc

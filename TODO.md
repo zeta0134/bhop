@@ -13,7 +13,7 @@ TODO - bhop
   - [x] channel_volume
   - [x] instrument_volume
   - [x] instrument_duty
-  - [ ] selected_instrument
+  - [x] selected_instrument
   - [ ] pitch_effects_active
   - [ ] note_delay
 
