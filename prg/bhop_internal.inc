@@ -55,7 +55,6 @@ PITCH_MODE_RELATIVE = $00
 PITCH_MODE_ABSOLUTE = $01
 
 .struct ChannelState
-        pitch_effects_active .byte
         note_delay .byte
 .endstruct
 

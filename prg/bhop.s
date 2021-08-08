@@ -62,6 +62,7 @@ channel_volume: .res NUM_CHANNELS
 channel_instrument_volume: .res NUM_CHANNELS
 channel_instrument_duty: .res NUM_CHANNELS
 channel_selected_instrument: .res NUM_CHANNELS
+channel_pitch_effects_active: .res NUM_CHANNELS
 .export channel_status, channel_global_duration, channel_row_delay_counter, channel_selected_instrument
 
 ; sequence state tables
@@ -237,11 +238,11 @@ positive:
 
         ; disable any active effects
         lda #0
-        sta pulse1_state   + ChannelState::pitch_effects_active
-        sta pulse2_state   + ChannelState::pitch_effects_active
-        sta triangle_state + ChannelState::pitch_effects_active
-        sta noise_state    + ChannelState::pitch_effects_active
-        sta dpcm_state     + ChannelState::pitch_effects_active
+        sta channel_pitch_effects_active + PULSE_1_INDEX
+        sta channel_pitch_effects_active + PULSE_2_INDEX
+        sta channel_pitch_effects_active + TRIANGLE_INDEX
+        sta channel_pitch_effects_active + NOISE_INDEX
+        sta channel_pitch_effects_active + DPCM_INDEX
 
         ; clear out special effects
         ldx #NUM_CHANNELS
@@ -483,8 +484,7 @@ note_trigger:
         ; if we do NOT have a portamento affect active, then also write
         ; to relative_frequency
         
-        ldy #ChannelState::pitch_effects_active
-        lda (channel_ptr), y
+        lda channel_pitch_effects_active, x
         and #($FF - PITCH_EFFECT_PORTAMENTO)
         bne portamento_active
 

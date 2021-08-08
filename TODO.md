@@ -14,7 +14,7 @@ TODO - bhop
   - [x] instrument_volume
   - [x] instrument_duty
   - [x] selected_instrument
-  - [ ] pitch_effects_active
+  - [x] pitch_effects_active
   - [ ] note_delay
 
 - [ ] Implement major effects
