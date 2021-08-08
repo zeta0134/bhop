@@ -6,10 +6,10 @@ TODO - bhop
   - [x] status
   - [x] global_duration
   - [x] row_delay_counter
-  - [ ] base_note
-  - [ ] base_frequency
-  - [ ] relative_frequency
-  - [ ] detuned_frequency
+  - [x] base_note
+  - [x] base_frequency
+  - [x] relative_frequency
+  - [x] detuned_frequency
   - [ ] channel_volume
   - [ ] instrument_volume
   - [ ] instrument_duty

@@ -55,10 +55,6 @@ PITCH_MODE_RELATIVE = $00
 PITCH_MODE_ABSOLUTE = $01
 
 .struct ChannelState
-        base_note .byte
-        base_frequency .word        
-        relative_frequency .word
-        detuned_frequency .word
         channel_volume .byte
         instrument_volume .byte
         instrument_duty .byte

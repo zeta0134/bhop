@@ -51,6 +51,13 @@ channel_pattern_ptr_high: .res NUM_CHANNELS
 channel_status: .res NUM_CHANNELS
 channel_global_duration: .res NUM_CHANNELS
 channel_row_delay_counter: .res NUM_CHANNELS
+channel_base_note: .res NUM_CHANNELS
+channel_base_frequency_low: .res NUM_CHANNELS
+channel_base_frequency_high: .res NUM_CHANNELS
+channel_relative_frequency_low: .res NUM_CHANNELS
+channel_relative_frequency_high: .res NUM_CHANNELS
+channel_detuned_frequency_low: .res NUM_CHANNELS
+channel_detuned_frequency_high: .res NUM_CHANNELS
 .export channel_status, channel_global_duration, channel_row_delay_counter
 
 ; sequence state tables
@@ -117,6 +124,54 @@ positive:
         adc (ptr), y
         sta (ptr), y
         dey
+.endscope
+.endmacro
+
+; add a signed byte, stored in value, to a 16bit word
+; whose component bytes are stored in the provided tables, and
+; indexed by x
+; clobbers a, flags
+.macro sadd16_split_x low_table, high_table, value
+.scope
+        ; handle the low byte normally
+        clc
+        lda value
+        adc low_table, x
+        sta low_table, x
+        ; sign-extend the high bit into the high byte
+        lda value
+        and #$80 ;extract the high bit
+        beq positive
+        lda #$FF ; the high bit was high, so set high byte to 0xFF, then add that plus carry 
+        ; note: unless a signed overflow occurred, carry will usually be *set* in this case
+positive:
+        ; the high bit was low; a contains #$00, so add that plus carry
+        adc high_table, x
+        sta high_table, x
+.endscope
+.endmacro
+
+; add a signed byte, stored in value, to a 16bit word
+; whose component bytes are stored in the provided tables, and
+; indexed by y
+; clobbers a, flags
+.macro sadd16_split_y low_table, high_table, value
+.scope
+        ; handle the low byte normally
+        clc
+        lda value
+        adc low_table, y
+        sta low_table, y
+        ; sign-extend the high bit into the high byte
+        lda value
+        and #$80 ;extract the high bit
+        beq positive
+        lda #$FF ; the high bit was high, so set high byte to 0xFF, then add that plus carry 
+        ; note: unless a signed overflow occurred, carry will usually be *set* in this case
+positive:
+        ; the high bit was low; a contains #$00, so add that plus carry
+        adc high_table, y
+        sta high_table, y
 .endscope
 .endmacro
 
@@ -363,7 +418,7 @@ done_advancing_rows:
 bytecode_loop:
         fetch_pattern_byte
         cmp #0 ; needed to set negative flag based on command byte currently in a
-        bpl handle_note ; if the low byte is clear, this is some kind of note
+        bpl handle_note ; if the high bit is clear, this is some kind of note
         tay ; preserve
         ; check for quick commands
         and #$F0
@@ -415,16 +470,13 @@ handle_note:
         jmp done_with_bytecode
 note_trigger:
         ; a contains the selected note at this point
-        ldy #ChannelState::base_note
-        sta (channel_ptr), y
+        sta channel_base_note, x
         ; use a to read the LUT and apply base_frequency
-        tax ; clobbers channel_index
-        lda ntsc_period_low, x
-        ldy #ChannelState::base_frequency
-        sta (channel_ptr), y
-        lda ntsc_period_high, x
-        iny
-        sta (channel_ptr), y
+        tay
+        lda ntsc_period_low, y
+        sta channel_base_frequency_low, x
+        lda ntsc_period_high, y
+        sta channel_base_frequency_high, x
 
         ; if we do NOT have a portamento affect active, then also write
         ; to relative_frequency
@@ -434,17 +486,14 @@ note_trigger:
         and #($FF - PITCH_EFFECT_PORTAMENTO)
         bne portamento_active
 
-        lda ntsc_period_low, x
-        ldy #ChannelState::relative_frequency
-        sta (channel_ptr), y
-        lda ntsc_period_high, x
-        iny
-        sta (channel_ptr), y
+        lda channel_base_frequency_low, x
+        sta channel_relative_frequency_low, x
+        lda channel_base_frequency_high, x
+        sta channel_relative_frequency_high, x
 
 portamento_active:
         ; finally, set the channel status as triggered
         ; (this will be cleared after effects are processed)
-        ldx channel_index ; un-clobber from above
         lda channel_status, x
         ora #CHANNEL_TRIGGERED
         ; also, un-mute the channel
@@ -547,9 +596,9 @@ done:
         lda channel_status + NOISE_INDEX
         cmp #($FF - CHANNEL_TRIGGERED)
         beq done
-        lda noise_state + ChannelState::base_note
-        sta noise_state + ChannelState::base_frequency
-        sta noise_state + ChannelState::relative_frequency
+        lda channel_base_note + NOISE_INDEX
+        sta channel_base_frequency_low + NOISE_INDEX
+        sta channel_relative_frequency_low + NOISE_INDEX
 done:
         rts
 .endproc
@@ -882,23 +931,23 @@ done:
 ; If this channel has an arp envelope active, process that
 ; envelope. Upon return, base_note and relative_frequency are set
 ; setup: 
-;   channel_ptr points to channel structure
+;   channel_ptr, channel_index points to channel structure
 .proc tick_arp_envelope
-        ldy channel_index
-        lda sequences_active, y
+        ldx channel_index
+        lda sequences_active, x
         and #SEQUENCE_ARP
         beq early_exit ; if sequence isn't enabled, bail fast
 
         ; prepare the arp pointer for reading
-        lda arpeggio_sequence_ptr_low, y
+        lda arpeggio_sequence_ptr_low, x
         sta bhop_ptr
-        lda arpeggio_sequence_ptr_high, y
+        lda arpeggio_sequence_ptr_high, x
         sta bhop_ptr + 1
 
         ; For arps, we need to "reset" the channel if the envelope finishes, so we're doing
         ; the length check first thing
 
-        lda arpeggio_sequence_index, y
+        lda arpeggio_sequence_index, x
         sta scratch_byte
         ; have we reached the end of the sequence?
         ldy #SequenceHeader::length
@@ -907,29 +956,24 @@ done:
         bne end_not_reached
         
         ; this sequence is finished! Disable the sequence flag
-        ldy channel_index
-        lda sequences_active, y
+        lda sequences_active, x
         and #($FF - SEQUENCE_ARP)
-        sta sequences_active, y
+        sta sequences_active, x
 
         ; now apply the current base note as the channel frequency,
         ; then exit:
-        ldy #ChannelState::base_note
-        lda (channel_ptr), y
-        tax
-        lda ntsc_period_low, x
-        ldy #ChannelState::relative_frequency
-        sta (channel_ptr), y
-        lda ntsc_period_high, x
-        iny
-        sta (channel_ptr), y
+        lda channel_base_note, x
+        tay
+        lda ntsc_period_low, y
+        sta channel_relative_frequency_low, x
+        lda ntsc_period_high, y
+        sta channel_relative_frequency_high, x
 early_exit:
         rts
 
 end_not_reached:
         ; read the current sequence byte, and set instrument_volume to this
-        ldy channel_index
-        lda arpeggio_sequence_index, y
+        lda arpeggio_sequence_index, x
         pha ; stash for later
         ; for reading the sequence, +4
         clc
@@ -951,33 +995,29 @@ end_not_reached:
         ; ARP SCHEME, unimplemented! for now, treat this just like absolute
 arp_absolute:
         ; arp is an offset from base note to apply each frame
-        ldy #ChannelState::base_note
-        lda (channel_ptr), y
+        lda channel_base_note, x
         clc
         adc scratch_byte
-        tax
+        tay
         jmp apply_arp
 arp_relative:
         ; arp accumulates an offset each frame, from the previous frame
-        ldy #ChannelState::base_note
-        lda (channel_ptr), y
+        lda channel_base_note, x
         clc
         adc scratch_byte
-        sta (channel_ptr), y
-        tax
+        sta channel_base_note, x
+        tay
         jmp apply_arp
 arp_fixed:
         ; the arp value *is* the note to apply
         lda scratch_byte
-        tax
+        tay
         ; fall through to apply_arp
 apply_arp:
-        lda ntsc_period_low, x
-        ldy #ChannelState::relative_frequency
-        sta (channel_ptr), y
-        lda ntsc_period_high, x
-        iny
-        sta (channel_ptr), y
+        lda ntsc_period_low, y
+        sta channel_relative_frequency_low, x
+        lda ntsc_period_high, y
+        sta channel_relative_frequency_high, x
 
 done_applying_arp:
         pla ; unstash the sequence counter
@@ -1000,21 +1040,21 @@ done:
 ; setup: 
 ;   channel_ptr points to channel structure
 .proc tick_noise_arp_envelope
-        ldy channel_index
-        lda sequences_active, y
+        ldx channel_index
+        lda sequences_active, x
         and #SEQUENCE_ARP
         beq early_exit ; if sequence isn't enabled, bail fast
 
         ; prepare the arp pointer for reading
-        lda arpeggio_sequence_ptr_low, y
+        lda arpeggio_sequence_ptr_low, x
         sta bhop_ptr
-        lda arpeggio_sequence_ptr_high, y
+        lda arpeggio_sequence_ptr_high, x
         sta bhop_ptr + 1
 
         ; For arps, we need to "reset" the channel if the envelope finishes, so we're doing
         ; the length check first thing
 
-        lda arpeggio_sequence_index, y
+        lda arpeggio_sequence_index, x
         sta scratch_byte
         ; have we reached the end of the sequence?
         ldy #SequenceHeader::length
@@ -1023,24 +1063,20 @@ done:
         bne end_not_reached
         
         ; this sequence is finished! Disable the sequence flag
-        ldy channel_index
-        lda sequences_active, y
+        lda sequences_active, x
         and #($FF - SEQUENCE_ARP)
-        sta sequences_active, y
+        sta sequences_active, x
 
         ; now apply the current base note as the channel frequency,
         ; then exit:
-        ldy #ChannelState::base_note
-        lda (channel_ptr), y
-        ldy #ChannelState::relative_frequency
-        sta (channel_ptr), y
+        lda channel_base_note, x
+        sta channel_relative_frequency_low, x
 early_exit:
         rts
 
 end_not_reached:
         ; read the current sequence byte, and set instrument_volume to this
-        ldy channel_index
-        lda arpeggio_sequence_index, y
+        lda arpeggio_sequence_index, x
         pha ; stash for later
         ; for reading the sequence, +4
         clc
@@ -1062,30 +1098,27 @@ end_not_reached:
         ; ARP SCHEME, unimplemented! for now, treat this just like absolute
 arp_absolute:
         ; arp is an offset from base note to apply each frame
-        ldy #ChannelState::base_note
-        lda (channel_ptr), y
+        lda channel_base_note, x
         clc
         adc scratch_byte
-        tax
+        tay
         jmp apply_arp
 arp_relative:
         ; arp accumulates an offset each frame, from the previous frame
-        ldy #ChannelState::base_note
-        lda (channel_ptr), y
+        lda channel_base_note, x
         clc
         adc scratch_byte
-        sta (channel_ptr), y
-        tax
+        sta channel_base_note, x
+        tay
         jmp apply_arp
 arp_fixed:
         ; the arp value *is* the note to apply
         lda scratch_byte
-        tax
+        tay
         ; fall through to apply_arp
 apply_arp:
-        txa ; for noise, we'll use the value directly
-        ldy #ChannelState::relative_frequency
-        sta (channel_ptr), y
+        tya ; for noise, we'll use the value directly
+        sta channel_relative_frequency_low, x
 
 done_applying_arp:
         pla ; unstash the sequence counter
@@ -1145,18 +1178,14 @@ absolute_pitch_mode:
 
         ; in absolute mode, reset to base_frequency before
         ; performing the addition
-        ldy #ChannelState::base_frequency
-        lda (channel_ptr), y
-        ldy #ChannelState::relative_frequency
-        sta (channel_ptr), y
-        ldy #ChannelState::base_frequency + 1
-        lda (channel_ptr), y
-        ldy #ChannelState::relative_frequency + 1
-        sta (channel_ptr), y
+        lda channel_base_frequency_low, y
+        sta channel_relative_frequency_low, y
+        lda channel_base_frequency_high, y
+        sta channel_relative_frequency_high, y
 relative_pitch_mode:
         ; add this data to relative_pitch
-        ldy #ChannelState::relative_frequency
-        sadd16_ptr_y channel_ptr, scratch_byte
+        ldy channel_index
+        sadd16_split_y channel_relative_frequency_low, channel_relative_frequency_high, scratch_byte
 
 done_applying_pitch:
         ; tick the sequence counter and exit
@@ -1269,7 +1298,7 @@ tick_pulse1:
         lda #$08
         sta $4001
 
-        lda pulse1_state + ChannelState::relative_frequency
+        lda channel_relative_frequency_low + PULSE_1_INDEX
         sta $4002
 
         ; If we triggered this frame, write unconditionally
@@ -1279,12 +1308,12 @@ tick_pulse1:
 
         ; otherwise, to avoid resetting the sequence counter, only
         ; write if the high byte has changed since the last time
-        lda pulse1_state + ChannelState::relative_frequency + 1
+        lda channel_relative_frequency_high + PULSE_1_INDEX
         cmp shadow_pulse1_freq_hi
         beq tick_pulse2
 
 write_pulse1:
-        lda pulse1_state + ChannelState::relative_frequency + 1
+        lda channel_relative_frequency_high + PULSE_1_INDEX
         sta shadow_pulse1_freq_hi
         ora #%11111000
         sta $4003
@@ -1318,7 +1347,7 @@ tick_pulse2:
         lda #$08
         sta $4005
 
-        lda pulse2_state + ChannelState::relative_frequency
+        lda channel_relative_frequency_low + PULSE_2_INDEX
         sta $4006
 
         ; If we triggered this frame, write unconditionally
@@ -1328,12 +1357,12 @@ tick_pulse2:
 
         ; otherwise, to avoid resetting the sequence counter, only
         ; write if the high byte has changed since the last time
-        lda pulse2_state + ChannelState::relative_frequency + 1
+        lda channel_relative_frequency_high + PULSE_2_INDEX
         cmp shadow_pulse2_freq_hi
         beq tick_triangle
 
 write_pulse2:
-        lda pulse2_state + ChannelState::relative_frequency + 1
+        lda channel_relative_frequency_high + PULSE_2_INDEX
         sta shadow_pulse2_freq_hi
         ora #%11111000
         sta $4007
@@ -1358,9 +1387,9 @@ tick_triangle:
         lda #$FF
         sta $4008 ; timers to max
 
-        lda triangle_state + ChannelState::relative_frequency
+        lda channel_relative_frequency_low + TRIANGLE_INDEX
         sta $400A
-        lda triangle_state + ChannelState::relative_frequency + 1
+        lda channel_relative_frequency_high + TRIANGLE_INDEX
         sta $400B
         jmp tick_noise
 triangle_muted:
@@ -1390,7 +1419,7 @@ tick_noise:
 
         ; the low 4 bits of relative_frequency become the
         ; noise period
-        lda noise_state + ChannelState::relative_frequency
+        lda channel_relative_frequency_low + NOISE_INDEX
         and #%00001111
         ; of *course* it's inverted
         sta scratch_byte
@@ -1455,7 +1484,7 @@ cleanup:
 
         ; using the current note, read the sample table
         prepare_ptr MUSIC_BASE + FtModuleHeader::sample_list
-        lda dpcm_state + ChannelState::base_note
+        lda channel_base_note + DPCM_INDEX
         ; if this is the special value $7E, then this is a note release; immediately halt the channel,
         ; but do not set the delta counter
         cmp #$7E
