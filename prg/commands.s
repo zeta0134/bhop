@@ -30,8 +30,8 @@ command_table:
     .word cmd_unimplemented        ;CMD_EFF_ARPEGGIO
     .word cmd_eff_vibrato          ;CMD_EFF_VIBRATO
     .word cmd_unimplemented        ;CMD_EFF_TREMOLO
-    .word cmd_unimplemented        ;CMD_EFF_PITCH
-    .word cmd_unimplemented_short  ;CMD_EFF_RESET_PITCH
+    .word cmd_eff_pitch            ;CMD_EFF_PITCH
+    .word cmd_eff_reset_pitch      ;CMD_EFF_RESET_PITCH
     .word cmd_unimplemented        ;CMD_EFF_DUTY
     .word cmd_eff_delay            ;CMD_EFF_DELAY
     .word cmd_unimplemented        ;CMD_EFF_SWEEP
@@ -183,6 +183,22 @@ command_table:
         lda #0
         sta channel_vibrato_accumulator, x
 done:
+        rts
+.endproc
+
+.proc cmd_eff_pitch
+        fetch_pattern_byte
+        sta scratch_byte
+        sec
+        lda #$80 ; center this on 0, where 0 is in tune
+        sbc scratch_byte
+        sta channel_tuning, x
+        rts
+.endproc
+
+.proc cmd_eff_reset_pitch
+        lda #0
+        sta channel_tuning, x
         rts
 .endproc
 

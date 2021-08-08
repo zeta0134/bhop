@@ -6,13 +6,11 @@
 
 .scope BHOP
 
-        .zeropage
-scratch_byte: .byte $00
-
         .segment "RAM"
 channel_vibrato_settings: .res ::NUM_CHANNELS
 channel_vibrato_accumulator: .res ::NUM_CHANNELS
-.export channel_vibrato_settings, channel_vibrato_accumulator
+channel_tuning: .res ::NUM_CHANNELS
+.export channel_vibrato_settings, channel_vibrato_accumulator, channel_tuning
 
         .segment "PRG0_8000"
 .include "vibrato_lut.inc"
@@ -87,7 +85,15 @@ invert_read:
 done:
         rts
 .endproc
-
 .export update_vibrato
+
+.proc update_tuning
+        ldx channel_index
+        lda channel_tuning, x
+        sta scratch_byte
+        sadd16_split_x channel_detuned_frequency_low, channel_detuned_frequency_high, scratch_byte
+        rts
+.endproc
+.export update_tuning
         
 .endscope

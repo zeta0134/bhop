@@ -16,8 +16,9 @@ bhop_ptr: .word $0000
 pattern_ptr: .word $0000
 channel_ptr: .word $0000
 channel_index: .byte $00
+scratch_byte: .byte $00
 
-.exportzp bhop_ptr, channel_ptr, pattern_ptr, channel_index
+.exportzp bhop_ptr, channel_ptr, pattern_ptr, channel_index, scratch_byte
 
         .segment "RAM"
 tempo_counter: .word $0000
@@ -34,7 +35,6 @@ frame_ptr: .word $0000
 
 shadow_pulse1_freq_hi: .byte $00
 shadow_pulse2_freq_hi: .byte $00
-scratch_byte: .byte $00
 
 ; channel state tables
 channel_pattern_ptr_low: .res ::NUM_CHANNELS
@@ -567,6 +567,7 @@ done_with_note_delay:
         jsr tick_pitch_envelope
         initialize_detuned_frequency
         jsr update_vibrato
+        jsr update_tuning
 
         ; PULSE 2
         lda #PULSE_2_INDEX
@@ -578,6 +579,7 @@ done_with_note_delay:
         jsr tick_pitch_envelope
         initialize_detuned_frequency
         jsr update_vibrato
+        jsr update_tuning
 
         ; TRIANGLE
         lda #TRIANGLE_INDEX
@@ -588,6 +590,7 @@ done_with_note_delay:
         jsr tick_pitch_envelope
         initialize_detuned_frequency
         jsr update_vibrato
+        jsr update_tuning
 
         ; NOISE
         lda #NOISE_INDEX

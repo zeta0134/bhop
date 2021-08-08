@@ -84,11 +84,11 @@ done:
 .endmacro
 
 ; various RAM and zeropage structures
-.importzp bhop_ptr, channel_ptr, pattern_ptr, channel_index
+.importzp bhop_ptr, channel_ptr, pattern_ptr, channel_index, scratch_byte
 .import row_counter, row_cmp, frame_counter, frame_cmp
 .import channel_status, channel_global_duration, channel_row_delay_counter, channel_selected_instrument
 .import channel_detuned_frequency_low, channel_detuned_frequency_high
-.import channel_vibrato_settings, channel_vibrato_accumulator
+.import channel_vibrato_settings, channel_vibrato_accumulator, channel_tuning
 
 .import sequences_enabled
 .import sequences_active
@@ -111,4 +111,4 @@ done:
 .import effect_note_delay
 
 ; various methods, mostly used by commands
-.import load_instrument, dispatch_command, update_vibrato
+.import load_instrument, dispatch_command, update_vibrato, update_tuning
