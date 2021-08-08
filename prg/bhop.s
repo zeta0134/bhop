@@ -1374,12 +1374,12 @@ tick_noise:
         ; the low 4 bits of relative_frequency become the
         ; noise period
         lda channel_relative_frequency_low + NOISE_INDEX
-        and #%00001111
         ; of *course* it's inverted
         sta scratch_byte
-        lda #$0F
+        lda #$10
         sec
         sbc scratch_byte
+        and #%00001111
         sta scratch_byte
 
         ; the low bit of channel duty becomes mode bit 1
