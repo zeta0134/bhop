@@ -34,13 +34,6 @@ frame_cmp: .byte $00
 song_ptr: .word $0000
 frame_ptr: .word $0000
 
-pulse1_state: .tag ChannelState
-pulse2_state: .tag ChannelState
-triangle_state: .tag ChannelState
-noise_state: .tag ChannelState
-dpcm_state: .tag ChannelState
-.export pulse1_state, pulse2_state, triangle_state, noise_state, dpcm_state
-
 shadow_pulse1_freq_hi: .byte $00
 shadow_pulse2_freq_hi: .byte $00
 scratch_byte: .byte $00
@@ -545,47 +538,27 @@ done:
 
 .proc advance_pattern_rows
         ; PULSE 1
-        lda #<pulse1_state
-        sta channel_ptr
-        lda #>pulse1_state
-        sta channel_ptr+1
         lda #PULSE_1_INDEX
         sta channel_index
         jsr advance_channel_row
 
         ; PULSE 2
-        lda #<pulse2_state
-        sta channel_ptr
-        lda #>pulse2_state
-        sta channel_ptr+1
         lda #PULSE_2_INDEX
         sta channel_index
         jsr advance_channel_row
 
         ; TRIANGLE
-        lda #<triangle_state
-        sta channel_ptr
-        lda #>triangle_state
-        sta channel_ptr+1
         lda #TRIANGLE_INDEX
         sta channel_index
         jsr advance_channel_row
 
         ; NOISE
-        lda #<noise_state
-        sta channel_ptr
-        lda #>noise_state
-        sta channel_ptr+1
         lda #NOISE_INDEX
         sta channel_index
         jsr advance_channel_row
         jsr fix_noise_freq
 
         ; DPCM
-        lda #<dpcm_state
-        sta channel_ptr
-        lda #>dpcm_state
-        sta channel_ptr+1
         lda #DPCM_INDEX
         sta channel_index
         jsr advance_channel_row
@@ -625,11 +598,7 @@ done_with_note_delay:
 
 .proc tick_envelopes_and_effects
         ; PULSE 1
-        lda #<pulse1_state
-        sta channel_ptr
-        lda #>pulse1_state
-        sta channel_ptr+1
-        lda #0
+        lda #PULSE_1_INDEX
         sta channel_index
         jsr tick_delayed_effects
         jsr tick_volume_envelope
@@ -638,11 +607,7 @@ done_with_note_delay:
         jsr tick_pitch_envelope
 
         ; PULSE 2
-        lda #<pulse2_state
-        sta channel_ptr
-        lda #>pulse2_state
-        sta channel_ptr+1
-        lda #1
+        lda #PULSE_2_INDEX
         sta channel_index
         jsr tick_delayed_effects
         jsr tick_volume_envelope
@@ -651,11 +616,7 @@ done_with_note_delay:
         jsr tick_pitch_envelope
 
         ; TRIANGLE
-        lda #<triangle_state
-        sta channel_ptr
-        lda #>triangle_state
-        sta channel_ptr+1
-        lda #2
+        lda #TRIANGLE_INDEX
         sta channel_index
         jsr tick_delayed_effects
         jsr tick_volume_envelope
@@ -663,11 +624,7 @@ done_with_note_delay:
         jsr tick_pitch_envelope
 
         ; NOISE
-        lda #<noise_state
-        sta channel_ptr
-        lda #>noise_state
-        sta channel_ptr+1
-        lda #3
+        lda #NOISE_INDEX
         sta channel_index
         jsr tick_delayed_effects
         jsr tick_volume_envelope
@@ -676,11 +633,7 @@ done_with_note_delay:
         jsr tick_pitch_envelope
 
         ; DPCM
-        lda #<dpcm_state
-        sta channel_ptr
-        lda #>dpcm_state
-        sta channel_ptr+1
-        lda #4
+        lda #DPCM_INDEX
         sta channel_index
         jsr tick_delayed_effects
 

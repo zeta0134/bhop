@@ -54,10 +54,6 @@ ARP_MODE_SCHEME =   $03
 PITCH_MODE_RELATIVE = $00
 PITCH_MODE_ABSOLUTE = $01
 
-.struct ChannelState
-        note_delay .byte
-.endstruct
-
 .struct InstrumentHeader
         type .byte
         sequences_enabled .byte
@@ -87,7 +83,6 @@ done:
 
 ; various RAM and zeropage structures
 .importzp bhop_ptr, channel_ptr, pattern_ptr, channel_index
-.import pulse1_state, pulse2_state, triangle_state, noise_state, dpcm_state
 .import row_counter, row_cmp, frame_counter, frame_cmp
 .import channel_status, channel_global_duration, channel_row_delay_counter, channel_selected_instrument
 

@@ -1,7 +1,7 @@
 TODO - bhop
 ===========
 
-- [ ] Convert remaining struct members to LUTs for performance
+- [x] Convert remaining struct members to LUTs for performance
   - [x] pattern_ptr
   - [x] status
   - [x] global_duration
@@ -15,7 +15,7 @@ TODO - bhop
   - [x] instrument_duty
   - [x] selected_instrument
   - [x] pitch_effects_active
-  - [ ] note_delay
+  - [x] note_delay
 
 - [ ] Implement major effects
   - [ ] 4xy vibrato
