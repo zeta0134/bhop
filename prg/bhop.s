@@ -55,6 +55,7 @@ channel_instrument_duty: .res ::NUM_CHANNELS
 channel_selected_instrument: .res ::NUM_CHANNELS
 channel_pitch_effects_active: .res ::NUM_CHANNELS
 .export channel_status, channel_global_duration, channel_row_delay_counter, channel_selected_instrument
+.export channel_detuned_frequency_low, channel_detuned_frequency_high
 
 ; sequence state tables
 sequences_enabled: .res ::NUM_CHANNELS
@@ -120,54 +121,6 @@ positive:
         adc (ptr), y
         sta (ptr), y
         dey
-.endscope
-.endmacro
-
-; add a signed byte, stored in value, to a 16bit word
-; whose component bytes are stored in the provided tables, and
-; indexed by x
-; clobbers a, flags
-.macro sadd16_split_x low_table, high_table, value
-.scope
-        ; handle the low byte normally
-        clc
-        lda value
-        adc low_table, x
-        sta low_table, x
-        ; sign-extend the high bit into the high byte
-        lda value
-        and #$80 ;extract the high bit
-        beq positive
-        lda #$FF ; the high bit was high, so set high byte to 0xFF, then add that plus carry 
-        ; note: unless a signed overflow occurred, carry will usually be *set* in this case
-positive:
-        ; the high bit was low; a contains #$00, so add that plus carry
-        adc high_table, x
-        sta high_table, x
-.endscope
-.endmacro
-
-; add a signed byte, stored in value, to a 16bit word
-; whose component bytes are stored in the provided tables, and
-; indexed by y
-; clobbers a, flags
-.macro sadd16_split_y low_table, high_table, value
-.scope
-        ; handle the low byte normally
-        clc
-        lda value
-        adc low_table, y
-        sta low_table, y
-        ; sign-extend the high bit into the high byte
-        lda value
-        and #$80 ;extract the high bit
-        beq positive
-        lda #$FF ; the high bit was high, so set high byte to 0xFF, then add that plus carry 
-        ; note: unless a signed overflow occurred, carry will usually be *set* in this case
-positive:
-        ; the high bit was low; a contains #$00, so add that plus carry
-        adc high_table, y
-        sta high_table, y
 .endscope
 .endmacro
 
@@ -594,6 +547,14 @@ done_with_note_delay:
         rts
 .endproc
 
+.macro initialize_detuned_frequency
+        ldx channel_index
+        lda channel_relative_frequency_low, x
+        sta channel_detuned_frequency_low, x
+        lda channel_relative_frequency_high, x
+        sta channel_detuned_frequency_high, x
+.endmacro
+
 .proc tick_envelopes_and_effects
         ; PULSE 1
         lda #PULSE_1_INDEX
@@ -601,8 +562,11 @@ done_with_note_delay:
         jsr tick_delayed_effects
         jsr tick_volume_envelope
         jsr tick_duty_envelope
+        ; the order of pitch updates matters a lot to match FT behavior
         jsr tick_arp_envelope
         jsr tick_pitch_envelope
+        initialize_detuned_frequency
+        jsr update_vibrato
 
         ; PULSE 2
         lda #PULSE_2_INDEX
@@ -612,6 +576,8 @@ done_with_note_delay:
         jsr tick_duty_envelope
         jsr tick_arp_envelope
         jsr tick_pitch_envelope
+        initialize_detuned_frequency
+        jsr update_vibrato
 
         ; TRIANGLE
         lda #TRIANGLE_INDEX
@@ -620,6 +586,8 @@ done_with_note_delay:
         jsr tick_volume_envelope
         jsr tick_arp_envelope
         jsr tick_pitch_envelope
+        initialize_detuned_frequency
+        jsr update_vibrato
 
         ; NOISE
         lda #NOISE_INDEX
@@ -1250,7 +1218,7 @@ tick_pulse1:
         lda #$08
         sta $4001
 
-        lda channel_relative_frequency_low + PULSE_1_INDEX
+        lda channel_detuned_frequency_low + PULSE_1_INDEX
         sta $4002
 
         ; If we triggered this frame, write unconditionally
@@ -1260,12 +1228,12 @@ tick_pulse1:
 
         ; otherwise, to avoid resetting the sequence counter, only
         ; write if the high byte has changed since the last time
-        lda channel_relative_frequency_high + PULSE_1_INDEX
+        lda channel_detuned_frequency_high + PULSE_1_INDEX
         cmp shadow_pulse1_freq_hi
         beq tick_pulse2
 
 write_pulse1:
-        lda channel_relative_frequency_high + PULSE_1_INDEX
+        lda channel_detuned_frequency_high + PULSE_1_INDEX
         sta shadow_pulse1_freq_hi
         ora #%11111000
         sta $4003
@@ -1299,7 +1267,7 @@ tick_pulse2:
         lda #$08
         sta $4005
 
-        lda channel_relative_frequency_low + PULSE_2_INDEX
+        lda channel_detuned_frequency_low + PULSE_2_INDEX
         sta $4006
 
         ; If we triggered this frame, write unconditionally
@@ -1309,12 +1277,12 @@ tick_pulse2:
 
         ; otherwise, to avoid resetting the sequence counter, only
         ; write if the high byte has changed since the last time
-        lda channel_relative_frequency_high + PULSE_2_INDEX
+        lda channel_detuned_frequency_high + PULSE_2_INDEX
         cmp shadow_pulse2_freq_hi
         beq tick_triangle
 
 write_pulse2:
-        lda channel_relative_frequency_high + PULSE_2_INDEX
+        lda channel_detuned_frequency_high + PULSE_2_INDEX
         sta shadow_pulse2_freq_hi
         ora #%11111000
         sta $4007
@@ -1339,9 +1307,9 @@ tick_triangle:
         lda #$FF
         sta $4008 ; timers to max
 
-        lda channel_relative_frequency_low + TRIANGLE_INDEX
+        lda channel_detuned_frequency_low + TRIANGLE_INDEX
         sta $400A
-        lda channel_relative_frequency_high + TRIANGLE_INDEX
+        lda channel_detuned_frequency_high + TRIANGLE_INDEX
         sta $400B
         jmp tick_noise
 triangle_muted:

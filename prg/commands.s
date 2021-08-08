@@ -28,7 +28,7 @@ command_table:
     .word cmd_unimplemented        ;CMD_EFF_PORTADOWN
     .word cmd_unimplemented        ;CMD_EFF_PORTAMENTO
     .word cmd_unimplemented        ;CMD_EFF_ARPEGGIO
-    .word cmd_unimplemented        ;CMD_EFF_VIBRATO
+    .word cmd_eff_vibrato          ;CMD_EFF_VIBRATO
     .word cmd_unimplemented        ;CMD_EFF_TREMOLO
     .word cmd_unimplemented        ;CMD_EFF_PITCH
     .word cmd_unimplemented_short  ;CMD_EFF_RESET_PITCH
@@ -172,6 +172,17 @@ command_table:
         adc #1
         ldy channel_index
         sta effect_note_delay, y
+        rts
+.endproc
+
+.proc cmd_eff_vibrato
+        fetch_pattern_byte
+        sta channel_vibrato_settings, x
+        bne done
+        ; for `400` specifically, reset the vibrato phase
+        lda #0
+        sta channel_vibrato_accumulator, x
+done:
         rts
 .endproc
 

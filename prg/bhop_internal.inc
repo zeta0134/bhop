@@ -87,6 +87,8 @@ done:
 .importzp bhop_ptr, channel_ptr, pattern_ptr, channel_index
 .import row_counter, row_cmp, frame_counter, frame_cmp
 .import channel_status, channel_global_duration, channel_row_delay_counter, channel_selected_instrument
+.import channel_detuned_frequency_low, channel_detuned_frequency_high
+.import channel_vibrato_settings, channel_vibrato_accumulator
 
 .import sequences_enabled
 .import sequences_active
@@ -109,4 +111,4 @@ done:
 .import effect_note_delay
 
 ; various methods, mostly used by commands
-.import load_instrument, dispatch_command
+.import load_instrument, dispatch_command, update_vibrato

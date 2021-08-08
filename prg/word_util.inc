@@ -144,6 +144,54 @@ positive:
 .endscope
 .endmacro
 
+; add a signed byte, stored in value, to a 16bit word
+; whose component bytes are stored in the provided tables, and
+; indexed by x
+; clobbers a, flags
+.macro sadd16_split_x low_table, high_table, value
+.scope
+        ; handle the low byte normally
+        clc
+        lda value
+        adc low_table, x
+        sta low_table, x
+        ; sign-extend the high bit into the high byte
+        lda value
+        and #$80 ;extract the high bit
+        beq positive
+        lda #$FF ; the high bit was high, so set high byte to 0xFF, then add that plus carry 
+        ; note: unless a signed overflow occurred, carry will usually be *set* in this case
+positive:
+        ; the high bit was low; a contains #$00, so add that plus carry
+        adc high_table, x
+        sta high_table, x
+.endscope
+.endmacro
+
+; add a signed byte, stored in value, to a 16bit word
+; whose component bytes are stored in the provided tables, and
+; indexed by y
+; clobbers a, flags
+.macro sadd16_split_y low_table, high_table, value
+.scope
+        ; handle the low byte normally
+        clc
+        lda value
+        adc low_table, y
+        sta low_table, y
+        ; sign-extend the high bit into the high byte
+        lda value
+        and #$80 ;extract the high bit
+        beq positive
+        lda #$FF ; the high bit was high, so set high byte to 0xFF, then add that plus carry 
+        ; note: unless a signed overflow occurred, carry will usually be *set* in this case
+positive:
+        ; the high bit was low; a contains #$00, so add that plus carry
+        adc high_table, y
+        sta high_table, y
+.endscope
+.endmacro
+
 .macro sub16 addr, value
         lda addr
         sbc value
