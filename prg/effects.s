@@ -40,7 +40,7 @@ normal_lut:
 reverse_lut:
         ; A already contains 0000 in its low bits, which
         ; works fine in this case
-        sec
+        clc
         sbc channel_vibrato_accumulator, x
         and #$0F ; mask off the upper bits
 store_index:
