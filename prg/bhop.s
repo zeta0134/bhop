@@ -60,6 +60,7 @@ channel_detuned_frequency_low: .res NUM_CHANNELS
 channel_detuned_frequency_high: .res NUM_CHANNELS
 channel_volume: .res NUM_CHANNELS
 channel_instrument_volume: .res NUM_CHANNELS
+channel_instrument_duty: .res NUM_CHANNELS
 .export channel_status, channel_global_duration, channel_row_delay_counter
 
 ; sequence state tables
@@ -898,8 +899,8 @@ done:
         ror
         ; safety
         and #%11000000
-        ldy #ChannelState::instrument_duty
-        sta (channel_ptr), y
+        ldy channel_index
+        sta channel_instrument_duty, y
 
         ; tick the sequence counter and exit
         jsr tick_sequence_counter
@@ -1290,7 +1291,7 @@ tick_pulse1:
         lda volume_table, x
 
         ; add in the duty
-        ora pulse1_state + ChannelState::instrument_duty
+        ora channel_instrument_duty + PULSE_1_INDEX
         ora #%00110000 ; disable length counter and envelope
         sta $4000
 
@@ -1339,7 +1340,7 @@ tick_pulse2:
         lda volume_table, x
 
         ; add in the duty
-        ora pulse2_state + ChannelState::instrument_duty
+        ora channel_instrument_duty + PULSE_2_INDEX
         ora #%00110000 ; set a duty, disable length counter and envelope
         sta $4004
 
@@ -1429,7 +1430,7 @@ tick_noise:
         sta scratch_byte
 
         ; the low bit of channel duty becomes mode bit 1
-        lda noise_state + ChannelState::instrument_duty
+        lda channel_instrument_duty + NOISE_INDEX
         asl
         and #%10000000 ; safety mask
         ora scratch_byte

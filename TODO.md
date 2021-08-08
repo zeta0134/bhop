@@ -12,7 +12,7 @@ TODO - bhop
   - [x] detuned_frequency
   - [x] channel_volume
   - [x] instrument_volume
-  - [ ] instrument_duty
+  - [x] instrument_duty
   - [ ] selected_instrument
   - [ ] pitch_effects_active
   - [ ] note_delay
