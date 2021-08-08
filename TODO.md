@@ -10,8 +10,8 @@ TODO - bhop
   - [x] base_frequency
   - [x] relative_frequency
   - [x] detuned_frequency
-  - [ ] channel_volume
-  - [ ] instrument_volume
+  - [x] channel_volume
+  - [x] instrument_volume
   - [ ] instrument_duty
   - [ ] selected_instrument
   - [ ] pitch_effects_active

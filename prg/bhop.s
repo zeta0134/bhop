@@ -58,6 +58,8 @@ channel_relative_frequency_low: .res NUM_CHANNELS
 channel_relative_frequency_high: .res NUM_CHANNELS
 channel_detuned_frequency_low: .res NUM_CHANNELS
 channel_detuned_frequency_high: .res NUM_CHANNELS
+channel_volume: .res NUM_CHANNELS
+channel_instrument_volume: .res NUM_CHANNELS
 .export channel_status, channel_global_duration, channel_row_delay_counter
 
 ; sequence state tables
@@ -226,10 +228,10 @@ positive:
 
         ; initialize every channel's volume to 15 (some songs seem to rely on this)
         lda #$0F
-        sta pulse1_state + ChannelState::channel_volume
-        sta pulse2_state + ChannelState::channel_volume
-        sta triangle_state + ChannelState::channel_volume
-        sta noise_state + ChannelState::channel_volume
+        sta channel_volume + PULSE_1_INDEX
+        sta channel_volume + PULSE_2_INDEX
+        sta channel_volume + TRIANGLE_INDEX
+        sta channel_volume + NOISE_INDEX
 
         ; disable any active effects
         lda #0
@@ -444,8 +446,7 @@ no_note_delay:
 quick_volume_change:
         tya ; un-preserve
         and #$0F ; a now contains new channel volume
-        ldy #ChannelState::channel_volume
-        sta (channel_ptr), y
+        sta channel_volume, x
         ; ready to process the next bytecode
         jmp bytecode_loop
 
@@ -500,12 +501,11 @@ portamento_active:
         and #($FF - CHANNEL_MUTED)
         sta channel_status, x
         ; reset the instrument envelopes to the beginning
-        jsr reset_instrument
+        jsr reset_instrument ; clobbers a, y
         ; reset the instrument volume to 0xF (if this instrument has a volume
         ; sequence, this will be immediately overwritten with the first element)
         lda #$F
-        ldy #ChannelState::instrument_volume
-        sta (channel_ptr), y
+        sta channel_instrument_volume, x
         ; fall through to done_with_bytecode
 done_with_bytecode:
         ; If we're still in global duration mode at this point,
@@ -838,8 +838,8 @@ done_loading_sequences:
         adc #4
         tay
         lda (bhop_ptr), y
-        ldy #ChannelState::instrument_volume
-        sta (channel_ptr), y
+        ldy channel_index
+        sta channel_instrument_volume, y
 
         ; tick the sequence counter and exit
         jsr tick_sequence_counter
@@ -1280,12 +1280,12 @@ tick_pulse1:
         bmi pulse1_muted
 
         ; apply the combined channel and instrument volume
-        lda pulse1_state + ChannelState::channel_volume
+        lda channel_volume + PULSE_1_INDEX
         asl
         asl
         asl
         asl
-        ora pulse1_state + ChannelState::instrument_volume
+        ora channel_instrument_volume + PULSE_1_INDEX
         tax
         lda volume_table, x
 
@@ -1329,12 +1329,12 @@ tick_pulse2:
         bmi pulse2_muted
 
         ; apply the combined channel and instrument volume
-        lda pulse2_state + ChannelState::channel_volume
+        lda channel_volume + PULSE_2_INDEX
         asl
         asl
         asl
         asl
-        ora pulse2_state + ChannelState::instrument_volume
+        ora channel_instrument_volume + PULSE_2_INDEX
         tax
         lda volume_table, x
 
@@ -1379,9 +1379,9 @@ tick_triangle:
         ; triangle additionally should mute here if either channel volume,
         ; or instrument volume is zero
         ; (but don't clobber a)
-        ldx triangle_state + ChannelState::channel_volume
+        ldx channel_volume + TRIANGLE_INDEX
         beq triangle_muted
-        ldx triangle_state + ChannelState::instrument_volume
+        ldx channel_instrument_volume + TRIANGLE_INDEX
         beq triangle_muted
 
         lda #$FF
@@ -1405,12 +1405,12 @@ tick_noise:
         bmi noise_muted
 
         ; apply the combined channel and instrument volume
-        lda noise_state + ChannelState::channel_volume
+        lda channel_volume + NOISE_INDEX
         asl
         asl
         asl
         asl
-        ora noise_state + ChannelState::instrument_volume
+        ora channel_instrument_volume + NOISE_INDEX
         tax
         lda volume_table, x
 

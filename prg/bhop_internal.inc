@@ -55,8 +55,6 @@ PITCH_MODE_RELATIVE = $00
 PITCH_MODE_ABSOLUTE = $01
 
 .struct ChannelState
-        channel_volume .byte
-        instrument_volume .byte
         instrument_duty .byte
         selected_instrument .byte
         pitch_effects_active .byte
