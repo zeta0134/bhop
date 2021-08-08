@@ -27,7 +27,7 @@ TODO - bhop
   - [ ] Axy volume slide
 
 - [ ] Implement minor effects
-  - [ ] Fxx tempo change
+  - [x] Fxx tempo change
   - [x] Sxx delayed note cut
   - [ ] Dxx skip to next frame + xx rows
 

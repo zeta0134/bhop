@@ -28,7 +28,7 @@ row_counter: .byte $00
 row_cmp: .byte $00
 frame_counter: .byte $00
 frame_cmp: .byte $00
-.export row_counter, row_cmp, frame_counter, frame_cmp
+.export row_counter, row_cmp, frame_counter, frame_cmp, tempo
 
 song_ptr: .word $0000
 frame_ptr: .word $0000
@@ -87,7 +87,7 @@ effect_cut_delay: .res ::NUM_CHANNELS
         ; global
         .export bhop_init, bhop_play
         ; internal
-        .export load_instrument
+        .export load_instrument, set_speed
 
 .include "midi_lut.inc"
 

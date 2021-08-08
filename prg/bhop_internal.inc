@@ -85,7 +85,7 @@ done:
 
 ; various RAM and zeropage structures
 .importzp bhop_ptr, channel_ptr, pattern_ptr, channel_index, scratch_byte
-.import row_counter, row_cmp, frame_counter, frame_cmp
+.import row_counter, row_cmp, frame_counter, frame_cmp, tempo
 .import channel_status, channel_global_duration, channel_row_delay_counter, channel_selected_instrument
 .import channel_detuned_frequency_low, channel_detuned_frequency_high
 .import channel_vibrato_settings, channel_vibrato_accumulator, channel_tuning
@@ -111,4 +111,5 @@ done:
 .import effect_note_delay, effect_cut_delay
 
 ; various methods, mostly used by commands
-.import load_instrument, dispatch_command, update_vibrato, update_tuning
+.import load_instrument, set_speed
+.import dispatch_command, update_vibrato, update_tuning

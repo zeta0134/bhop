@@ -17,8 +17,8 @@ command_table:
     .word cmd_unimplemented_short  ;CMD_HOLD
     .word cmd_set_duration         ;CMD_SET_DURATION
     .word cmd_reset_duration       ;CMD_RESET_DURATION
-    .word cmd_unimplemented        ;CMD_EFF_SPEED
-    .word cmd_unimplemented        ;CMD_EFF_TEMPO
+    .word cmd_eff_speed            ;CMD_EFF_SPEED
+    .word cmd_eff_tempo            ;CMD_EFF_TEMPO
     .word cmd_eff_jump             ;CMD_EFF_JUMP
     .word cmd_unimplemented        ;CMD_EFF_SKIP
     .word cmd_unimplemented        ;CMD_EFF_HALT
@@ -207,6 +207,19 @@ done:
         clc
         adc #1
         sta effect_cut_delay, x
+        rts
+.endproc
+
+.proc cmd_eff_speed
+        fetch_pattern_byte
+        tax
+        jsr set_speed
+        rts
+.endproc
+
+.proc cmd_eff_tempo
+        fetch_pattern_byte
+        sta tempo
         rts
 .endproc
 
