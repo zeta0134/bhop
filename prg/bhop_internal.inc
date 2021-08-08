@@ -108,7 +108,7 @@ done:
 .import duty_sequence_ptr_high
 .import duty_sequence_index
 
-.import effect_note_delay
+.import effect_note_delay, effect_cut_delay
 
 ; various methods, mostly used by commands
 .import load_instrument, dispatch_command, update_vibrato, update_tuning

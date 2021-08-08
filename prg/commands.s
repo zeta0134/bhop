@@ -40,7 +40,7 @@ command_table:
     .word cmd_unimplemented        ;CMD_EFF_SLIDE_UP
     .word cmd_unimplemented        ;CMD_EFF_SLIDE_DOWN
     .word cmd_unimplemented        ;CMD_EFF_VOL_SLIDE
-    .word cmd_unimplemented        ;CMD_EFF_NOTE_CUT
+    .word cmd_eff_note_cut         ;CMD_EFF_NOTE_CUT
     .word cmd_unimplemented        ;CMD_EFF_RETRIGGER
     .word cmd_unimplemented        ;CMD_EFF_DPCM_PITCH
     .word cmd_unimplemented        ;CMD_EFF_NOTE_RELEASE
@@ -199,6 +199,14 @@ done:
 .proc cmd_eff_reset_pitch
         lda #0
         sta channel_tuning, x
+        rts
+.endproc
+
+.proc cmd_eff_note_cut
+        fetch_pattern_byte
+        clc
+        adc #1
+        sta effect_cut_delay, x
         rts
 .endproc
 

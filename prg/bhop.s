@@ -78,8 +78,9 @@ duty_sequence_index: .res ::NUM_CHANNELS
 
 ; memory for various effects
 effect_note_delay: .res ::NUM_CHANNELS
+effect_cut_delay: .res ::NUM_CHANNELS
 
-.export effect_note_delay
+.export effect_note_delay, effect_cut_delay
 
 
         .segment "PRG0_8000"
@@ -529,6 +530,7 @@ done:
 .endproc
 
 .proc tick_delayed_effects
+        ; Gxx: delayed pattern row
         ldx channel_index
         lda effect_note_delay, x
         beq done_with_note_delay
@@ -544,6 +546,17 @@ done:
         bne done_with_note_delay
         jsr fix_noise_freq
 done_with_note_delay:
+        ; Sxx: delayed note cut
+        ldx channel_index
+        lda effect_cut_delay, x
+        beq done_with_cut_delay
+        dec effect_cut_delay, x
+        bne done_with_cut_delay
+        ; apply a note cut, immediately silencing this channel
+        lda channel_status, x
+        ora #CHANNEL_MUTED
+        sta channel_status, x
+done_with_cut_delay:
         rts
 .endproc
 
