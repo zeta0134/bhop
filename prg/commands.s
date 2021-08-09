@@ -20,7 +20,7 @@ command_table:
     .word cmd_eff_speed            ;CMD_EFF_SPEED
     .word cmd_eff_tempo            ;CMD_EFF_TEMPO
     .word cmd_eff_jump             ;CMD_EFF_JUMP
-    .word cmd_unimplemented        ;CMD_EFF_SKIP
+    .word cmd_eff_skip             ;CMD_EFF_SKIP
     .word cmd_unimplemented        ;CMD_EFF_HALT
     .word cmd_unimplemented        ;CMD_EFF_VOLUME
     .word cmd_unimplemented_short  ;CMD_EFF_CLEAR
@@ -249,7 +249,7 @@ done:
 
 .proc cmd_eff_skip
         fetch_pattern_byte
-        sta effect_skip_target, x
+        sta effect_skip_target
         rts
 .endproc
 

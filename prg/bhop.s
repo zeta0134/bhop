@@ -78,7 +78,7 @@ duty_sequence_index: .res ::NUM_CHANNELS
 ; memory for various effects
 effect_note_delay: .res ::NUM_CHANNELS
 effect_cut_delay: .res ::NUM_CHANNELS
-effect_skip_target: .res ::NUM_CHANNELS
+effect_skip_target: .byte $00
 
 .export effect_note_delay, effect_cut_delay, effect_skip_target
 
@@ -313,6 +313,29 @@ loop:
         bcc done_advancing_rows
         ; is either the same or higher; do the thing
 advance_row:
+        ; Dxx command processing: do we have a skip requested?
+        lda effect_skip_target
+        beq no_skip_requested
+        ; we'll skip right away, so advance the frame pointer and load
+        ; the next frame:
+        jsr advance_frame
+        lda #0
+        sta row_counter
+        dec effect_skip_target
+        ; if the target is 00 at this point, we're done with the Dxx effect.
+        ; Process the next row normally.
+        beq no_frame_advance
+        ; Otherwise, we now need to continually skip entire rows in a loop
+dxx_loop:
+        jsr skip_pattern_rows
+        inc row_counter
+        dec effect_skip_target
+        bne dxx_loop
+        ; now, finally we are done with the dxx command. Process the next
+        ; row normally:
+        jmp no_frame_advance
+
+no_skip_requested:
         ; first off, have we reached the end of this pattern?
         ; if so, advance to the next frame here:
         lda row_counter
@@ -596,6 +619,36 @@ done:
         lda #DPCM_INDEX
         sta channel_index
         jsr advance_channel_row
+
+        rts
+.endproc
+
+.proc skip_pattern_rows
+                ; PULSE 1
+        lda #PULSE_1_INDEX
+        sta channel_index
+        jsr skip_channel_row
+
+        ; PULSE 2
+        lda #PULSE_2_INDEX
+        sta channel_index
+        jsr skip_channel_row
+
+        ; TRIANGLE
+        lda #TRIANGLE_INDEX
+        sta channel_index
+        jsr skip_channel_row
+
+        ; NOISE
+        lda #NOISE_INDEX
+        sta channel_index
+        jsr skip_channel_row
+        jsr fix_noise_freq
+
+        ; DPCM
+        lda #DPCM_INDEX
+        sta channel_index
+        jsr skip_channel_row
 
         rts
 .endproc

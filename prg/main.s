@@ -28,7 +28,8 @@ highest_performance: .word $0000
         ;.include "../ftm/bah.asm"
         ;.include "../ftm/1-1.asm"
         ;.include "../ftm/nary.asm"
-        .include "../ftm/corneriaz.asm"
+        ;.include "../ftm/corneriaz.asm"
+        .include "../ftm/moonlight.asm"
 
         .segment "PRG3_E000"
         .export start, nmi, irq
