@@ -78,8 +78,32 @@ command_table:
         jmp (cmd_ptr)
         ; dispatched command executes rts
 .endproc
-
 .export dispatch_command
+
+.proc skip_command
+        ; we can't *actually* skip the duration commands, otherwise we'll bug out the bytecode reader on the next row
+        cmp #CommandBytes::CMD_SET_DURATION
+        bne not_set_duration
+        jmp cmd_set_duration
+not_set_duration:
+        cmp #CommandBytes::CMD_RESET_DURATION
+        bne not_reset_duration
+        jmp cmd_reset_duration
+not_reset_duration:
+        ; these commands have NO parameter byte:
+        cmp #CommandBytes::CMD_HOLD
+        beq no_parameter_byte
+        cmp #CommandBytes::CMD_EFF_CLEAR
+        beq no_parameter_byte
+        cmp #CommandBytes::CMD_EFF_RESET_PITCH
+        beq no_parameter_byte
+        ; for anything else, fetch the parameter byte and throw it away
+        fetch_pattern_byte
+        rts
+no_parameter_byte:
+        rts
+.endproc
+.export skip_command
 
 ; Note: Every command begins with channel_index conveniently in x. This does
 ; not need to be explicitly restored (calling code does that), but initialization
@@ -220,6 +244,12 @@ done:
 .proc cmd_eff_tempo
         fetch_pattern_byte
         sta tempo
+        rts
+.endproc
+
+.proc cmd_eff_skip
+        fetch_pattern_byte
+        sta effect_skip_target, x
         rts
 .endproc
 
