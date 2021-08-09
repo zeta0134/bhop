@@ -14,11 +14,10 @@ bhop_ptr: .word $0000
 ; pattern pointers, read repeatedly when updating
 ; rows in a loop, we'll want access to these to be quick
 pattern_ptr: .word $0000
-channel_ptr: .word $0000
 channel_index: .byte $00
 scratch_byte: .byte $00
 
-.exportzp bhop_ptr, channel_ptr, pattern_ptr, channel_index, scratch_byte
+.exportzp bhop_ptr, pattern_ptr, channel_index, scratch_byte
 
         .segment "RAM"
 tempo_counter: .word $0000
@@ -79,8 +78,9 @@ duty_sequence_index: .res ::NUM_CHANNELS
 ; memory for various effects
 effect_note_delay: .res ::NUM_CHANNELS
 effect_cut_delay: .res ::NUM_CHANNELS
+effect_skip_target: .res ::NUM_CHANNELS
 
-.export effect_note_delay, effect_cut_delay
+.export effect_note_delay, effect_cut_delay, effect_skip_target
 
 
         .segment "PRG0_8000"
@@ -333,19 +333,11 @@ no_frame_advance:
         sta tempo_counter+1
         ; advance the row counter
         inc row_counter
-        ;lda row_counter
-        ;cmp row_cmp
-        ;bcc done_advancing_rows
-        ; row is equal or greater to max
-        ;jsr advance_frame
-        ;lda #0
-        ;sta row_counter
 done_advancing_rows:
         rts
 .endproc
 
 ; prep: 
-; - channel_ptr points to desired channel structure
 ; - channel_index is set to desired channel
 .proc advance_channel_row
         ldx channel_index
@@ -453,6 +445,96 @@ portamento_active:
         lda #$F
         sta channel_instrument_volume, x
         ; fall through to done_with_bytecode
+done_with_bytecode:
+        ; If we're still in global duration mode at this point,
+        ; apply that to the row counter
+        ldx channel_index
+        lda channel_status, x
+        and #CHANNEL_GLOBAL_DURATION
+        beq read_duration_from_pattern
+
+        lda channel_global_duration, x
+        sta channel_row_delay_counter, x
+        jmp cleanup_channel_ptr
+
+read_duration_from_pattern:
+        fetch_pattern_byte ; does not clobber x
+        sta channel_row_delay_counter, x
+        ; fall through to channel_cleanup_ptr
+cleanup_channel_ptr:
+        ; preserve pattern_ptr back to the channel status
+        ldx channel_index
+        lda pattern_ptr
+        sta channel_pattern_ptr_low, x
+        lda pattern_ptr+1
+        sta channel_pattern_ptr_high, x
+
+        ; finally done with this channel
+        jmp done
+skip:
+        ; conveniently carry is already set
+        ; a contains the counter
+        sbc #1 ; decrement that counter
+        sta channel_row_delay_counter, x
+done:
+        rts
+.endproc
+
+; if for whatever reason (usually Dxx with xx >= 0) we need to skip a channel
+; row and *not* apply *any* of the bytecode, this is the way to go. Note that we
+; still need to process the bytecode mostly normally, and apply duration changes
+; and whatnot.
+.proc skip_channel_row
+        ldx channel_index
+        lda channel_row_delay_counter, x
+        cmp #0
+        jne skip
+
+        ; prep the pattern pointer for reading
+        lda channel_pattern_ptr_low, x
+        sta pattern_ptr
+        lda channel_pattern_ptr_high, x
+        sta pattern_ptr+1
+
+        ; implementation note: x now holds channel_index, and lots of this code
+        ; assumes it will not be clobbered. Take care when refactoring.
+        
+        ; continue reading bytecode, processing one command at a time,
+        ; until a note is encountered. Any note command breaks out of the loop and
+        ; signals the end of processing for this row.
+bytecode_loop:
+        fetch_pattern_byte
+        cmp #0 ; needed to set negative flag based on command byte currently in a
+        bpl handle_note ; if the high bit is clear, this is some kind of note
+        tay ; preserve
+        ; check for quick commands
+        and #$F0
+        cmp #$F0
+        beq quick_volume_change
+        cmp #$E0
+        beq quick_instrument_change
+process_extended_command:
+        ; it's a *proper* command, restore the full command byte
+        tya
+        ; instead of applying the command, we just need to skip over it; unfortunately
+        ; not all commands have a parameter byte, so we need to handle special cases. Note
+        ; that the global duration affecting commands will NOT be skipped here!
+        jsr skip_command
+        ; note that we ignore Gxx commands, which means unlike the main loop above, we
+        ; don't need to check if we enabled them here. (We didn't.)
+        jmp bytecode_loop
+
+quick_volume_change:
+        ; do nothing
+        jmp bytecode_loop
+
+quick_instrument_change:
+        ; also do nothing
+        jmp bytecode_loop
+
+handle_note:
+        ; we don't care what kind of note this is, we're ignoring it. Proceed to be done
+        ; processing bytecode for this row.
 done_with_bytecode:
         ; If we're still in global duration mode at this point,
         ; apply that to the row counter
@@ -640,8 +722,8 @@ no_wrap:
 ; Loads sequence pointers (if enabled) and clears pointers to begin
 ; sequence playback from the beginning
 ; setup: 
-;   channel_ptr points to channel structure
-;   ChannelState::selected_instrument contains desired instrument index
+;   channel_index points to desired channel
+;   channel_selected_instrument[channel_index] contains desired instrument index
 .proc load_instrument
         prepare_ptr MUSIC_BASE + FtModuleHeader::instrument_list
         ldx channel_index
@@ -753,7 +835,7 @@ done_loading_sequences:
 ; envelope. Upon return, instrument_volume will have the current
 ; element in the sequence.
 ; setup: 
-;   channel_ptr points to channel structure
+;   channel_index points to channel structure
 .proc tick_volume_envelope
         ldy channel_index
         lda sequences_active, y
@@ -807,7 +889,7 @@ done:
 ; If this channel has a duty envelope active, process that
 ; envelope. Upon return, instrument_duty is set
 ; setup: 
-;   channel_ptr points to channel structure
+;   channel_index points to channel structure
 .proc tick_duty_envelope
         ldy channel_index
         lda sequences_active, y
@@ -867,7 +949,7 @@ done:
 ; If this channel has an arp envelope active, process that
 ; envelope. Upon return, base_note and relative_frequency are set
 ; setup: 
-;   channel_ptr, channel_index points to channel structure
+;   channel_index, channel_index points to channel structure
 .proc tick_arp_envelope
         ldx channel_index
         lda sequences_active, x
@@ -974,7 +1056,7 @@ done:
 ; We need a special variant of this just for noise, which uses a different
 ; means of frequency to base_note mapping
 ; setup: 
-;   channel_ptr points to channel structure
+;   channel_index points to channel structure
 .proc tick_noise_arp_envelope
         ldx channel_index
         lda sequences_active, x
@@ -1075,7 +1157,7 @@ done:
 ; If this channel has a pitch envelope active, process that
 ; envelope. Upon return, relative_pitch is set
 ; setup: 
-;   channel_ptr points to channel structure
+;   channel_index points to channel structure
 .proc tick_pitch_envelope
         ldy channel_index
         lda sequences_active, y
@@ -1152,7 +1234,7 @@ done:
 .endproc
 
 ; setup:
-;   channel_ptr points to channel structure
+;   channel_index points to channel structure
 ;   bhop_ptr points to start of sequence data
 ;   x - current sequence pointer
 ; return: new sequence counter in x
