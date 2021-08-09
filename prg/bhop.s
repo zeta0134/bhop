@@ -624,7 +624,7 @@ done:
 .endproc
 
 .proc skip_pattern_rows
-                ; PULSE 1
+        ; PULSE 1
         lda #PULSE_1_INDEX
         sta channel_index
         jsr skip_channel_row
@@ -643,7 +643,6 @@ done:
         lda #NOISE_INDEX
         sta channel_index
         jsr skip_channel_row
-        jsr fix_noise_freq
 
         ; DPCM
         lda #DPCM_INDEX

@@ -81,6 +81,7 @@ command_table:
 .export dispatch_command
 
 .proc skip_command
+        and #$7F ; mask off the high bit
         ; we can't *actually* skip the duration commands, otherwise we'll bug out the bytecode reader on the next row
         cmp #CommandBytes::CMD_SET_DURATION
         bne not_set_duration
