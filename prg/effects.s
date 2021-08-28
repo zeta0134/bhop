@@ -12,7 +12,7 @@ channel_vibrato_accumulator: .res ::NUM_CHANNELS
 channel_tuning: .res ::NUM_CHANNELS
 .export channel_vibrato_settings, channel_vibrato_accumulator, channel_tuning
 
-        .segment "PRG0_8000"
+        .segment "PRG_8000"
 .include "vibrato_lut.inc"
 
 ; Vibrato LUT: there are 16 tables, each containing the first 1/4 of a sine

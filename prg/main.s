@@ -24,17 +24,23 @@ lowest_performance: .word $0000
 highest_performance: .word $0000
 current_track: .byte $00
 
-        .segment "PRG1_A000"
+        .segment "SONG_0"
+        .scope SONG_0
+        .include "../ftm/bah.asm"
+        .endscope
+        .segment "SONG_1"
+        .scope SONG_1
+        .include "../ftm/1-1.asm"
+        .endscope
+        
         ;.include "../ftm/yakra.asm"
         ;.include "../ftm/sanctuary.asm"
         ;.include "../ftm/bark.asm"
-        ;.include "../ftm/bah.asm"
-        ;.include "../ftm/1-1.asm"
         ;.include "../ftm/nary.asm"
         ;.include "../ftm/corneriaz.asm"
-        .include "../ftm/moonlight.asm"
+        ;.include "../ftm/moonlight.asm"
 
-        .segment "PRG3_E000"
+        .segment "PRG_E000"
         .export start, nmi, irq
 
 timing_nametable:

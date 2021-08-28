@@ -2,7 +2,7 @@
 .include "nes.inc"
 
 .scope PRG3_E000
-        .segment "PRG3_E000"
+        .segment "PRG_E000"
 
 .macro spinwait_for_vblank
 .scope

@@ -9,7 +9,7 @@
         .zeropage
 cmd_ptr: .word $0000
 
-        .segment "PRG0_8000"
+        .segment "PRG_8000"
         .export command_table
 
 command_table:

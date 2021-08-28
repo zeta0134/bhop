@@ -9,7 +9,7 @@ mmc3_bank_select_shadow: .byte $00
 .exportzp mmc3_bank_select_shadow
 
 .scope PRG3_E000
-        .segment "PRG3_E000"
+        .segment "PRG_E000"
         ;.org $e000
 
 .export initialize_mmc3

@@ -706,7 +706,7 @@ ft_s0p17c1:
 
 ; DPCM samples (located at DPCM segment)
 
-	.segment "DPCM"
+	.segment "DPCM_0"
 ft_sample_0: ; kick15.dmc
 	.byte $AA, $AA, $5A, $55, $55, $55, $55, $55, $71, $91, $2A, $09, $0F, $B2, $09, $D3, $2A, $32, $29, $87
 	.byte $C1, $8E, $E3, $E0, $7F, $9C, $E7, $FF, $BF, $EF, $FE, $7C, $4B, $93, $58, $A5, $A9, $2A, $6B, $71

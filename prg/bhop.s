@@ -83,7 +83,7 @@ effect_skip_target: .byte $00
 .export effect_note_delay, effect_cut_delay, effect_skip_target
 
 
-        .segment "PRG0_8000"
+        .segment "PRG_8000"
         ; global
         .export bhop_init, bhop_play
         ; internal

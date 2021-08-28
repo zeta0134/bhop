@@ -12,7 +12,7 @@ ButtonsDown: .byte $00
 ButtonsUp: .byte $00
 ButtonsHeld: .byte $00
 
-        .segment "PRG3_E000"
+        .segment "PRG_E000"
         ;.org $e000
 
 .export poll_input
