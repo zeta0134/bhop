@@ -1,8 +1,5 @@
 .include "bhop.inc"
 .include "bhop_internal.inc"
-.include "commands.inc"
-.include "nes.inc"
-.include "word_util.inc"
 
 .scope BHOP
 
