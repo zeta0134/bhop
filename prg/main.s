@@ -2,6 +2,7 @@
 
         .include "bhop.inc"
         .include "branch_checks.inc"
+        .include "input.inc"
         .include "nes.inc"
         .include "ppu.inc"
         .include "word_util.inc"
@@ -20,6 +21,7 @@ baseline_performance: .word $0000
 current_performance: .word $0000
 lowest_performance: .word $0000
 highest_performance: .word $0000
+current_track: .byte $00
 
         .segment "PRG1_A000"
         ;.include "../ftm/yakra.asm"
@@ -202,7 +204,38 @@ nybble_to_ascii_mapping:
         display_hex_word current_performance, #$222C
         display_hex_word lowest_performance,  #$226C
         display_hex_word highest_performance, #$22AC
+        set_ppuaddr #$208A
+        lda current_track
+        sta R0
+        inc R0
+        jsr display_hex_byte
         rts
+.endproc
+
+NUM_TRACKS = 5
+
+.proc handle_input
+        lda #KEY_RIGHT
+        bit ButtonsDown
+        beq check_left
+        lda #(NUM_TRACKS - 1)
+        cmp current_track
+        beq check_left ; don't increment if already at max
+        inc current_track
+        ; would re-init player here
+        jmp done
+check_left:
+        lda #KEY_LEFT
+        bit ButtonsDown
+        beq done
+        lda #0
+        cmp current_track
+        beq done ; don't decrement if already 0
+        dec current_track
+        ; would re-init player here
+        jmp done
+done:
+        rts        
 .endproc
 
 .proc start
@@ -214,6 +247,7 @@ nybble_to_ascii_mapping:
 
         ; bhop init
         lda #0 ; song index
+        sta current_track
         jsr bhop_init
 
         ; graphics init
@@ -250,6 +284,8 @@ nybble_to_ascii_mapping:
         ; one final nmi to get the first run of the game loop lined up for timing
         jsr wait_for_nmi
 gameloop:
+        ; check for track switching
+        jsr handle_input
         ; align the gameloop with a sprite zero clear, this erases a lot of timing jitter
         ; from the performance counting function
         jsr wait_until_sprite_zero_clears
@@ -297,6 +333,8 @@ gameloop:
         lda #0
         sta PPUSCROLL
         sta PPUSCROLL
+
+        jsr poll_input
 
         ; restore registers
         pla
