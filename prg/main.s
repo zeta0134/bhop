@@ -219,7 +219,19 @@ nybble_to_ascii_mapping:
         rts
 .endproc
 
-NUM_TRACKS = 5
+.proc switch_modules
+        lda current_track
+        asl
+        sta R0
+        mmc3_select_bank $7, R0 ; song data
+        inc R0
+        mmc3_select_bank $6, R0 ; sample data
+        lda #0
+        jsr bhop_init
+        rts
+.endproc
+
+NUM_TRACKS = 2
 
 .proc handle_input
         lda #KEY_RIGHT
@@ -229,7 +241,7 @@ NUM_TRACKS = 5
         cmp current_track
         beq check_left ; don't increment if already at max
         inc current_track
-        ; would re-init player here
+        jsr switch_modules
         jmp done
 check_left:
         lda #KEY_LEFT
@@ -239,7 +251,7 @@ check_left:
         cmp current_track
         beq done ; don't decrement if already 0
         dec current_track
-        ; would re-init player here
+        jsr switch_modules
         jmp done
 done:
         rts        
