@@ -28,10 +28,21 @@ current_track: .byte $00
         .scope SONG_0
         .include "../ftm/bah.asm"
         .endscope
+
         .segment "SONG_1"
         .scope SONG_1
         .include "../ftm/1-1.asm"
         .endscope
+
+        .segment "SONG_2"
+        .scope SONG_2
+        .include "../ftm/sanctuary.asm"
+        .endscope
+
+        ;.segment "SONG_3"
+        ;.scope SONG_3
+        ;.include "../ftm/corneriaz.asm"
+        ;.endscope
         
         ;.include "../ftm/yakra.asm"
         ;.include "../ftm/sanctuary.asm"
@@ -39,6 +50,8 @@ current_track: .byte $00
         ;.include "../ftm/nary.asm"
         ;.include "../ftm/corneriaz.asm"
         ;.include "../ftm/moonlight.asm"
+
+        NUM_TRACKS = 3
 
         .segment "PRG_E000"
         .export start, nmi, irq
@@ -230,8 +243,6 @@ nybble_to_ascii_mapping:
         jsr bhop_init
         rts
 .endproc
-
-NUM_TRACKS = 2
 
 .proc handle_input
         lda #KEY_RIGHT
