@@ -7,8 +7,8 @@
         .byte "NES", $1a
         .byte $02               ; 2x 16KB PRG-ROM banks = 32 KB total
         .byte $01               ; 1x 8KB CHR-ROM banks = 8 KB total
-        .byte $01, $00          ; NROM with vertical mirroring (horizontal layout)
-        .byte $00               ; No PRG RAM (mapper 0 will give us 8k, which we will ignore)
+        .byte $40, $00          ; MMC3 without battery-backed PRG RAM
+        .byte $00               ; No PRG RAM (ines 1.0 will give us 8k, which we will ignore)
         .byte $00               ;
         .byte $00
         .byte $00

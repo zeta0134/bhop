@@ -1,3 +1,4 @@
+.include "mmc3.inc"
 .include "nes.inc"
 
 .scope PRG3_E000
@@ -48,6 +49,7 @@ reset:
         clear_page $0100
         ; now that the stack is usable, clear internal ram with a jsr
         jsr clear_internal_ram
+        jsr initialize_mmc3
         
 
         ; Jump to main

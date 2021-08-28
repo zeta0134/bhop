@@ -3,6 +3,7 @@
         .include "bhop.inc"
         .include "branch_checks.inc"
         .include "input.inc"
+        .include "mmc3.inc"
         .include "nes.inc"
         .include "ppu.inc"
         .include "word_util.inc"

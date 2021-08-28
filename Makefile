@@ -28,7 +28,7 @@ clean:
 run: dir $(ROM_NAME)
 	rusticnes-sdl $(ROM_NAME)
 
-$(ROM_NAME): $(SOURCEDIR)/nrom.cfg $(O_FILES)
+$(ROM_NAME): $(SOURCEDIR)/mmc3.cfg $(O_FILES)
 	ld65 -m $(BUILDDIR)/map.txt --dbgfile $(DBG_NAME) -o $@ -C $^
 
 $(BUILDDIR)/%.o: $(SOURCEDIR)/%.s
