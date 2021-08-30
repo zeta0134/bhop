@@ -2,6 +2,10 @@
 .include "bhop_internal.inc"
 .include "nes.inc"
 
+; TODO: this library must NOT provide mapper specific code.
+; Once you're done testing, REMOVE THIS!
+.include "mmc3.inc"
+
 .macpack longbranch
 
 .scope BHOP
@@ -1587,12 +1591,21 @@ no_delta_set:
         ; the sample table should contain, in order:
         ; - location byte
         ; - size byte
-        ; - bank to switch in (which we'll ignore for now)
+        ; - bank to switch in
         lda (bhop_ptr), y
         iny
         sta $4012
         lda (bhop_ptr), y
         sta $4013
+        ; TODO! TODO! This is currently set up only for MMC3! This MUST be extracted into a general
+        ; function, for the user to fill in
+        iny
+        lda (bhop_ptr), y
+        sta scratch_byte
+        mmc3_select_bank $6, scratch_byte
+
+        ; end TODO
+
         ; finally, briefly disable the sample channel to set bytes_remaining in the memory
         ; reader to 0, then start it again to initiate playback
         lda #$0F
