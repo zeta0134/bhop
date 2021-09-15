@@ -251,34 +251,24 @@ ft_samples:
 	.byte 14, 59, 1
 	.byte 29, 130, 1
 	.byte 62, 168, 1
-
 	.byte 0, 255, 2
 	.byte 64, 251, 2
-
 	.byte 0, 150, 3
 	.byte 38, 188, 3
-
 	.byte 0, 255, 4
 	.byte 64, 255, 4
-
 	.byte 0, 255, 5
 	.byte 64, 255, 5
-
 	.byte 0, 255, 6
 	.byte 64, 233, 6
-
 	.byte 0, 208, 7
 	.byte 53, 185, 7
-
 	.byte 0, 175, 8
 	.byte 44, 156, 8
-
 	.byte 0, 241, 9
 	.byte 61, 227, 9
-
 	.byte 0, 202, 10
 	.byte 51, 180, 10
-
 	.byte 0, 170, 11
 	.byte 43, 161, 11
 	.byte 84, 135, 11

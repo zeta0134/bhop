@@ -1,3 +1,4 @@
+
 ; DPCM samples (located at DPCM segment)
 
 	.segment "DPCM_0"
@@ -1046,6 +1047,8 @@ ft_sample_7: ; calliope-ds4
 
 	.align 64
 
+
+	.segment "DPCM_3"
 ft_sample_8: ; string-f3
 	.byte $D5, $0E, $80, $83, $4F, $E8, $3F, $67, $0F, $DD, $0F, $3E, $2C, $06, $80, $23, $6F, $F8, $1F, $63
 	.byte $0F, $F6, $07, $7F, $30, $02, $80, $3F, $36, $FC, $8F, $01, $1F, $FF, $83, $3B, $70, $00, $81, $3F
@@ -1255,8 +1258,6 @@ ft_sample_8: ; string-f3
 
 	.align 64
 
-
-	.segment "DPCM_3"
 ft_sample_9: ; string-g3
 	.byte $D5, $06, $F0, $78, $06, $FF, $4C, $1D, $AD, $87, $17, $E3, $00, $9C, $9D, $F8, $0F, $F1, $43, $6F
 	.byte $74, $C3, $11, $04, $1F, $17, $FF, $21, $F2, $D8, $0F, $37, $38, $42, $E0, $C7, $C7, $3B, $14, $3E
@@ -1466,6 +1467,8 @@ ft_sample_9: ; string-g3
 
 	.align 64
 
+
+	.segment "DPCM_4"
 ft_sample_10: ; string-gs3
 	.byte $55, $55, $55, $55, $55, $55, $D1, $95, $56, $35, $95, $17, $3E, $A6, $4A, $A9, $81, $8F, $37, $56
 	.byte $07, $3F, $3C, $4E, $0E, $E1, $80, $1F, $7F, $98, $0F, $7E, $38, $1D, $0D, $61, $81, $3F, $7E, $D0
@@ -1675,8 +1678,6 @@ ft_sample_10: ; string-gs3
 
 	.align 64
 
-
-	.segment "DPCM_4"
 ft_sample_11: ; string-a3
 	.byte $55, $55, $4D, $55, $55, $55, $74, $71, $55, $35, $79, $F8, $98, $2A, $A5, $81, $1F, $97, $56, $C3
 	.byte $0F, $8F, $A3, $51, $0C, $F8, $F1, $C3, $3E, $F8, $F0, $1C, $1D, $60, $C1, $1F, $1F, $F4, $C1, $0F
@@ -1886,6 +1887,8 @@ ft_sample_11: ; string-a3
 
 	.align 64
 
+
+	.segment "DPCM_5"
 ft_sample_12: ; string-as3
 	.byte $55, $55, $55, $55, $C5, $A5, $55, $55, $D5, $F4, $B0, $2A, $A5, $C1, $C7, $A5, $B5, $F8, $F0, $38
 	.byte $1A, $71, $C0, $C7, $8F, $F9, $F0, $71, $1C, $0D, $61, $E0, $E7, $87, $3E, $F8, $31, $2E, $0E, $A8
@@ -2095,8 +2098,6 @@ ft_sample_12: ; string-as3
 
 	.align 64
 
-
-	.segment "DPCM_5"
 ft_sample_13: ; string-f4
 	.byte $35, $10, $C3, $7F, $67, $E7, $14, $00, $C7, $1F, $E7, $77, $0C, $20, $C6, $1F, $E7, $7B, $04, $60
 	.byte $CE, $17, $E7, $7B, $08, $70, $EC, $93, $E3, $6F, $00, $70, $9E, $9F, $E3, $66, $40, $30, $DE, $8F
@@ -2288,6 +2289,8 @@ ft_sample_13: ; string-f4
 
 	.align 64
 
+
+	.segment "DPCM_6"
 ft_sample_14: ; string-g4
 	.byte $1D, $80, $F1, $7F, $3E, $53, $00, $86, $BF, $F3, $1D, $03, $60, $7E, $9C, $EF, $08, $30, $F3, $63
 	.byte $BE, $23, $C0, $F8, $8B, $F3, $1E, $00, $E7, $DC, $CC, $DB, $00, $38, $77, $73, $6E, $06, $E0, $3C
@@ -2459,8 +2462,6 @@ ft_sample_14: ; string-g4
 
 	.align 64
 
-
-	.segment "DPCM_6"
 ft_sample_15: ; string-a4
 	.byte $1D, $60, $FC, $CD, $37, $01, $18, $BF, $F3, $CE, $00, $C4, $EF, $BC, $23, $20, $F3, $39, $EF, $08
 	.byte $8C, $7D, $CC, $3D, $00, $73, $97, $F3, $09, $C4, $DC, $C7, $7C, $06, $30, $E7, $B9, $9B, $01, $CC
@@ -2614,6 +2615,8 @@ ft_sample_15: ; string-a4
 
 	.align 64
 
+
+	.segment "DPCM_7"
 ft_sample_16: ; string-as4
 	.byte $1D, $60, $7E, $F3, $4D, $00, $E2, $3F, $EF, $04, $20, $3F, $F3, $47, $40, $F6, $39, $77, $04, $66
 	.byte $1F, $73, $07, $60, $F6, $B9, $5B, $00, $E6, $9F, $B9, $09, $30, $E7, $B9, $CF, $00, $73, $9C, $FB
@@ -2889,7 +2892,7 @@ ft_sample_17: ; string-c5
 	.align 64
 
 
-	.segment "DPCM_7"
+	.segment "DPCM_8"
 ft_sample_18: ; newage-d6
 	.byte $95, $25, $E9, $5B, $D2, $34, $3C, $0D, $4B, $D3, $B6, $B4, $24, $7D, $1A, $96, $86, $E7, $61, $79
 	.byte $D8, $16, $3C, $0D, $CB, $C3, $F3, $B0, $3C, $1C, $0E, $8F, $C3, $E3, $E1, $78, $38, $1E, $9E, $87
@@ -3274,7 +3277,7 @@ ft_sample_19: ; newage-ds6
 	.align 64
 
 
-	.segment "DPCM_8"
+	.segment "DPCM_9"
 ft_sample_20: ; newage-f6
 	.byte $55, $63, $BC, $52, $2B, $BC, $42, $29, $BD, $C2, $29, $9F, $C2, $39, $DE, $C2, $39, $D6, $62, $39
 	.byte $D6, $63, $38, $D6, $63, $38, $CE, $E1, $1C, $CE, $E1, $1C, $CF, $E1, $1C, $CA, $F1, $1C, $AA, $F1
@@ -3590,6 +3593,8 @@ ft_sample_21: ; newage-g6
 
 	.align 64
 
+
+	.segment "DPCM_10"
 ft_sample_22: ; newage-gs6
 	.byte $55, $8C, $37, $4E, $39, $E3, $8C, $33, $CE, $38, $E3, $98, $33, $8E, $39, $C7, $98, $73, $8C, $39
 	.byte $C7, $98, $73, $8C, $39, $C7, $98, $73, $8C, $71, $C7, $18, $77, $CC, $31, $C7, $19, $63, $DC, $31
@@ -3731,8 +3736,6 @@ ft_sample_22: ; newage-gs6
 
 	.align 64
 
-
-	.segment "DPCM_9"
 ft_sample_23: ; newage-a6
 	.byte $55, $C6, $0B, $67, $6E, $98, $71, $C7, $98, $33, $66, $DC, $31, $E3, $8C, $19, $77, $CC, $98, $73
 	.byte $C6, $9C, $31, $66, $9C, $39, $E3, $8C, $19, $67, $CE, $98, $63, $C6, $1D, $33, $4E, $DC, $38, $63

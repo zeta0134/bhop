@@ -427,12 +427,15 @@ handle_note:
         cmp #$00 ; note rest
         beq done_with_bytecode
         cmp #$7F ; note off
-        bne note_trigger
+        bne check_release
         ; a note off immediately mutes the channel
         lda channel_status, x
         ora #CHANNEL_MUTED
         sta channel_status, x
         jmp done_with_bytecode
+check_release:
+        cmp #$7E
+        beq done_with_bytecode ; UNIMPLEMENTED! ignore these
 note_trigger:
         ; a contains the selected note at this point
         sta channel_base_note, x
