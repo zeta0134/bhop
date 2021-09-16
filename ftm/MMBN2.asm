@@ -247,31 +247,32 @@ ft_sample_list:
 
 ; DPCM samples list (location, size, bank)
 ft_samples:
-	.byte 0, 53, 1
-	.byte 14, 59, 1
-	.byte 29, 130, 1
-	.byte 62, 168, 1
-	.byte 0, 255, 2
-	.byte 64, 251, 2
-	.byte 0, 150, 3
-	.byte 38, 188, 3
-	.byte 0, 255, 4
-	.byte 64, 255, 4
-	.byte 0, 255, 5
-	.byte 64, 255, 5
-	.byte 0, 255, 6
-	.byte 64, 233, 6
-	.byte 0, 208, 7
-	.byte 53, 185, 7
-	.byte 0, 175, 8
-	.byte 44, 156, 8
-	.byte 0, 241, 9
-	.byte 61, 227, 9
-	.byte 0, 202, 10
-	.byte 51, 180, 10
-	.byte 0, 170, 11
-	.byte 43, 161, 11
-	.byte 84, 135, 11
+	.byte <((ft_sample_0  - $C000) >> 6),  53, <.bank(ft_sample_0)
+	.byte <((ft_sample_1  - $C000) >> 6),  59, <.bank(ft_sample_1)
+	.byte <((ft_sample_2  - $C000) >> 6),  130, <.bank(ft_sample_2)
+	.byte <((ft_sample_3  - $C000) >> 6),  168, <.bank(ft_sample_3)
+	.byte <((ft_sample_4  - $C000) >> 6),  255, <.bank(ft_sample_4)
+	.byte <((ft_sample_5  - $C000) >> 6),  251, <.bank(ft_sample_5)
+	.byte <((ft_sample_6  - $C000) >> 6),  150, <.bank(ft_sample_6)
+	.byte <((ft_sample_7  - $C000) >> 6),  188, <.bank(ft_sample_7)
+	.byte <((ft_sample_8  - $C000) >> 6),  255, <.bank(ft_sample_8)
+	.byte <((ft_sample_9  - $C000) >> 6),  255, <.bank(ft_sample_9)
+	.byte <((ft_sample_10  - $C000) >> 6),  255, <.bank(ft_sample_10)
+	.byte <((ft_sample_11  - $C000) >> 6),  255, <.bank(ft_sample_11)
+	.byte <((ft_sample_12  - $C000) >> 6),  255, <.bank(ft_sample_12)
+	.byte <((ft_sample_13  - $C000) >> 6),  233, <.bank(ft_sample_13)
+	.byte <((ft_sample_14  - $C000) >> 6),  208, <.bank(ft_sample_14)
+	.byte <((ft_sample_15  - $C000) >> 6),  185, <.bank(ft_sample_15)
+	.byte <((ft_sample_16  - $C000) >> 6),  175, <.bank(ft_sample_16)
+	.byte <((ft_sample_17  - $C000) >> 6),  156, <.bank(ft_sample_17)
+	.byte <((ft_sample_18  - $C000) >> 6),  241, <.bank(ft_sample_18)
+	.byte <((ft_sample_19  - $C000) >> 6),  227, <.bank(ft_sample_19)
+	.byte <((ft_sample_20  - $C000) >> 6),  202, <.bank(ft_sample_20)
+	.byte <((ft_sample_21  - $C000) >> 6),  180, <.bank(ft_sample_21)
+	.byte <((ft_sample_22  - $C000) >> 6),  170, <.bank(ft_sample_22)
+	.byte <((ft_sample_23  - $C000) >> 6),  161, <.bank(ft_sample_23)
+	.byte <((ft_sample_24  - $C000) >> 6),  135, <.bank(ft_sample_24)
+
 
 ; Groove list
 ft_groove_list:
