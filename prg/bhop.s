@@ -82,7 +82,7 @@ effect_note_delay: .res ::NUM_CHANNELS
 effect_cut_delay: .res ::NUM_CHANNELS
 effect_skip_target: .byte $00
 
-.export effect_note_delay, effect_cut_delay, effect_skip_target
+.export effect_note_delay, effect_cut_delay, effect_skip_target, apply_release
 
 
         .segment "PRG_8000"
@@ -435,7 +435,9 @@ handle_note:
         jmp done_with_bytecode
 check_release:
         cmp #$7E
-        beq done_with_bytecode ; UNIMPLEMENTED! ignore these
+        bne note_trigger
+        jsr apply_release
+        jmp done_with_bytecode
 note_trigger:
         ; a contains the selected note at this point
         sta channel_base_note, x
@@ -1312,6 +1314,10 @@ end_reached:
         lda (bhop_ptr), y
         cmp #$FF
         beq end_reached_without_loop
+        ; Is this loop point *after* the release point?
+        ldy #SequenceHeader::release_point
+        cmp (bhop_ptr), y ; A=loop point, M=release point
+        bcc end_reached_without_loop
         jmp apply_loop_point
 
 end_reached_without_loop:
@@ -1327,11 +1333,14 @@ end_not_reached:
         cpx scratch_byte
         bne release_point_not_reached
 
-        ; is there a loop point? if so, jump there
+        ; is there a loop point?
         ldy #SequenceHeader::loop_point
         lda (bhop_ptr), y
         cmp #$FF ; magic value, means there is no loop defined
         beq release_without_loop
+        ; is the loop point *before* the release point?
+        cmp scratch_byte ; A=loop point, M=release point
+        bcs release_without_loop
 
 apply_loop_point:
         ; a contains our loop point, so jump there and exit
@@ -1346,6 +1355,43 @@ release_without_loop:
 release_point_not_reached:
         ; no jumps needed, so stash our new sequence value and exit
 done:
+        rts
+.endproc
+
+.macro release_sequence sequence_type, sequence_ptr_low, sequence_ptr_high, pitch_sequence_index
+.scope
+        lda sequences_active, x
+        and #sequence_type
+        beq done_with_sequence ; if sequence isn't enabled, bail fast
+
+        ; prepare the pitch pointer for reading
+        lda sequence_ptr_low, x
+        sta bhop_ptr
+        lda sequence_ptr_high, x
+        sta bhop_ptr + 1
+
+        ; do we have a release point enabled?
+        ldy #SequenceHeader::release_point
+        lda (bhop_ptr), y
+        beq done_with_sequence
+        ; set the sequence index to the release point immediately
+        ; (it will be ticked *past* this point on the next cycle)
+        sta pitch_sequence_index, x
+done_with_sequence:
+.endscope
+.endmacro
+
+; If this channel has any envelopes, and those envelopes
+; have a release point, jump to it immediately
+; setup: 
+;   channel_index points to channel structure
+;   x contains channel_index
+.proc apply_release
+        ; note: channel_index is conveniently already in X
+release_sequence SEQUENCE_VOLUME, volume_sequence_ptr_low, volume_sequence_ptr_high, volume_sequence_index
+release_sequence SEQUENCE_PITCH, pitch_sequence_ptr_low, pitch_sequence_ptr_high, pitch_sequence_index
+release_sequence SEQUENCE_ARP, arpeggio_sequence_ptr_low, arpeggio_sequence_ptr_high, arpeggio_sequence_index
+release_sequence SEQUENCE_DUTY, duty_sequence_ptr_low, duty_sequence_ptr_high, duty_sequence_index
         rts
 .endproc
 
