@@ -445,6 +445,9 @@ handle_note:
 check_release:
         cmp #$7E
         bne note_trigger
+        lda channel_status, x
+        ora #CHANNEL_RELEASED
+        sta channel_status, x
         jsr apply_release
         jmp done_with_bytecode
 note_trigger:
@@ -474,8 +477,8 @@ portamento_active:
         ; (this will be cleared after effects are processed)
         lda channel_status, x
         ora #CHANNEL_TRIGGERED
-        ; also, un-mute the channel
-        and #($FF - CHANNEL_MUTED)
+        ; also, un-mute  and un-release the channel
+        and #($FF - (CHANNEL_MUTED | CHANNEL_RELEASED))
         sta channel_status, x
         ; reset the instrument envelopes to the beginning
         jsr reset_instrument ; clobbers a, y
@@ -1605,8 +1608,9 @@ cleanup:
 .endproc
 
 .proc play_dpcm_samples
-        bit channel_status + DPCM_INDEX
-        bmi dpcm_muted
+        lda channel_status + DPCM_INDEX
+        and #(CHANNEL_MUTED | CHANNEL_RELEASED)
+        bne dpcm_muted
 
         lda channel_status + DPCM_INDEX
         and #CHANNEL_TRIGGERED
@@ -1615,10 +1619,7 @@ cleanup:
         ; using the current note, read the sample table
         prepare_ptr MUSIC_BASE + FtModuleHeader::sample_list
         lda channel_base_note + DPCM_INDEX
-        ; if this is the special value $7E, then this is a note release; immediately halt the channel,
-        ; but do not set the delta counter
-        cmp #$7E
-        beq dpcm_muted
+
         sta scratch_byte
         dec scratch_byte ; notes start at 1, list is indexed at 0
         ; multiply by 3
