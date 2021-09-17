@@ -191,7 +191,16 @@ positive:
         sta channel_pitch_effects_active + NOISE_INDEX
         sta channel_pitch_effects_active + DPCM_INDEX
 
+        ; reset every channel's status
+        lda #(CHANNEL_MUTED)
+        sta channel_status + PULSE_1_INDEX
+        sta channel_status + PULSE_2_INDEX
+        sta channel_status + TRIANGLE_INDEX
+        sta channel_status + NOISE_INDEX
+        sta channel_status + DPCM_INDEX
+
         ; clear out special effects
+        lda #0
         ldx #NUM_CHANNELS
 effect_init_loop:
         dex
