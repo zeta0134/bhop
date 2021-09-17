@@ -30,10 +30,10 @@ current_track: .byte $00
         .endscope
         .include "../ftm/MMBN2_samples.asm"
 
-        ;.segment "SONG_1"
-        ;.scope SONG_1
-        ;.include "../ftm/1-1.asm"
-        ;.endscope
+        .segment "SONG_1"
+        .scope SONG_1
+        .include "../ftm/1-1.asm"
+        .endscope
 
         ;.segment "SONG_2"
         ;.scope SONG_2
@@ -52,7 +52,7 @@ current_track: .byte $00
         ;.include "../ftm/corneriaz.asm"
         ;.include "../ftm/moonlight.asm"
 
-        NUM_TRACKS = 1
+        NUM_TRACKS = 2
 
         .segment "PRG_E000"
         .export start, nmi, irq
@@ -235,7 +235,6 @@ nybble_to_ascii_mapping:
 
 .proc switch_modules
         lda current_track
-        asl
         sta R0
         mmc3_select_bank $7, R0 ; song data
         inc R0

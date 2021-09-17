@@ -191,9 +191,9 @@ ft_sample_list:
 
 ; DPCM samples list (location, size, bank)
 ft_samples:
-	.byte 0, 18, 0
-	.byte 5, 36, 0
-	.byte 15, 123, 0
+	.byte <((ft_sample_0 - $C000) >> 6),  18, <.bank(ft_sample_0)
+	.byte <((ft_sample_1 - $C000) >> 6),  36, <.bank(ft_sample_1)
+	.byte <((ft_sample_2 - $C000) >> 6), 123, <.bank(ft_sample_2)
 
 ; Groove list
 ft_groove_list:
@@ -732,7 +732,7 @@ ft_s0p14c2:
 
 ; DPCM samples (located at DPCM segment)
 
-	.segment "DPCM_1"
+	.segment "DPCM_11"
 ft_sample_0: ; kick15.dmc
 	.byte $AA, $AA, $5A, $55, $55, $55, $55, $55, $71, $91, $2A, $09, $0F, $B2, $09, $D3, $2A, $32, $29, $87
 	.byte $C1, $8E, $E3, $E0, $7F, $9C, $E7, $FF, $BF, $EF, $FE, $7C, $4B, $93, $58, $A5, $A9, $2A, $6B, $71
