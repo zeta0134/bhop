@@ -28,17 +28,16 @@ current_track: .byte $00
         .scope SONG_0
         .include "../ftm/MMBN2.asm"
         .endscope
-        .include "../ftm/MMBN2_samples.asm"
 
         .segment "SONG_1"
         .scope SONG_1
         .include "../ftm/1-1.asm"
         .endscope
 
-        ;.segment "SONG_2"
-        ;.scope SONG_2
-        ;.include "../ftm/sanctuary.asm"
-        ;.endscope
+        .segment "SONG_2"
+        .scope SONG_2
+        .include "../ftm/sanctuary.asm"
+        .endscope
 
         ;.segment "SONG_3"
         ;.scope SONG_3
@@ -52,7 +51,7 @@ current_track: .byte $00
         ;.include "../ftm/corneriaz.asm"
         ;.include "../ftm/moonlight.asm"
 
-        NUM_TRACKS = 2
+        NUM_TRACKS = 3
 
         .segment "PRG_E000"
         .export start, nmi, irq

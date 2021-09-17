@@ -277,16 +277,16 @@ ft_sample_list:
 
 ; DPCM samples list (location, size, bank)
 ft_samples:
-	.byte 0, 7, 0
-	.byte 2, 10, 0
-	.byte 5, 83, 0
-	.byte 26, 5, 0
-	.byte 28, 60, 0
-	.byte 44, 29, 0
-	.byte 52, 60, 0
-	.byte 68, 29, 0
-	.byte 76, 37, 0
-	.byte 86, 29, 0
+	.byte <((ft_sample_0  - $C000) >> 6),  7, <.bank(ft_sample_0)
+	.byte <((ft_sample_1  - $C000) >> 6), 10, <.bank(ft_sample_1)
+	.byte <((ft_sample_2  - $C000) >> 6), 83, <.bank(ft_sample_2)
+	.byte <((ft_sample_3  - $C000) >> 6),  5, <.bank(ft_sample_3)
+	.byte <((ft_sample_4  - $C000) >> 6), 60, <.bank(ft_sample_4)
+	.byte <((ft_sample_5  - $C000) >> 6), 29, <.bank(ft_sample_5)
+	.byte <((ft_sample_6  - $C000) >> 6), 60, <.bank(ft_sample_6)
+	.byte <((ft_sample_7  - $C000) >> 6), 29, <.bank(ft_sample_7)
+	.byte <((ft_sample_8  - $C000) >> 6), 37, <.bank(ft_sample_8)
+	.byte <((ft_sample_9  - $C000) >> 6), 29, <.bank(ft_sample_9)
 
 ; Groove list
 ft_groove_list:
@@ -573,7 +573,7 @@ ft_s0p8c4:
 
 ; DPCM samples (located at DPCM segment)
 
-	.segment "DPCM_2"
+	.segment "DPCM_12"
 ft_sample_0: ; triangle-12D2
 	.byte $56, $55, $55, $B5, $AA, $AA, $AA, $56, $55, $55, $B5, $AA, $AA, $AA, $AA, $AA, $AA, $2A, $55, $55
 	.byte $55, $A9, $AA, $AA, $2A, $55, $55, $55, $A9, $AA, $AA, $2A, $55, $55, $55, $A5, $AA, $AA, $2A, $55
