@@ -207,6 +207,9 @@ effect_init_loop:
         sta effect_note_delay, x
         sta sequences_enabled, x
         sta sequences_active, x
+        sta channel_tuning, x
+        sta channel_vibrato_settings, x
+        sta channel_vibrato_accumulator, x
         bne effect_init_loop
 
         ; finally, enable all channels except DMC
@@ -220,6 +223,7 @@ effect_init_loop:
 .proc set_speed
         st16 tempo_cmp, $0000
 loop:
+        clc
         add16 tempo_cmp, #150
         dex
         bne loop
