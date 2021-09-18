@@ -360,7 +360,6 @@ no_skip_requested:
         lda #0
         sta row_counter
 no_frame_advance:
-        jsr advance_pattern_rows
         ; subtract tempo_cmp from tempo_counter
         sec
         lda tempo_counter
@@ -369,7 +368,9 @@ no_frame_advance:
         lda tempo_counter+1
         sbc tempo_cmp+1
         sta tempo_counter+1
-        ; advance the row counter
+        ; process the bytecode for the next pattern row
+        jsr advance_pattern_rows
+        ; advance the row counter *after* running the bytecode
         inc row_counter
 done_advancing_rows:
         rts
