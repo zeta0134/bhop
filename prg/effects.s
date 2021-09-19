@@ -7,7 +7,9 @@
 channel_vibrato_settings: .res ::NUM_CHANNELS
 channel_vibrato_accumulator: .res ::NUM_CHANNELS
 channel_tuning: .res ::NUM_CHANNELS
-.export channel_vibrato_settings, channel_vibrato_accumulator, channel_tuning
+channel_arpeggio_settings: .res ::NUM_CHANNELS
+channel_arpeggio_counter: .res ::NUM_CHANNELS
+.export channel_vibrato_settings, channel_vibrato_accumulator, channel_tuning, channel_arpeggio_settings, channel_arpeggio_counter
 
         .segment "PRG_8000"
 .include "vibrato_lut.inc"
@@ -92,5 +94,63 @@ done:
         rts
 .endproc
 .export update_tuning
+
+; prep: 
+;   channel_index set for the desired channel
+;   base_note contains the tracked note
+; effects:
+;   relative_frequency gets the arp'd note
+.proc update_arp
+        ldx channel_index
+        lda channel_pitch_effects_active, x
+        and #(PITCH_EFFECT_ARP)
+        beq done
+
+        ; the current arp counter determines which offset we apply to base_note
+        lda channel_arpeggio_counter, x
+        beq first_tick
+        cmp #1
+        beq second_tick
+third_tick:
+        ; add the low nybble to the base note
+        lda channel_arpeggio_settings, x
+        and #$0F
+        clc
+        adc channel_base_note, x
+        tay
+        jmp apply_adjusted_note
+second_tick:
+        ; add the high nybble to the base note
+        lda channel_arpeggio_settings, x
+        lsr
+        lsr
+        lsr
+        lsr
+        clc
+        adc channel_base_note, x
+        tay
+        jmp apply_adjusted_note
+first_tick:
+        ; use the base_note directly
+        lda channel_base_note, x
+        tay
+        ; fall through to:
+apply_adjusted_note:
+        lda ntsc_period_low, y
+        sta channel_relative_frequency_low, x
+        lda ntsc_period_high, y
+        sta channel_relative_frequency_high, x
+increment_arp_counter:
+        inc channel_arpeggio_counter, x
+        lda #3
+        cmp channel_arpeggio_counter, x
+        bne done
+        lda #0
+        sta channel_arpeggio_counter, x
+
+done:
+        rts
+.endproc
+.export update_arp
         
 .endscope

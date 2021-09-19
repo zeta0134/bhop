@@ -55,8 +55,9 @@ channel_instrument_volume: .res ::NUM_CHANNELS
 channel_instrument_duty: .res ::NUM_CHANNELS
 channel_selected_instrument: .res ::NUM_CHANNELS
 channel_pitch_effects_active: .res ::NUM_CHANNELS
-.export channel_status, channel_global_duration, channel_row_delay_counter, channel_selected_instrument
-.export channel_detuned_frequency_low, channel_detuned_frequency_high
+.export channel_status, channel_global_duration, channel_row_delay_counter, channel_selected_instrument, channel_pitch_effects_active
+.export channel_detuned_frequency_low, channel_detuned_frequency_high, channel_relative_frequency_low, channel_relative_frequency_high
+.export channel_base_note
 
 ; sequence state tables
 sequences_enabled: .res ::NUM_CHANNELS
@@ -92,6 +93,7 @@ effect_skip_target: .byte $00
         .export load_instrument, set_speed
 
 .include "midi_lut.inc"
+.export ntsc_period_low, ntsc_period_high, pal_period_low, pal_period_high
 
 .macro prepare_ptr address
         lda address
@@ -734,6 +736,7 @@ done_with_cut_delay:
         jsr tick_volume_envelope
         jsr tick_duty_envelope
         ; the order of pitch updates matters a lot to match FT behavior
+        jsr update_arp
         jsr tick_arp_envelope
         jsr tick_pitch_envelope
         initialize_detuned_frequency
@@ -746,6 +749,7 @@ done_with_cut_delay:
         jsr tick_delayed_effects
         jsr tick_volume_envelope
         jsr tick_duty_envelope
+        jsr update_arp
         jsr tick_arp_envelope
         jsr tick_pitch_envelope
         initialize_detuned_frequency
@@ -757,6 +761,7 @@ done_with_cut_delay:
         sta channel_index
         jsr tick_delayed_effects
         jsr tick_volume_envelope
+        jsr update_arp
         jsr tick_arp_envelope
         jsr tick_pitch_envelope
         initialize_detuned_frequency

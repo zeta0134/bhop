@@ -48,6 +48,8 @@ PITCH_EFFECT_ARP          = %00000001
 PITCH_EFFECT_UP           = %00000010
 PITCH_EFFECT_DOWN         = %00000100
 PITCH_EFFECT_PORTAMENTO   = %00001000
+PITCH_EFFECT_NOTE_UP      = %00010000
+PITCH_EFFECT_NOTE_DOWN    = %00100000
 
 ARP_MODE_ABSOLUTE = $00
 ARP_MODE_FIXED =    $01
@@ -84,12 +86,15 @@ done:
 .endscope
 .endmacro
 
+.import ntsc_period_low, ntsc_period_high, pal_period_low, pal_period_high
+
 ; various RAM and zeropage structures
 .importzp bhop_ptr, pattern_ptr, channel_index, scratch_byte
 .import row_counter, row_cmp, frame_counter, frame_cmp, tempo
-.import channel_status, channel_global_duration, channel_row_delay_counter, channel_selected_instrument
-.import channel_detuned_frequency_low, channel_detuned_frequency_high
-.import channel_vibrato_settings, channel_vibrato_accumulator, channel_tuning
+.import channel_status, channel_global_duration, channel_row_delay_counter, channel_selected_instrument, channel_pitch_effects_active
+.import channel_base_note
+.import channel_detuned_frequency_low, channel_detuned_frequency_high, channel_relative_frequency_low, channel_relative_frequency_high
+.import channel_vibrato_settings, channel_vibrato_accumulator, channel_tuning, channel_arpeggio_settings, channel_arpeggio_counter
 
 .import sequences_enabled
 .import sequences_active
@@ -113,7 +118,7 @@ done:
 
 ; various methods, mostly used by commands
 .import load_instrument, set_speed
-.import dispatch_command, skip_command, update_vibrato, update_tuning
+.import dispatch_command, skip_command, update_vibrato, update_tuning, update_arp
 
 ; Inline collections of utility macros from various sources, collected here
 ; to reduce the number of individual files needed for the sound driver to be

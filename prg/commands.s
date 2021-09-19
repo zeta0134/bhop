@@ -20,11 +20,11 @@ command_table:
     .word cmd_eff_skip             ;CMD_EFF_SKIP
     .word cmd_unimplemented        ;CMD_EFF_HALT
     .word cmd_unimplemented        ;CMD_EFF_VOLUME
-    .word cmd_unimplemented_short  ;CMD_EFF_CLEAR
+    .word cmd_eff_clear            ;CMD_EFF_CLEAR
     .word cmd_unimplemented        ;CMD_EFF_PORTAUP
     .word cmd_unimplemented        ;CMD_EFF_PORTADOWN
     .word cmd_unimplemented        ;CMD_EFF_PORTAMENTO
-    .word cmd_unimplemented        ;CMD_EFF_ARPEGGIO
+    .word cmd_eff_arpeggio         ;CMD_EFF_ARPEGGIO
     .word cmd_eff_vibrato          ;CMD_EFF_VIBRATO
     .word cmd_unimplemented        ;CMD_EFF_TREMOLO
     .word cmd_eff_pitch            ;CMD_EFF_PITCH
@@ -248,6 +248,22 @@ done:
 .proc cmd_eff_skip
         fetch_pattern_byte
         sta effect_skip_target
+        rts
+.endproc
+
+.proc cmd_eff_arpeggio
+        fetch_pattern_byte
+        sta channel_arpeggio_settings, x
+        lda #0
+        sta channel_arpeggio_counter, x
+        lda #PITCH_EFFECT_ARP
+        sta channel_pitch_effects_active, x
+        rts
+.endproc
+
+.proc cmd_eff_clear
+        lda #0
+        sta channel_pitch_effects_active, x
         rts
 .endproc
 
