@@ -685,6 +685,9 @@ done:
         lda channel_base_note + NOISE_INDEX
         sta channel_base_frequency_low + NOISE_INDEX
         sta channel_relative_frequency_low + NOISE_INDEX
+        ; reset the noise duty cycle to 0 on trigger
+        lda #0
+        sta channel_instrument_duty + NOISE_INDEX
 done:
         rts
 .endproc
