@@ -44,6 +44,7 @@ channel_status: .res ::NUM_CHANNELS
 channel_global_duration: .res ::NUM_CHANNELS
 channel_row_delay_counter: .res ::NUM_CHANNELS
 channel_base_note: .res ::NUM_CHANNELS
+channel_relative_note_offset:  .res ::NUM_CHANNELS
 channel_base_frequency_low: .res ::NUM_CHANNELS
 channel_base_frequency_high: .res ::NUM_CHANNELS
 channel_relative_frequency_low: .res ::NUM_CHANNELS
@@ -1109,11 +1110,23 @@ arp_absolute:
         tay
         jmp apply_arp
 arp_relative:
+        ; were we just triggered? if so, reset the relative offset
+        lda channel_status, x
+        and #CHANNEL_TRIGGERED
+        beq not_triggered
+        lda #0
+        sta channel_relative_note_offset, x
+not_triggered:
         ; arp accumulates an offset each frame, from the previous frame
-        lda channel_base_note, x
+        lda channel_relative_note_offset, x
         clc
         adc scratch_byte
-        sta channel_base_note, x
+        sta channel_relative_note_offset, x
+        ; this offset is then applied to base_note
+        lda channel_base_note, x
+        clc
+        adc channel_relative_note_offset, x
+        ; stuff that result in y, and apply it
         tay
         jmp apply_arp
 arp_fixed:
