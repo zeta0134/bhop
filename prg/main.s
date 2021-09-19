@@ -24,8 +24,8 @@ lowest_performance: .word $0000
 highest_performance: .word $0000
 current_track: .byte $00
 
-        .segment "SONG_6"
-        .scope SONG_6
+        .segment "SONG_0"
+        .scope SONG_0
         .include "../ftm/MMBN2.asm"
         .endscope
 
@@ -54,8 +54,8 @@ current_track: .byte $00
         .include "../ftm/bark.asm"
         .endscope
 
-        .segment "SONG_0"
-        .scope SONG_0
+        .segment "SONG_6"
+        .scope SONG_6
         .include "../ftm/nary.asm"
         .endscope
 

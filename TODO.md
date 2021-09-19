@@ -19,9 +19,9 @@ TODO - bhop
 
 - [ ] Implement major effects
   - [x] 4xy vibrato
-  - [ ] 1xx, 2xx: continuous slide
-  - [ ] Qxy, Rxy targeted semitone note slide
-  - [ ] 3xx automatic note slide (portamento)
+  - [x] 1xx, 2xx: continuous slide
+  - [x] Qxy, Rxy targeted semitone note slide
+  - [x] 3xx automatic note slide (portamento)
   - [x] 0xy arpeggio
   - [ ] 7xy tremolo
   - [ ] Axy volume slide
