@@ -9,7 +9,10 @@ channel_vibrato_accumulator: .res ::NUM_CHANNELS
 channel_tuning: .res ::NUM_CHANNELS
 channel_arpeggio_settings: .res ::NUM_CHANNELS
 channel_arpeggio_counter: .res ::NUM_CHANNELS
-.export channel_vibrato_settings, channel_vibrato_accumulator, channel_tuning, channel_arpeggio_settings, channel_arpeggio_counter
+channel_pitch_effect_settings: .res ::NUM_CHANNELS
+.export channel_vibrato_settings, channel_vibrato_accumulator, channel_tuning, channel_arpeggio_settings, channel_arpeggio_counter, channel_pitch_effect_settings
+
+scratch_target_frequency: .res 2
 
         .segment "PRG_8000"
 .include "vibrato_lut.inc"
@@ -209,13 +212,27 @@ done:
 
 ; 1xx: unconditional slide upwards; amount in xx
 .proc update_pitch_slide_up
-        ; unimplemented
+        ; (to increase pitch, we decrease period)
+        sec
+        lda channel_relative_frequency_low, x
+        sbc channel_pitch_effect_settings, x
+        sta channel_relative_frequency_low, x
+        lda channel_relative_frequency_high, x
+        sbc #0
+        sta channel_relative_frequency_high, x
         rts
 .endproc
 
-; 2xx: unconditional slide downwards; amount in xx
+; 2xx: unconditional pitch slide downwards; amount in xx
 .proc update_pitch_slide_down
-        ; unimplemented
+        ; (to decrease pitch, we increase period)
+        clc
+        lda channel_relative_frequency_low, x
+        adc channel_pitch_effect_settings, x
+        sta channel_relative_frequency_low, x
+        lda channel_relative_frequency_high, x
+        adc #0
+        sta channel_relative_frequency_high, x
         rts
 .endproc
 
@@ -223,23 +240,174 @@ done:
 ; prep: base_note, set by the tracked row, is the relative target
 ; note: does not disable itself automatically (that's the "automatic" part)
 .proc update_portamento
-        ; unimplemented
+        ; work out the target frequency based on the base_note
+        ldy channel_base_note, x
+        lda ntsc_period_low, y
+        sta scratch_target_frequency
+        lda ntsc_period_high, y
+        sta scratch_target_frequency+1
+        ; determine if our current relative_frequency is above or below the target
+check_high:
+        lda channel_relative_frequency_high, x
+        cmp scratch_target_frequency+1
+        beq check_low
+        bcc pitch_up ; channel frequency (A) is lower than target (M)
+        jmp pitch_down   
+check_low:
+        lda channel_relative_frequency_low, x
+        cmp scratch_target_frequency
+        beq done ; we are already at the target, no change needed
+        bcc pitch_up ; channel frequency (A) is lower than target (M)
+pitch_down:
+        ; subtract towards our target, based on the current speed
+        sec
+        lda channel_relative_frequency_low, x
+        sbc channel_pitch_effect_settings, x
+        sta channel_relative_frequency_low, x
+        lda channel_relative_frequency_high, x
+        sbc #0
+        sta channel_relative_frequency_high, x
+        ; did we overshoot our target? (is relative_frequency now BELOW target_frequency?)
+post_down_check_high:
+        lda scratch_target_frequency+1
+        cmp channel_relative_frequency_high, x
+        beq post_down_check_low
+        bcc done ; target frequency (A) is STILL lower than channel frequency (M)
+        jmp fix_it
+post_down_check_low:
+        lda scratch_target_frequency
+        cmp channel_relative_frequency_low, x
+        beq done ; we have reached the target, no change needed
+        bcc done ; target frequency (A) is STILL lower than channel frequency (M)
+        jmp fix_it
+pitch_up:
+        ; add towards our target, based on the current speed
+        clc
+        lda channel_relative_frequency_low, x
+        adc channel_pitch_effect_settings, x
+        sta channel_relative_frequency_low, x
+        lda channel_relative_frequency_high, x
+        adc #0
+        sta channel_relative_frequency_high, x
+        ; did we overshoot our target? (is relative_frequency now ABOVE target_frequency?)
+post_up_check_high:
+        lda channel_relative_frequency_high, x
+        cmp scratch_target_frequency+1
+        beq post_up_check_low
+        bcc done ; channel frequency (A) is STILL lower than target (M)
+        jmp fix_it
+post_up_check_low:
+        lda channel_relative_frequency_low, x
+        cmp scratch_target_frequency
+        beq done ; we have reached the target, no change needed
+        bcc done ; channel frequency (A) is STILL lower than target (M)
+        ; fall through to fix_it
+fix_it:
+        lda scratch_target_frequency
+        sta channel_relative_frequency_low, x
+        lda scratch_target_frequency+1
+        sta channel_relative_frequency_high, x
+done:
         rts
 .endproc
 
-; Qxy: targeted note slide upwards; semitones in x, speed in y
+; Qxy: targeted note slide upwards; speed in x, semitones in y
 ; prep: original note in base_note
 ; when the target note is reached, the effect becomes disabled
 .proc update_pitch_note_slide_up
-        ; unimplemented
+        ; have we just triggered? If so, adjust base_note to use the new offset
+        lda channel_pitch_effects_active, x
+        and #PITCH_EFFECT_TRIGGERED
+        beq not_triggered
+        ; clear the trigger flag which we are about to service
+        lda channel_pitch_effects_active, x
+        and #($FF - PITCH_EFFECT_TRIGGERED)
+        sta channel_pitch_effects_active, x
+
+        lda channel_pitch_effect_settings, x
+        and #$0F ; a now contains semitone offset
+        clc
+        adc channel_base_note, x
+        sta channel_base_note, x
+        ; set the portamento speed based on the high nybble
+        lsr channel_pitch_effect_settings, x
+        lsr channel_pitch_effect_settings, x
+        lsr channel_pitch_effect_settings, x
+        inc channel_pitch_effect_settings, x
+        ;lsr channel_pitch_effect_settings, x
+        jmp apply_effect
+not_triggered:
+        ; was the *channel* just triggered?
+        ; if so, disable ourselves
+        lda channel_status, x
+        and #CHANNEL_TRIGGERED
+        bne disable_effect
+
+apply_effect:
+        ; apply a portamento effect to chase the target note
+        jsr update_portamento
+        ; have we reached the target? if so, disable ourselves
+        lda scratch_target_frequency
+        cmp channel_relative_frequency_low, x
+        bne done
+        lda scratch_target_frequency+1
+        cmp channel_relative_frequency_high, x
+        bne done
+disable_effect:
+        lda #0
+        sta channel_pitch_effects_active, x
+done:   
         rts
 .endproc
 
-; Rxy: targeted note slide downwards; semitones in x, speed in y
+; Rxy: targeted note slide downwards; speed in x, semitones in y
 ; prep: original note in base_note
 ; when the target note is reached, the effect becomes disabled
 .proc update_pitch_note_slide_down
-        ; unimplemented
+        ; have we just triggered? If so, adjust base_note to use the new offset
+        lda channel_pitch_effects_active, x
+        and #PITCH_EFFECT_TRIGGERED
+        beq not_triggered
+        ; clear the trigger flag which we are about to service
+        lda channel_pitch_effects_active, x
+        and #($FF - PITCH_EFFECT_TRIGGERED)
+        sta channel_pitch_effects_active, x
+
+        lda channel_pitch_effect_settings, x
+        and #$0F ; a now contains semitone offset
+        sta scratch_byte
+        lda channel_base_note, x
+        sec
+        sbc scratch_byte
+        sta channel_base_note, x
+        ; set the portamento speed based on the high nybble
+        lsr channel_pitch_effect_settings, x
+        lsr channel_pitch_effect_settings, x
+        lsr channel_pitch_effect_settings, x
+        inc channel_pitch_effect_settings, x
+        ;lsr channel_pitch_effect_settings, x
+        jmp apply_effect
+not_triggered:
+        ; was the *channel* just triggered?
+        ; if so, disable ourselves
+        lda channel_status, x
+        and #CHANNEL_TRIGGERED
+        bne disable_effect
+
+apply_effect:
+        ; apply a portamento effect to chase the target note
+        jsr update_portamento
+        ; have we reached the target? if so, disable ourselves
+        lda scratch_target_frequency
+        cmp channel_relative_frequency_low, x
+        bne done
+        lda scratch_target_frequency+1
+        cmp channel_relative_frequency_high, x
+        bne done
+disable_effect:
+        lda #0
+        sta channel_pitch_effects_active, x
+done:   
         rts
 .endproc
 

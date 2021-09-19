@@ -470,13 +470,18 @@ note_trigger:
         lda ntsc_period_high, y
         sta channel_base_frequency_high, x
 
-        ; if we do NOT have a portamento affect active, then also write
-        ; to relative_frequency
+        ; if portamento is active AND we are not currently muted,
+        ; then skip writing the relative frequency
         
+        lda channel_status, x
+        and #CHANNEL_MUTED
+        bne write_relative_frequency
+
         lda channel_pitch_effects_active, x
-        and #($FF - PITCH_EFFECT_PORTAMENTO)
+        and #PITCH_EFFECT_PORTAMENTO
         bne portamento_active
 
+write_relative_frequency:
         lda channel_base_frequency_low, x
         sta channel_relative_frequency_low, x
         lda channel_base_frequency_high, x
@@ -744,8 +749,8 @@ done_with_cut_delay:
         jsr tick_duty_envelope
         ; the order of pitch updates matters a lot to match FT behavior
         jsr update_arp
-        jsr tick_arp_envelope
         jsr update_pitch_effects
+        jsr tick_arp_envelope
         jsr tick_pitch_envelope
         initialize_detuned_frequency
         jsr update_vibrato
@@ -758,8 +763,8 @@ done_with_cut_delay:
         jsr tick_volume_envelope
         jsr tick_duty_envelope
         jsr update_arp
-        jsr tick_arp_envelope
         jsr update_pitch_effects
+        jsr tick_arp_envelope
         jsr tick_pitch_envelope
         initialize_detuned_frequency
         jsr update_vibrato
@@ -771,8 +776,8 @@ done_with_cut_delay:
         jsr tick_delayed_effects
         jsr tick_volume_envelope
         jsr update_arp
-        jsr tick_arp_envelope
         jsr update_pitch_effects
+        jsr tick_arp_envelope
         jsr tick_pitch_envelope
         initialize_detuned_frequency
         jsr update_vibrato

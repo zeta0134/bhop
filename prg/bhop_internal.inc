@@ -43,13 +43,14 @@ SEQUENCE_PITCH   = %00000100
 SEQUENCE_HIPITCH = %00001000
 SEQUENCE_DUTY    = %00010000
 
-; for active effects (mostly unimplemented)
+; for active effects
 PITCH_EFFECT_UP           = %00000001
 PITCH_EFFECT_DOWN         = %00000010
 PITCH_EFFECT_PORTAMENTO   = %00000100
 PITCH_EFFECT_NOTE_UP      = %00001000
 PITCH_EFFECT_NOTE_DOWN    = %00010000
 PITCH_EFFECT_ARP          = %00100000
+PITCH_EFFECT_TRIGGERED    = %10000000
 
 ARP_MODE_ABSOLUTE = $00
 ARP_MODE_FIXED =    $01
@@ -94,7 +95,7 @@ done:
 .import channel_status, channel_global_duration, channel_row_delay_counter, channel_selected_instrument, channel_pitch_effects_active
 .import channel_base_note, channel_duty
 .import channel_detuned_frequency_low, channel_detuned_frequency_high, channel_relative_frequency_low, channel_relative_frequency_high
-.import channel_vibrato_settings, channel_vibrato_accumulator, channel_tuning, channel_arpeggio_settings, channel_arpeggio_counter
+.import channel_vibrato_settings, channel_vibrato_accumulator, channel_tuning, channel_arpeggio_settings, channel_arpeggio_counter, channel_pitch_effect_settings
 
 .import sequences_enabled
 .import sequences_active

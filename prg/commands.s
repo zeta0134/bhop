@@ -21,9 +21,9 @@ command_table:
     .word cmd_unimplemented        ;CMD_EFF_HALT
     .word cmd_unimplemented        ;CMD_EFF_VOLUME
     .word cmd_eff_clear            ;CMD_EFF_CLEAR
-    .word cmd_unimplemented        ;CMD_EFF_PORTAUP
-    .word cmd_unimplemented        ;CMD_EFF_PORTADOWN
-    .word cmd_unimplemented        ;CMD_EFF_PORTAMENTO
+    .word cmd_eff_portaup          ;CMD_EFF_PORTAUP
+    .word cmd_eff_portadown        ;CMD_EFF_PORTADOWN
+    .word cmd_eff_portamento       ;CMD_EFF_PORTAMENTO
     .word cmd_eff_arpeggio         ;CMD_EFF_ARPEGGIO
     .word cmd_eff_vibrato          ;CMD_EFF_VIBRATO
     .word cmd_unimplemented        ;CMD_EFF_TREMOLO
@@ -34,8 +34,8 @@ command_table:
     .word cmd_unimplemented        ;CMD_EFF_SWEEP
     .word cmd_unimplemented        ;CMD_EFF_DAC
     .word cmd_unimplemented        ;CMD_EFF_OFFSET
-    .word cmd_unimplemented        ;CMD_EFF_SLIDE_UP
-    .word cmd_unimplemented        ;CMD_EFF_SLIDE_DOWN
+    .word cmd_eff_slide_up         ;CMD_EFF_SLIDE_UP
+    .word cmd_eff_slide_down       ;CMD_EFF_SLIDE_DOWN
     .word cmd_unimplemented        ;CMD_EFF_VOL_SLIDE
     .word cmd_eff_note_cut         ;CMD_EFF_NOTE_CUT
     .word cmd_unimplemented        ;CMD_EFF_RETRIGGER
@@ -257,6 +257,46 @@ done:
         lda #0
         sta channel_arpeggio_counter, x
         lda #PITCH_EFFECT_ARP
+        sta channel_pitch_effects_active, x
+        rts
+.endproc
+
+.proc cmd_eff_portaup
+        fetch_pattern_byte
+        sta channel_pitch_effect_settings, x
+        lda #PITCH_EFFECT_UP
+        sta channel_pitch_effects_active, x
+        rts
+.endproc
+
+.proc cmd_eff_portadown
+        fetch_pattern_byte
+        sta channel_pitch_effect_settings, x
+        lda #PITCH_EFFECT_DOWN
+        sta channel_pitch_effects_active, x
+        rts
+.endproc
+
+.proc cmd_eff_portamento
+        fetch_pattern_byte
+        sta channel_pitch_effect_settings, x
+        lda #PITCH_EFFECT_PORTAMENTO
+        sta channel_pitch_effects_active, x
+        rts
+.endproc
+
+.proc cmd_eff_slide_up
+        fetch_pattern_byte
+        sta channel_pitch_effect_settings, x
+        lda #(PITCH_EFFECT_NOTE_UP | PITCH_EFFECT_TRIGGERED)
+        sta channel_pitch_effects_active, x
+        rts
+.endproc
+
+.proc cmd_eff_slide_down
+        fetch_pattern_byte
+        sta channel_pitch_effect_settings, x
+        lda #(PITCH_EFFECT_NOTE_DOWN | PITCH_EFFECT_TRIGGERED)
         sta channel_pitch_effects_active, x
         rts
 .endproc
