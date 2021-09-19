@@ -1058,7 +1058,7 @@ done:
         lda arpeggio_sequence_ptr_high, x
         sta bhop_ptr + 1
 
-        ; For arps, we need to "reset" the channel if the envelope finishes, so we're doing
+        ; For fixed arps, we need to "reset" the channel if the envelope finishes, so we're doing
         ; the length check first thing
 
         lda arpeggio_sequence_index, x
@@ -1074,7 +1074,13 @@ done:
         and #($FF - SEQUENCE_ARP)
         sta sequences_active, x
 
-        ; now apply the current base note as the channel frequency,
+        ; is this a fixed arp?
+        ldy #SequenceHeader::mode
+        lda (bhop_ptr), y
+        cmp #ARP_MODE_FIXED
+        bne early_exit
+
+        ; apply the current base note as the channel frequency,
         ; then exit:
         lda channel_base_note, x
         tay
