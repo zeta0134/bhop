@@ -309,6 +309,11 @@ done:
 
 .proc cmd_eff_duty
         fetch_pattern_byte
+        ror
+        ror
+        ror
+        ; safety
+        and #%11000000
         sta channel_duty, x
         rts
 .endproc

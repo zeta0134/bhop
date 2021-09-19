@@ -60,7 +60,7 @@ channel_selected_instrument: .res ::NUM_CHANNELS
 channel_pitch_effects_active: .res ::NUM_CHANNELS
 .export channel_status, channel_global_duration, channel_row_delay_counter, channel_selected_instrument, channel_pitch_effects_active
 .export channel_detuned_frequency_low, channel_detuned_frequency_high, channel_relative_frequency_low, channel_relative_frequency_high
-.export channel_base_note, channel_duty, channel_volume, channel_tremolo_volume
+.export channel_base_note, channel_duty, channel_volume, channel_tremolo_volume, channel_instrument_duty
 
 ; sequence state tables
 sequences_enabled: .res ::NUM_CHANNELS
