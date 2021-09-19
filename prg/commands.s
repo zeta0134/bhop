@@ -18,7 +18,7 @@ command_table:
     .word cmd_eff_tempo            ;CMD_EFF_TEMPO
     .word cmd_eff_jump             ;CMD_EFF_JUMP
     .word cmd_eff_skip             ;CMD_EFF_SKIP
-    .word cmd_unimplemented        ;CMD_EFF_HALT
+    .word cmd_eff_halt             ;CMD_EFF_HALT
     .word cmd_unimplemented        ;CMD_EFF_VOLUME
     .word cmd_eff_clear            ;CMD_EFF_CLEAR
     .word cmd_eff_portaup          ;CMD_EFF_PORTAUP
@@ -334,6 +334,23 @@ done:
         sta channel_volume_slide_settings, x
         lda #0
         sta channel_volume_slide_accumulator, x
+        rts
+.endproc
+
+.proc cmd_eff_halt
+        fetch_pattern_byte ; and throw it away
+        ; set the tempo to 0 (stops rows from advancing at all)
+        lda #0
+        sta tempo
+        ; immediately mute all channels
+        ldx #NUM_CHANNELS
+loop:
+        dex
+        lda channel_status, x
+        ora #CHANNEL_MUTED
+        sta channel_status, x
+        cpx #0
+        bne loop
         rts
 .endproc
 
