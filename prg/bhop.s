@@ -215,6 +215,8 @@ effect_init_loop:
         sta channel_tuning, x
         sta channel_vibrato_settings, x
         sta channel_vibrato_accumulator, x
+        sta channel_volume_slide_settings, x
+        sta channel_tremolo_settings, x
         sta channel_duty, x
         bne effect_init_loop
 
