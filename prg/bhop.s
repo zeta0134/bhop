@@ -1145,8 +1145,10 @@ not_triggered:
         tay
         jmp apply_arp
 arp_fixed:
-        ; the arp value *is* the note to apply
+        ; the arp value +1 is the note to apply
         lda scratch_byte
+        clc
+        adc #1
         tay
         ; fall through to apply_arp
 apply_arp:
@@ -1248,8 +1250,10 @@ arp_relative:
         tay
         jmp apply_arp
 arp_fixed:
-        ; the arp value *is* the note to apply
+        ; the arp value +1 is the note to apply
         lda scratch_byte
+        clc
+        adc #1
         tay
         ; fall through to apply_arp
 apply_arp:
