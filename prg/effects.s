@@ -330,11 +330,13 @@ done:
         adc channel_base_note, x
         sta channel_base_note, x
         ; set the portamento speed based on the high nybble
-        lsr channel_pitch_effect_settings, x
-        lsr channel_pitch_effect_settings, x
-        lsr channel_pitch_effect_settings, x
-        inc channel_pitch_effect_settings, x
-        ;lsr channel_pitch_effect_settings, x
+        ; Given Qxy, compute (x >> 3 + 1)
+        lda channel_pitch_effect_settings, x
+        lsr
+        lsr
+        lsr
+        ora #1
+        sta channel_pitch_effect_settings, x
         jmp apply_effect
 not_triggered:
         ; was the *channel* just triggered?
@@ -381,11 +383,13 @@ done:
         sbc scratch_byte
         sta channel_base_note, x
         ; set the portamento speed based on the high nybble
-        lsr channel_pitch_effect_settings, x
-        lsr channel_pitch_effect_settings, x
-        lsr channel_pitch_effect_settings, x
-        inc channel_pitch_effect_settings, x
-        ;lsr channel_pitch_effect_settings, x
+        ; Given Rxy, compute (x >> 3 + 1)
+        lda channel_pitch_effect_settings, x
+        lsr
+        lsr
+        lsr
+        ora #1
+        sta channel_pitch_effect_settings, x
         jmp apply_effect
 not_triggered:
         ; was the *channel* just triggered?
