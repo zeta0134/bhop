@@ -17,14 +17,14 @@ TODO - bhop
   - [x] pitch_effects_active
   - [x] note_delay
 
-- [ ] Implement major effects
+- [x] Implement major effects
   - [x] 4xy vibrato
   - [x] 1xx, 2xx: continuous slide
   - [x] Qxy, Rxy targeted semitone note slide
   - [x] 3xx automatic note slide (portamento)
   - [x] 0xy arpeggio
-  - [ ] 7xy tremolo
-  - [ ] Axy volume slide
+  - [x] 7xy tremolo
+  - [x] Axy volume slide
 
 - [x] Implement minor effects
   - [x] Fxx tempo change
