@@ -1,4 +1,4 @@
-; Dn-FamiTracker exported music data: Untitled
+; Dn-FamiTracker exported music data: volume_slide_test.0cc
 ;
 
 ; Module header
@@ -69,8 +69,8 @@ ft_s0f1:
 	.word ft_s0p1c0, ft_s0p0c1, ft_s0p0c1, ft_s0p0c1, ft_s0p0c1
 ; Bank 0
 ft_s0p0c0:
-	.byte $E0, $90, $44, $19, $0B, $7F, $03, $90, $84, $1B, $0B, $7F, $03, $90, $C4, $1D, $0B, $7F, $03, $90
-	.byte $F4, $1E, $0B, $90, $00, $7F, $03
+	.byte $E0, $90, $44, $FF, $19, $0B, $7F, $03, $90, $84, $FF, $1B, $0B, $7F, $03, $90, $C4, $FF, $1D, $0B
+	.byte $7F, $03, $90, $F4, $FF, $1E, $0B, $90, $00, $7F, $03
 
 ; Bank 0
 ft_s0p0c1:
@@ -79,7 +79,7 @@ ft_s0p0c1:
 ; Bank 0
 ft_s0p1c0:
 	.byte $E0, $9A, $10, $F0, $25, $0B, $7F, $03, $9A, $20, $F0, $27, $0B, $7F, $03, $9A, $01, $FF, $29, $0B
-	.byte $7F, $03, $9A, $12, $FF, $2A, $0B, $7F, $03
+	.byte $7F, $03, $9A, $12, $FF, $2A, $0B, $9A, $00, $7F, $03
 
 
 ; DPCM samples (located at DPCM segment)

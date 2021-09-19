@@ -96,7 +96,7 @@ done:
 .import channel_base_note, channel_duty, channel_volume, channel_tremolo_volume
 .import channel_detuned_frequency_low, channel_detuned_frequency_high, channel_relative_frequency_low, channel_relative_frequency_high
 .import channel_vibrato_settings, channel_vibrato_accumulator, channel_tuning, channel_arpeggio_settings, channel_arpeggio_counter
-.import channel_pitch_effect_settings, channel_tremolo_settings, channel_tremolo_accumulator, channel_volume_slide_settings
+.import channel_pitch_effect_settings, channel_tremolo_settings, channel_tremolo_accumulator, channel_volume_slide_settings, channel_volume_slide_accumulator
 
 .import sequences_enabled
 .import sequences_active

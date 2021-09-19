@@ -13,8 +13,9 @@ channel_pitch_effect_settings: .res ::NUM_CHANNELS
 channel_tremolo_settings: .res ::NUM_CHANNELS
 channel_tremolo_accumulator: .res ::NUM_CHANNELS
 channel_volume_slide_settings: .res ::NUM_CHANNELS
+channel_volume_slide_accumulator: .res ::NUM_CHANNELS
 .export channel_vibrato_settings, channel_vibrato_accumulator, channel_tuning, channel_arpeggio_settings, channel_arpeggio_counter
-.export channel_pitch_effect_settings, channel_tremolo_settings, channel_tremolo_accumulator, channel_volume_slide_settings
+.export channel_pitch_effect_settings, channel_tremolo_settings, channel_tremolo_accumulator, channel_volume_slide_settings, channel_volume_slide_accumulator
 
 scratch_target_frequency: .res 2
 
@@ -408,13 +409,14 @@ done:
 .endproc
 
 .proc update_volume_effects
+        ldx channel_index
         jsr update_tremolo
+        jsr update_volume_slide
         rts
 .endproc
 .export update_volume_effects
 
 .proc update_tremolo
-        ldx channel_index
         lda channel_tremolo_settings, x
         beq no_tremolo ; bail fast
 
@@ -482,6 +484,58 @@ normal_read:
         lda vibrato_lut, y
         ; tremolo is at half-strength
         lsr
+        rts
+.endproc
+
+.proc update_volume_slide
+        lda channel_volume_slide_settings, x
+        beq done
+
+        ; the high nybble should be added to the accumulator
+        lsr
+        lsr
+        lsr
+        lsr
+        clc
+        adc channel_volume_slide_accumulator, x
+        sta channel_volume_slide_accumulator, x
+        ; the low nybble should be subtracted from the same accumulator
+        lda channel_volume_slide_settings, x
+        and #$0F
+        sta scratch_byte
+        lda channel_volume_slide_accumulator, x
+        sec
+        sbc scratch_byte
+        ; at this stage the high 5 bits describe our desired change to channel_volume
+        sta scratch_byte
+        ; mask the change off and keep the low 3 bits for future accumulation
+        and #%00000111
+        sta channel_volume_slide_accumulator, x
+        ; ASR 3 times
+        lda scratch_byte
+        .repeat 3
+        cmp #$80
+        ror
+        .endrep
+        ; A now contains the desired change to channel_volume
+        clc
+        adc channel_volume, x
+        ; if channel volume is now negative, set it to 0
+        bmi zero_volume
+        ; if it now exceeds 15, cap it there
+        cmp #15
+        bcs cap_volume
+        ; store this volume and bail
+        sta channel_volume, x
+        rts
+cap_volume:
+        lda #15
+        sta channel_volume, x
+        rts
+zero_volume:
+        lda #0
+        sta channel_volume, x
+done:
         rts
 .endproc
 

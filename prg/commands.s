@@ -36,7 +36,7 @@ command_table:
     .word cmd_unimplemented        ;CMD_EFF_OFFSET
     .word cmd_eff_slide_up         ;CMD_EFF_SLIDE_UP
     .word cmd_eff_slide_down       ;CMD_EFF_SLIDE_DOWN
-    .word cmd_unimplemented        ;CMD_EFF_VOL_SLIDE
+    .word cmd_eff_vol_slide        ;CMD_EFF_VOL_SLIDE
     .word cmd_eff_note_cut         ;CMD_EFF_NOTE_CUT
     .word cmd_unimplemented        ;CMD_EFF_RETRIGGER
     .word cmd_unimplemented        ;CMD_EFF_DPCM_PITCH
@@ -321,6 +321,14 @@ done:
         lda #0
         sta channel_tremolo_accumulator, x
 done:
+        rts
+.endproc
+
+.proc cmd_eff_vol_slide
+        fetch_pattern_byte
+        sta channel_volume_slide_settings, x
+        lda #0
+        sta channel_volume_slide_accumulator, x
         rts
 .endproc
 
