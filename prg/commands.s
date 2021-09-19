@@ -29,7 +29,7 @@ command_table:
     .word cmd_unimplemented        ;CMD_EFF_TREMOLO
     .word cmd_eff_pitch            ;CMD_EFF_PITCH
     .word cmd_eff_reset_pitch      ;CMD_EFF_RESET_PITCH
-    .word cmd_unimplemented        ;CMD_EFF_DUTY
+    .word cmd_eff_duty             ;CMD_EFF_DUTY
     .word cmd_eff_delay            ;CMD_EFF_DELAY
     .word cmd_unimplemented        ;CMD_EFF_SWEEP
     .word cmd_unimplemented        ;CMD_EFF_DAC
@@ -264,6 +264,12 @@ done:
 .proc cmd_eff_clear
         lda #0
         sta channel_pitch_effects_active, x
+        rts
+.endproc
+
+.proc cmd_eff_duty
+        fetch_pattern_byte
+        sta channel_duty, x
         rts
 .endproc
 

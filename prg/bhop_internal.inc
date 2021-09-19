@@ -92,7 +92,7 @@ done:
 .importzp bhop_ptr, pattern_ptr, channel_index, scratch_byte
 .import row_counter, row_cmp, frame_counter, frame_cmp, tempo
 .import channel_status, channel_global_duration, channel_row_delay_counter, channel_selected_instrument, channel_pitch_effects_active
-.import channel_base_note
+.import channel_base_note, channel_duty
 .import channel_detuned_frequency_low, channel_detuned_frequency_high, channel_relative_frequency_low, channel_relative_frequency_high
 .import channel_vibrato_settings, channel_vibrato_accumulator, channel_tuning, channel_arpeggio_settings, channel_arpeggio_counter
 

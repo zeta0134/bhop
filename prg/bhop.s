@@ -51,13 +51,14 @@ channel_relative_frequency_high: .res ::NUM_CHANNELS
 channel_detuned_frequency_low: .res ::NUM_CHANNELS
 channel_detuned_frequency_high: .res ::NUM_CHANNELS
 channel_volume: .res ::NUM_CHANNELS
+channel_duty: .res ::NUM_CHANNELS
 channel_instrument_volume: .res ::NUM_CHANNELS
 channel_instrument_duty: .res ::NUM_CHANNELS
 channel_selected_instrument: .res ::NUM_CHANNELS
 channel_pitch_effects_active: .res ::NUM_CHANNELS
 .export channel_status, channel_global_duration, channel_row_delay_counter, channel_selected_instrument, channel_pitch_effects_active
 .export channel_detuned_frequency_low, channel_detuned_frequency_high, channel_relative_frequency_low, channel_relative_frequency_high
-.export channel_base_note
+.export channel_base_note, channel_duty
 
 ; sequence state tables
 sequences_enabled: .res ::NUM_CHANNELS
@@ -212,6 +213,7 @@ effect_init_loop:
         sta channel_tuning, x
         sta channel_vibrato_settings, x
         sta channel_vibrato_accumulator, x
+        sta channel_duty, x
         bne effect_init_loop
 
         ; finally, enable all channels except DMC
@@ -493,6 +495,10 @@ portamento_active:
         ; sequence, this will be immediately overwritten with the first element)
         lda #$F
         sta channel_instrument_volume, x
+        ; reset the instrument duty to the channel_duty (again, this will usually
+        ; be overwritten by the instrument sequence)
+        lda channel_duty, x
+        sta channel_instrument_duty, x
         ; fall through to done_with_bytecode
 done_with_bytecode:
         ; If we're still in global duration mode at this point,
@@ -685,9 +691,6 @@ done:
         lda channel_base_note + NOISE_INDEX
         sta channel_base_frequency_low + NOISE_INDEX
         sta channel_relative_frequency_low + NOISE_INDEX
-        ; reset the noise duty cycle to 0 on trigger
-        lda #0
-        sta channel_instrument_duty + NOISE_INDEX
 done:
         rts
 .endproc
