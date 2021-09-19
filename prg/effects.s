@@ -348,13 +348,7 @@ not_triggered:
 apply_effect:
         ; apply a portamento effect to chase the target note
         jsr update_portamento
-        ; have we reached the target? if so, disable ourselves
-        lda scratch_target_frequency
-        cmp channel_relative_frequency_low, x
-        bne done
-        lda scratch_target_frequency+1
-        cmp channel_relative_frequency_high, x
-        bne done
+        rts ; all done
 disable_effect:
         lda #0
         sta channel_pitch_effects_active, x
@@ -401,13 +395,7 @@ not_triggered:
 apply_effect:
         ; apply a portamento effect to chase the target note
         jsr update_portamento
-        ; have we reached the target? if so, disable ourselves
-        lda scratch_target_frequency
-        cmp channel_relative_frequency_low, x
-        bne done
-        lda scratch_target_frequency+1
-        cmp channel_relative_frequency_high, x
-        bne done
+        rts ; all done
 disable_effect:
         lda #0
         sta channel_pitch_effects_active, x
