@@ -10,7 +10,11 @@ channel_tuning: .res ::NUM_CHANNELS
 channel_arpeggio_settings: .res ::NUM_CHANNELS
 channel_arpeggio_counter: .res ::NUM_CHANNELS
 channel_pitch_effect_settings: .res ::NUM_CHANNELS
-.export channel_vibrato_settings, channel_vibrato_accumulator, channel_tuning, channel_arpeggio_settings, channel_arpeggio_counter, channel_pitch_effect_settings
+channel_tremolo_settings: .res ::NUM_CHANNELS
+channel_tremolo_accumulator: .res ::NUM_CHANNELS
+channel_volume_slide_settings: .res ::NUM_CHANNELS
+.export channel_vibrato_settings, channel_vibrato_accumulator, channel_tuning, channel_arpeggio_settings, channel_arpeggio_counter
+.export channel_pitch_effect_settings, channel_tremolo_settings, channel_tremolo_accumulator, channel_volume_slide_settings
 
 scratch_target_frequency: .res 2
 
@@ -400,6 +404,84 @@ disable_effect:
         lda #0
         sta channel_pitch_effects_active, x
 done:   
+        rts
+.endproc
+
+.proc update_volume_effects
+        jsr update_tremolo
+        rts
+.endproc
+.export update_volume_effects
+
+.proc update_tremolo
+        ldx channel_index
+        lda channel_tremolo_settings, x
+        beq no_tremolo ; bail fast
+
+        ; apply the current tremolo speed to the accumulator
+        and #$0F
+        clc
+        adc channel_tremolo_accumulator, x
+        sta channel_tremolo_accumulator, x
+
+        ; now read the "tremolo" LUT, then subtract the result from channel_volume
+        jsr read_tremolo_lut
+        sta scratch_byte
+        lda channel_volume, x
+        sec
+        sbc scratch_byte
+        ; if we land on 0 or end up negative, we need to clamp to 1
+        bpl no_clamp
+        lda #1
+no_clamp:
+        sta channel_tremolo_volume, x
+        rts
+
+no_tremolo:
+        ; use the channel volume directly then
+        lda channel_volume, x
+        sta channel_tremolo_volume, x
+        rts
+.endproc
+
+; Read the "tremolo" LUT, which is actually a riff on the vibrato LUT. Here we only
+; care about the first half of the table, so we need the mirroring logic, but not the
+; negation logic.
+; prep: 
+;   x contains channel_index
+; return:
+;   a - tremolo strength, unsigned
+; clobbers: y, scratch_byte
+.proc read_tremolo_lut
+        ; tremolo advances the accumulator at half speed
+        lda channel_tremolo_accumulator, x
+        lsr
+        sta scratch_byte
+        ; note: we can't use BIT here, it has inconvenient addressing modes
+        ; fortunately it's ideal for A to end up mostly cleared
+        lda #%00010000
+        and scratch_byte
+        bne reverse_lut
+normal_lut:
+        lda #$0F
+        and scratch_byte
+        jmp store_index
+reverse_lut:
+        ; A already contains 0000 in its low bits, which
+        ; works fine in this case
+        clc
+        sbc scratch_byte
+        and #$0F ; mask off the upper bits
+store_index:
+        sta scratch_byte
+        lda channel_tremolo_settings, x
+        and #$F0
+        ora scratch_byte
+        tay        
+normal_read:
+        lda vibrato_lut, y
+        ; tremolo is at half-strength
+        lsr
         rts
 .endproc
 

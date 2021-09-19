@@ -26,7 +26,8 @@ current_track: .byte $00
 
         .segment "SONG_0"
         .scope SONG_0
-        .include "../ftm/MMBN2.asm"
+        ;.include "../ftm/MMBN2.asm"
+        .include "../ftm/tremolo_axy_test.asm"
         .endscope
 
         .segment "SONG_1"

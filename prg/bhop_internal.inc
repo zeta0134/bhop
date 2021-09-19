@@ -93,9 +93,10 @@ done:
 .importzp bhop_ptr, pattern_ptr, channel_index, scratch_byte
 .import row_counter, row_cmp, frame_counter, frame_cmp, tempo
 .import channel_status, channel_global_duration, channel_row_delay_counter, channel_selected_instrument, channel_pitch_effects_active
-.import channel_base_note, channel_duty
+.import channel_base_note, channel_duty, channel_volume, channel_tremolo_volume
 .import channel_detuned_frequency_low, channel_detuned_frequency_high, channel_relative_frequency_low, channel_relative_frequency_high
-.import channel_vibrato_settings, channel_vibrato_accumulator, channel_tuning, channel_arpeggio_settings, channel_arpeggio_counter, channel_pitch_effect_settings
+.import channel_vibrato_settings, channel_vibrato_accumulator, channel_tuning, channel_arpeggio_settings, channel_arpeggio_counter
+.import channel_pitch_effect_settings, channel_tremolo_settings, channel_tremolo_accumulator, channel_volume_slide_settings
 
 .import sequences_enabled
 .import sequences_active
@@ -119,7 +120,7 @@ done:
 
 ; various methods, mostly used by commands
 .import load_instrument, set_speed
-.import dispatch_command, skip_command, update_vibrato, update_tuning, update_arp, update_pitch_effects
+.import dispatch_command, skip_command, update_vibrato, update_tuning, update_arp, update_pitch_effects, update_volume_effects
 
 ; Inline collections of utility macros from various sources, collected here
 ; to reduce the number of individual files needed for the sound driver to be

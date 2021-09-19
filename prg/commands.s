@@ -26,7 +26,7 @@ command_table:
     .word cmd_eff_portamento       ;CMD_EFF_PORTAMENTO
     .word cmd_eff_arpeggio         ;CMD_EFF_ARPEGGIO
     .word cmd_eff_vibrato          ;CMD_EFF_VIBRATO
-    .word cmd_unimplemented        ;CMD_EFF_TREMOLO
+    .word cmd_eff_tremolo          ;CMD_EFF_TREMOLO
     .word cmd_eff_pitch            ;CMD_EFF_PITCH
     .word cmd_eff_reset_pitch      ;CMD_EFF_RESET_PITCH
     .word cmd_eff_duty             ;CMD_EFF_DUTY
@@ -310,6 +310,17 @@ done:
 .proc cmd_eff_duty
         fetch_pattern_byte
         sta channel_duty, x
+        rts
+.endproc
+
+.proc cmd_eff_tremolo
+        fetch_pattern_byte
+        sta channel_tremolo_settings, x
+        bne done
+        ; for `700` specifically, reset the tremolo phase
+        lda #0
+        sta channel_tremolo_accumulator, x
+done:
         rts
 .endproc
 

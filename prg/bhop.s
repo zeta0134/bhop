@@ -52,6 +52,7 @@ channel_relative_frequency_high: .res ::NUM_CHANNELS
 channel_detuned_frequency_low: .res ::NUM_CHANNELS
 channel_detuned_frequency_high: .res ::NUM_CHANNELS
 channel_volume: .res ::NUM_CHANNELS
+channel_tremolo_volume: .res ::NUM_CHANNELS
 channel_duty: .res ::NUM_CHANNELS
 channel_instrument_volume: .res ::NUM_CHANNELS
 channel_instrument_duty: .res ::NUM_CHANNELS
@@ -59,7 +60,7 @@ channel_selected_instrument: .res ::NUM_CHANNELS
 channel_pitch_effects_active: .res ::NUM_CHANNELS
 .export channel_status, channel_global_duration, channel_row_delay_counter, channel_selected_instrument, channel_pitch_effects_active
 .export channel_detuned_frequency_low, channel_detuned_frequency_high, channel_relative_frequency_low, channel_relative_frequency_high
-.export channel_base_note, channel_duty
+.export channel_base_note, channel_duty, channel_volume, channel_tremolo_volume
 
 ; sequence state tables
 sequences_enabled: .res ::NUM_CHANNELS
@@ -750,6 +751,7 @@ done_with_cut_delay:
         ; the order of pitch updates matters a lot to match FT behavior
         jsr update_arp
         jsr update_pitch_effects
+        jsr update_volume_effects
         jsr tick_arp_envelope
         jsr tick_pitch_envelope
         initialize_detuned_frequency
@@ -764,6 +766,7 @@ done_with_cut_delay:
         jsr tick_duty_envelope
         jsr update_arp
         jsr update_pitch_effects
+        jsr update_volume_effects
         jsr tick_arp_envelope
         jsr tick_pitch_envelope
         initialize_detuned_frequency
@@ -787,6 +790,7 @@ done_with_cut_delay:
         lda #NOISE_INDEX
         sta channel_index
         jsr tick_delayed_effects
+        jsr update_volume_effects
         jsr tick_volume_envelope
         jsr tick_duty_envelope
         jsr tick_noise_arp_envelope
@@ -1456,7 +1460,7 @@ tick_pulse1:
         bmi pulse1_muted
 
         ; apply the combined channel and instrument volume
-        lda channel_volume + PULSE_1_INDEX
+        lda channel_tremolo_volume + PULSE_1_INDEX
         asl
         asl
         asl
@@ -1505,7 +1509,7 @@ tick_pulse2:
         bmi pulse2_muted
 
         ; apply the combined channel and instrument volume
-        lda channel_volume + PULSE_2_INDEX
+        lda channel_tremolo_volume + PULSE_2_INDEX
         asl
         asl
         asl
@@ -1581,7 +1585,7 @@ tick_noise:
         bmi noise_muted
 
         ; apply the combined channel and instrument volume
-        lda channel_volume + NOISE_INDEX
+        lda channel_tremolo_volume + NOISE_INDEX
         asl
         asl
         asl
