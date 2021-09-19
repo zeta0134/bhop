@@ -152,5 +152,95 @@ done:
         rts
 .endproc
 .export update_arp
+
+; sortof a dispatch function, since pitch effects are all processed at
+; the same time but have subtly different behavior
+; prep: 
+;   channel_index set for the desired channel
+;   base_note contains the triggered OR current target note (depending on effect)
+;   relative_frequency contains the active frequency
+; effects:
+;   relative_frequency gets the adjusted frequency
+;   on trigger, base_note might be adjusted (depends on effect)
+.proc update_pitch_effects
+        ldx channel_index
+        lda channel_pitch_effects_active, x
+        and #($FF - PITCH_EFFECT_ARP)
+        beq done ; no effects active at all
         
+        ; here we abuse the flag layout for the effects; only one of these
+        ; will ever be enabled at a time, and they are in this order:
+        ;PITCH_EFFECT_UP           = %00000001
+        ;PITCH_EFFECT_DOWN         = %00000010
+        ;PITCH_EFFECT_PORTAMENTO   = %00000100
+        ;PITCH_EFFECT_NOTE_UP      = %00001000
+        ;PITCH_EFFECT_NOTE_DOWN    = %00010000
+
+        ; given the above, let's shift the bits of A out to the right,
+        ; and call the selected function
+check_slide_up:
+        lsr
+        bcc check_slide_down
+        jsr update_pitch_slide_up
+        rts
+check_slide_down:
+        lsr
+        bcc check_portamento
+        jsr update_pitch_slide_down
+        rts
+check_portamento:
+        lsr
+        bcc check_note_up
+        jsr update_portamento
+        rts
+check_note_up:
+        lsr
+        bcc check_note_down
+        jsr update_pitch_note_slide_up
+        rts
+check_note_down:
+        lsr
+        bcc done
+        jsr update_pitch_note_slide_down
+done:
+        rts
+.endproc
+.export update_pitch_effects
+
+; 1xx: unconditional slide upwards; amount in xx
+.proc update_pitch_slide_up
+        ; unimplemented
+        rts
+.endproc
+
+; 2xx: unconditional slide downwards; amount in xx
+.proc update_pitch_slide_down
+        ; unimplemented
+        rts
+.endproc
+
+; 3xx: automatic portamento, speed in xx
+; prep: base_note, set by the tracked row, is the relative target
+; note: does not disable itself automatically (that's the "automatic" part)
+.proc update_portamento
+        ; unimplemented
+        rts
+.endproc
+
+; Qxy: targeted note slide upwards; semitones in x, speed in y
+; prep: original note in base_note
+; when the target note is reached, the effect becomes disabled
+.proc update_pitch_note_slide_up
+        ; unimplemented
+        rts
+.endproc
+
+; Rxy: targeted note slide downwards; semitones in x, speed in y
+; prep: original note in base_note
+; when the target note is reached, the effect becomes disabled
+.proc update_pitch_note_slide_down
+        ; unimplemented
+        rts
+.endproc
+
 .endscope

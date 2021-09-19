@@ -22,13 +22,17 @@ TODO - bhop
   - [ ] 1xx, 2xx: continuous slide
   - [ ] Qxy, Rxy targeted semitone note slide
   - [ ] 3xx automatic note slide (portamento)
-  - [ ] 0xy arpeggio
+  - [x] 0xy arpeggio
   - [ ] 7xy tremolo
   - [ ] Axy volume slide
 
-- [ ] Implement minor effects
+- [x] Implement minor effects
   - [x] Fxx tempo change
   - [x] Sxx delayed note cut
-  - [ ] Dxx skip to next frame + xx rows
+  - [x] Dxx skip to next frame + xx rows
 
-- [ ] Work on a tool to redistribute DPCM samples into single banks, with sizes other than 4k
+- [x] Work on a tool to redistribute DPCM samples into single banks, with sizes other than 4k*
+
+Dn-FamiTracker now sorta, kinda supports this in a branch
+
+

@@ -738,6 +738,7 @@ done_with_cut_delay:
         ; the order of pitch updates matters a lot to match FT behavior
         jsr update_arp
         jsr tick_arp_envelope
+        jsr update_pitch_effects
         jsr tick_pitch_envelope
         initialize_detuned_frequency
         jsr update_vibrato
@@ -751,6 +752,7 @@ done_with_cut_delay:
         jsr tick_duty_envelope
         jsr update_arp
         jsr tick_arp_envelope
+        jsr update_pitch_effects
         jsr tick_pitch_envelope
         initialize_detuned_frequency
         jsr update_vibrato
@@ -763,6 +765,7 @@ done_with_cut_delay:
         jsr tick_volume_envelope
         jsr update_arp
         jsr tick_arp_envelope
+        jsr update_pitch_effects
         jsr tick_pitch_envelope
         initialize_detuned_frequency
         jsr update_vibrato
