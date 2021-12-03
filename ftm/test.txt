@@ -1,0 +1,580 @@
+btm_song0_frames:
+  .word btm_song0_frame0
+  .word btm_song0_frame1
+  .word btm_song0_frame2
+  .word btm_song0_frame3
+  .word btm_song0_frame4
+  .word btm_song0_frame5
+  .word btm_song0_frame6
+  .word btm_song0_frame7
+  .word btm_song0_frame8
+  .word btm_song0_frame9
+  .word btm_song0_frame10
+btm_song0_frame0:
+  .word btm_song0_fm_1ch_pattern0
+  .word btm_song0_fm_2ch_pattern0
+  .word btm_song0_fm_3ch_pattern0
+  .word btm_song0_fm_4ch_pattern0
+  .word btm_song0_fm_5ch_pattern0
+  .word btm_song0_fm_6ch_pattern0
+  .word btm_song0_ssg_1ch_pattern0
+  .word btm_song0_ssg_2ch_pattern0
+  .word btm_song0_ssg_3ch_pattern0
+  .word btm_song0_rhythm_bass_drum_pattern0
+  .word btm_song0_rhythm_snare_drum_pattern0
+  .word btm_song0_rhythm_top_cymbal_pattern0
+  .word btm_song0_rhythm_hi_hat_pattern0
+  .word btm_song0_rhythm_tom_pattern0
+  .word unspecified_empty_pattern
+  .word unspecified_empty_pattern
+btm_song0_frame1:
+  .word btm_song0_fm_1ch_pattern0
+  .word btm_song0_fm_2ch_pattern0
+  .word btm_song0_fm_3ch_pattern1
+  .word btm_song0_fm_4ch_pattern1
+  .word btm_song0_fm_5ch_pattern1
+  .word btm_song0_fm_6ch_pattern1
+  .word btm_song0_ssg_1ch_pattern1
+  .word btm_song0_ssg_2ch_pattern1
+  .word btm_song0_ssg_3ch_pattern1
+  .word btm_song0_rhythm_bass_drum_pattern1
+  .word btm_song0_rhythm_snare_drum_pattern1
+  .word btm_song0_rhythm_top_cymbal_pattern0
+  .word btm_song0_rhythm_hi_hat_pattern1
+  .word btm_song0_rhythm_tom_pattern1
+  .word unspecified_empty_pattern
+  .word unspecified_empty_pattern
+btm_song0_frame2:
+  .word btm_song0_fm_1ch_pattern0
+  .word btm_song0_fm_2ch_pattern0
+  .word btm_song0_fm_3ch_pattern2
+  .word btm_song0_fm_4ch_pattern3
+  .word btm_song0_fm_5ch_pattern4
+  .word btm_song0_fm_6ch_pattern4
+  .word btm_song0_ssg_1ch_pattern2
+  .word btm_song0_ssg_2ch_pattern2
+  .word btm_song0_ssg_3ch_pattern2
+  .word btm_song0_rhythm_bass_drum_pattern2
+  .word btm_song0_rhythm_snare_drum_pattern2
+  .word btm_song0_rhythm_top_cymbal_pattern2
+  .word btm_song0_rhythm_hi_hat_pattern2
+  .word btm_song0_rhythm_tom_pattern2
+  .word unspecified_empty_pattern
+  .word unspecified_empty_pattern
+btm_song0_frame3:
+  .word btm_song0_fm_1ch_pattern0
+  .word btm_song0_fm_2ch_pattern0
+  .word btm_song0_fm_3ch_pattern3
+  .word btm_song0_fm_4ch_pattern2
+  .word btm_song0_fm_5ch_pattern3
+  .word btm_song0_fm_6ch_pattern3
+  .word btm_song0_ssg_1ch_pattern3
+  .word btm_song0_ssg_2ch_pattern3
+  .word btm_song0_ssg_3ch_pattern3
+  .word btm_song0_rhythm_bass_drum_pattern3
+  .word btm_song0_rhythm_snare_drum_pattern3
+  .word btm_song0_rhythm_top_cymbal_pattern0
+  .word btm_song0_rhythm_hi_hat_pattern2
+  .word btm_song0_rhythm_tom_pattern2
+  .word unspecified_empty_pattern
+  .word unspecified_empty_pattern
+btm_song0_frame4:
+  .word btm_song0_fm_1ch_pattern0
+  .word btm_song0_fm_2ch_pattern0
+  .word btm_song0_fm_3ch_pattern2
+  .word btm_song0_fm_4ch_pattern3
+  .word btm_song0_fm_5ch_pattern2
+  .word btm_song0_fm_6ch_pattern2
+  .word btm_song0_ssg_1ch_pattern2
+  .word btm_song0_ssg_2ch_pattern2
+  .word btm_song0_ssg_3ch_pattern2
+  .word btm_song0_rhythm_bass_drum_pattern2
+  .word btm_song0_rhythm_snare_drum_pattern2
+  .word btm_song0_rhythm_top_cymbal_pattern2
+  .word btm_song0_rhythm_hi_hat_pattern2
+  .word btm_song0_rhythm_tom_pattern2
+  .word unspecified_empty_pattern
+  .word unspecified_empty_pattern
+btm_song0_frame5:
+  .word btm_song0_fm_1ch_pattern0
+  .word btm_song0_fm_2ch_pattern0
+  .word btm_song0_fm_3ch_pattern3
+  .word btm_song0_fm_4ch_pattern4
+  .word btm_song0_fm_5ch_pattern5
+  .word btm_song0_fm_6ch_pattern5
+  .word btm_song0_ssg_1ch_pattern3
+  .word btm_song0_ssg_2ch_pattern3
+  .word btm_song0_ssg_3ch_pattern3
+  .word btm_song0_rhythm_bass_drum_pattern4
+  .word btm_song0_rhythm_snare_drum_pattern4
+  .word btm_song0_rhythm_top_cymbal_pattern0
+  .word btm_song0_rhythm_hi_hat_pattern2
+  .word btm_song0_rhythm_tom_pattern2
+  .word unspecified_empty_pattern
+  .word unspecified_empty_pattern
+btm_song0_frame6:
+  .word btm_song0_fm_1ch_pattern0
+  .word btm_song0_fm_2ch_pattern0
+  .word btm_song0_fm_3ch_pattern2
+  .word btm_song0_fm_4ch_pattern3
+  .word btm_song0_fm_5ch_pattern6
+  .word btm_song0_fm_6ch_pattern6
+  .word btm_song0_ssg_1ch_pattern2
+  .word btm_song0_ssg_2ch_pattern2
+  .word btm_song0_ssg_3ch_pattern2
+  .word btm_song0_rhythm_bass_drum_pattern2
+  .word btm_song0_rhythm_snare_drum_pattern2
+  .word btm_song0_rhythm_top_cymbal_pattern3
+  .word btm_song0_rhythm_hi_hat_pattern2
+  .word btm_song0_rhythm_tom_pattern2
+  .word unspecified_empty_pattern
+  .word unspecified_empty_pattern
+btm_song0_frame7:
+  .word btm_song0_fm_1ch_pattern1
+  .word btm_song0_fm_2ch_pattern1
+  .word btm_song0_fm_3ch_pattern4
+  .word btm_song0_fm_4ch_pattern5
+  .word btm_song0_fm_5ch_pattern7
+  .word btm_song0_fm_6ch_pattern7
+  .word btm_song0_ssg_1ch_pattern5
+  .word btm_song0_ssg_2ch_pattern5
+  .word btm_song0_ssg_3ch_pattern5
+  .word btm_song0_rhythm_bass_drum_pattern5
+  .word btm_song0_rhythm_snare_drum_pattern5
+  .word btm_song0_rhythm_top_cymbal_pattern1
+  .word btm_song0_rhythm_hi_hat_pattern3
+  .word unspecified_empty_pattern
+  .word unspecified_empty_pattern
+  .word unspecified_empty_pattern
+btm_song0_frame8:
+  .word btm_song0_fm_1ch_pattern2
+  .word btm_song0_fm_2ch_pattern2
+  .word btm_song0_fm_3ch_pattern5
+  .word btm_song0_fm_4ch_pattern6
+  .word btm_song0_fm_5ch_pattern8
+  .word btm_song0_fm_6ch_pattern8
+  .word btm_song0_ssg_1ch_pattern6
+  .word btm_song0_ssg_2ch_pattern6
+  .word btm_song0_ssg_3ch_pattern6
+  .word unspecified_empty_pattern
+  .word btm_song0_rhythm_snare_drum_pattern6
+  .word unspecified_empty_pattern
+  .word unspecified_empty_pattern
+  .word unspecified_empty_pattern
+  .word unspecified_empty_pattern
+  .word unspecified_empty_pattern
+btm_song0_frame9:
+  .word btm_song0_fm_1ch_pattern3
+  .word btm_song0_fm_2ch_pattern3
+  .word btm_song0_fm_3ch_pattern6
+  .word btm_song0_fm_4ch_pattern7
+  .word btm_song0_fm_5ch_pattern9
+  .word btm_song0_fm_6ch_pattern9
+  .word btm_song0_ssg_1ch_pattern7
+  .word btm_song0_ssg_2ch_pattern7
+  .word btm_song0_ssg_3ch_pattern7
+  .word unspecified_empty_pattern
+  .word unspecified_empty_pattern
+  .word unspecified_empty_pattern
+  .word unspecified_empty_pattern
+  .word unspecified_empty_pattern
+  .word unspecified_empty_pattern
+  .word unspecified_empty_pattern
+btm_song0_frame10:
+  .word btm_song0_fm_1ch_pattern2
+  .word btm_song0_fm_2ch_pattern2
+  .word btm_song0_fm_3ch_pattern5
+  .word btm_song0_fm_4ch_pattern6
+  .word unspecified_empty_pattern
+  .word unspecified_empty_pattern
+  .word unspecified_empty_pattern
+  .word unspecified_empty_pattern
+  .word unspecified_empty_pattern
+  .word unspecified_empty_pattern
+  .word unspecified_empty_pattern
+  .word unspecified_empty_pattern
+  .word unspecified_empty_pattern
+  .word unspecified_empty_pattern
+  .word unspecified_empty_pattern
+  .word unspecified_empty_pattern
+btm_song0_fm_1ch_pattern0:
+  .byte $f5, $00, $03, $e1, $2b, $00, $00, $00, $2d, $00, $00, $00, $7e, $01, $26, $00
+  .byte $00, $00, $28, $00, $00, $00, $7e, $01, $2b, $00, $00, $00, $2d, $00, $00, $00
+  .byte $30, $00, $00, $00, $2f, $00, $00, $00, $7e, $01, $2b, $00, $00, $00, $2d, $01
+  .byte $7e, $01, $26, $00, $00, $00, $28, $00, $00, $00, $7e, $01, $2b, $00, $00, $00
+  .byte $2d, $00, $00, $00, $30, $00, $00, $00, $2f, $00, $00, $00, $2b, $00, $00, $00
+  .byte $7e, $01, $2d, $00, $00, $00, $2b, $00, $00, $00, $7e, $01, $2d, $00, $00, $00
+  .byte $28, $00, $00, $00, $7e, $ff
+btm_song0_fm_1ch_pattern1:
+  .byte $f5, $00, $03, $e1, $2b, $00, $00, $00, $2d, $00, $00, $00, $7e, $01, $26, $00
+  .byte $00, $00, $28, $00, $00, $00, $7e, $01, $2b, $00, $00, $00, $2d, $00, $00, $00
+  .byte $30, $00, $00, $00, $2f, $00, $00, $00, $7e, $01, $2b, $00, $00, $00, $2d, $01
+  .byte $7e, $01, $26, $00, $00, $00, $28, $00, $00, $00, $7e, $01, $2b, $00, $00, $00
+  .byte $2d, $00, $00, $00, $30, $00, $00, $00, $2f, $00, $00, $00, $2b, $00, $00, $00
+  .byte $7e, $01, $2d, $00, $00, $00, $2b, $00, $00, $00, $7e, $01, $2d, $00, $00, $00
+  .byte $28, $00, $00, $00, $7e, $ff
+btm_song0_fm_1ch_pattern2:
+  .byte $e3, $ff, $11, $1f, $10, $ff
+btm_song0_fm_1ch_pattern3:
+  .byte $e3, $ff, $15, $1f, $80, $10, $15, $07, $14, $07, $13, $07, $12, $ff
+btm_song0_fm_1ch_pattern4:
+  .byte $80, $10, $ff, $11, $1f, $10, $ff
+btm_song0_fm_2ch_pattern0:
+  .byte $ff, $00, $00, $00, $01, $00, $01, $00, $01, $e1, $2b, $00, $00, $00, $2d, $00
+  .byte $00, $00, $7e, $01, $26, $00, $00, $00, $28, $00, $00, $00, $7e, $01, $2b, $00
+  .byte $00, $00, $2d, $00, $00, $00, $30, $00, $00, $00, $2f, $00, $00, $00, $7e, $01
+  .byte $2b, $00, $00, $00, $2d, $01, $7e, $01, $26, $00, $00, $00, $28, $00, $00, $00
+  .byte $7e, $01, $2b, $00, $00, $00, $2d, $00, $00, $00, $30, $00, $00, $00, $2f, $00
+  .byte $00, $00, $2b, $00, $00, $00, $7e, $01, $2d, $00, $00, $00, $2b, $00, $00, $00
+  .byte $7e, $01, $2d, $00, $00, $00, $28, $00, $00, $00, $7e, $ff
+btm_song0_fm_2ch_pattern1:
+  .byte $ff, $00, $00, $00, $01, $00, $01, $00, $01, $e1, $2b, $00, $00, $00, $2d, $00
+  .byte $00, $00, $7e, $01, $26, $00, $00, $00, $28, $00, $00, $00, $7e, $01, $2b, $00
+  .byte $00, $00, $2d, $00, $00, $00, $30, $00, $00, $00, $2f, $00, $00, $00, $7e, $01
+  .byte $2b, $00, $00, $00, $2d, $01, $7e, $01, $26, $00, $00, $00, $28, $00, $00, $00
+  .byte $7e, $01, $2b, $00, $00, $00, $2d, $00, $00, $00, $30, $00, $00, $00, $2f, $00
+  .byte $00, $00, $2b, $00, $00, $00, $7e, $01, $2d, $00, $00, $00, $2b, $00, $00, $00
+  .byte $7e, $01, $2d, $00, $00, $00, $28, $00, $00, $00, $7e, $ff
+btm_song0_fm_2ch_pattern2:
+  .byte $e3, $ff, $15, $1f, $13, $ff
+btm_song0_fm_2ch_pattern3:
+  .byte $e3, $ff, $18, $1f, $80, $10, $18, $07, $17, $07, $16, $07, $15, $ff
+btm_song0_fm_2ch_pattern4:
+  .byte $80, $10, $ff, $15, $1f, $13, $ff
+btm_song0_fm_3ch_pattern0:
+  .byte $e2, $f7, $15, $ff
+btm_song0_fm_3ch_pattern1:
+  .byte $e2, $f7, $13, $ff
+btm_song0_fm_3ch_pattern2:
+  .byte $e8, $f7, $1d, $01, $7e, $01, $1c, $01, $1d, $01, $7e, $05, $1c, $01, $7e, $01
+  .byte $1c, $03, $1b, $00, $7e, $00, $1c, $01, $1f, $00, $7e, $00, $24, $01, $21, $05
+  .byte $1f, $01, $21, $01, $7e, $05, $1f, $01, $7e, $01, $1f, $01, $7e, $01, $18, $01
+  .byte $1a, $01, $1c, $01, $1f, $01, $1d, $ff
+btm_song0_fm_3ch_pattern3:
+  .byte $00, $01, $7e, $01, $e8, $f7, $1c, $01, $1d, $01, $7e, $05, $1c, $01, $7e, $01
+  .byte $1c, $03, $1b, $00, $7e, $00, $1c, $01, $1f, $00, $7e, $00, $24, $01, $21, $05
+  .byte $1f, $01, $21, $01, $7e, $05, $21, $01, $7e, $01, $21, $01, $7e, $01, $1a, $01
+  .byte $1c, $01, $1f, $01, $1c, $01, $1d, $ff
+btm_song0_fm_3ch_pattern4:
+  .byte $00, $01, $7e, $01, $e8, $f7, $1c, $01, $1d, $01, $7e, $05, $1c, $01, $7e, $01
+  .byte $1c, $03, $1b, $00, $7e, $00, $1c, $01, $1f, $00, $7e, $00, $24, $01, $21, $05
+  .byte $1f, $01, $21, $01, $7e, $05, $21, $01, $7e, $01, $21, $01, $7e, $01, $1a, $01
+  .byte $1c, $01, $1f, $01, $1c, $01, $1d, $ff
+btm_song0_fm_3ch_pattern5:
+  .byte $e8, $f7, $1a, $03, $7e, $01, $1a, $03, $7e, $01, $21, $07, $1a, $01, $7e, $01
+  .byte $26, $01, $21, $01, $28, $01, $29, $01, $28, $03, $7e, $01, $28, $03, $1f, $03
+  .byte $7e, $01, $1c, $03, $28, $01, $7e, $01, $23, $03, $1f, $01, $1c, $00, $00, $ff
+btm_song0_fm_3ch_pattern6:
+  .byte $e8, $f7, $21, $05, $21, $01, $7e, $01, $2d, $00, $7e, $00, $21, $01, $00, $01
+  .byte $7e, $01, $21, $01, $24, $01, $26, $00, $7e, $00, $28, $01, $2b, $01, $28, $01
+  .byte $2b, $00, $7e, $00, $21, $07, $20, $07, $1f, $07, $1e, $ff
+btm_song0_fm_4ch_pattern0:
+  .byte $e3, $89, $13, $1c, $ff
+btm_song0_fm_4ch_pattern1:
+  .byte $e3, $89, $13, $1a, $35, $e4, $89, $17, $24, $00, $ff, $24, $00, $f7, $24, $01
+  .byte $24, $01, $e5, $39, $01, $32, $ff
+btm_song0_fm_4ch_pattern2:
+  .byte $e6, $18, $01, $e7, $89, $17, $48, $01, $fb, $48, $01, $89, $17, $48, $01, $e4
+  .byte $f7, $24, $01, $e7, $89, $17, $48, $01, $fb, $48, $01, $e6, $18, $01, $e7, $48
+  .byte $01, $e6, $18, $01, $18, $01, $e7, $48, $01, $e4, $f7, $24, $01, $e7, $89, $17
+  .byte $48, $01, $fb, $48, $01, $e6, $18, $01, $e7, $89, $17, $48, $01, $e4, $fb, $24
+  .byte $01, $e7, $48, $01, $e6, $18, $01, $e4, $f7, $24, $01, $e7, $89, $17, $48, $01
+  .byte $fb, $48, $01, $e4, $24, $01, $e7, $48, $01, $e4, $24, $01, $e7, $48, $01, $e4
+  .byte $24, $01, $f7, $24, $01, $24, $01, $24, $01, $24, $ff
+btm_song0_fm_4ch_pattern3:
+  .byte $e6, $18, $01, $e7, $89, $17, $48, $01, $fb, $48, $01, $89, $17, $48, $01, $e4
+  .byte $f7, $24, $01, $e7, $89, $17, $48, $01, $fb, $48, $01, $e6, $18, $01, $e7, $48
+  .byte $01, $e6, $18, $01, $18, $01, $e7, $48, $01, $e4, $f7, $24, $01, $e7, $89, $17
+  .byte $48, $01, $fb, $48, $01, $e6, $18, $01, $e7, $89, $17, $48, $01, $e4, $fb, $24
+  .byte $01, $e7, $48, $01, $e6, $18, $01, $e4, $f7, $24, $01, $e7, $89, $17, $48, $01
+  .byte $fb, $48, $01, $e4, $24, $01, $e7, $48, $01, $e4, $24, $01, $e7, $48, $01, $e6
+  .byte $18, $01, $e4, $f7, $24, $01, $e7, $89, $17, $48, $01, $fb, $48, $01, $e4, $f7
+  .byte $24, $ff
+btm_song0_fm_4ch_pattern4:
+  .byte $e6, $18, $01, $e7, $89, $17, $48, $01, $fb, $48, $01, $89, $17, $48, $01, $e4
+  .byte $f7, $24, $01, $e7, $89, $17, $48, $01, $fb, $48, $01, $e6, $18, $01, $e7, $48
+  .byte $01, $e6, $18, $01, $18, $01, $e7, $48, $01, $e4, $f7, $24, $01, $e7, $89, $17
+  .byte $48, $01, $fb, $48, $01, $e6, $18, $01, $e7, $89, $17, $48, $01, $e4, $fb, $24
+  .byte $01, $e7, $48, $01, $e6, $18, $01, $e4, $f7, $24, $01, $e7, $89, $17, $48, $01
+  .byte $fb, $48, $01, $e4, $24, $01, $e7, $48, $01, $e4, $24, $01, $e7, $48, $01, $e6
+  .byte $18, $01, $e4, $f7, $24, $01, $e7, $89, $17, $48, $01, $e4, $f7, $24, $01, $24
+  .byte $ff
+btm_song0_fm_4ch_pattern5:
+  .byte $e6, $18, $01, $e7, $89, $17, $48, $01, $fb, $48, $01, $89, $17, $48, $01, $e4
+  .byte $f7, $24, $01, $e7, $89, $17, $48, $01, $fb, $48, $01, $e6, $18, $01, $e7, $48
+  .byte $01, $e6, $18, $01, $18, $01, $e7, $48, $01, $e4, $f7, $24, $01, $e7, $89, $17
+  .byte $48, $01, $fb, $48, $01, $e6, $18, $01, $e7, $89, $17, $48, $01, $e4, $fb, $24
+  .byte $01, $e7, $48, $01, $e6, $18, $01, $e4, $f7, $24, $01, $e7, $89, $17, $48, $01
+  .byte $fb, $48, $01, $e4, $24, $01, $e7, $48, $01, $e4, $24, $01, $e7, $48, $01, $e6
+  .byte $18, $01, $e4, $f7, $24, $01, $24, $01, $24, $01, $24, $ff
+btm_song0_fm_4ch_pattern6:
+  .byte $e6, $18, $03, $ee, $fb, $48, $03, $e4, $f7, $24, $01, $e7, $89, $17, $48, $01
+  .byte $ee, $fb, $48, $01, $e5, $f7, $3c, $01, $e6, $18, $01, $e5, $30, $01, $ee, $fb
+  .byte $48, $03, $e4, $f7, $24, $01, $e7, $89, $17, $48, $01, $ee, $fb, $48, $01, $e5
+  .byte $f7, $30, $01, $e6, $18, $03, $ee, $fb, $48, $03, $e4, $f7, $24, $01, $e7, $89
+  .byte $17, $48, $01, $ee, $fb, $48, $01, $e5, $f7, $3c, $01, $e6, $18, $01, $e5, $30
+  .byte $01, $ee, $fb, $48, $03, $e4, $f7, $24, $01, $e7, $89, $17, $48, $01, $ee, $fb
+  .byte $48, $01, $e5, $f7, $30, $00, $30, $ff
+btm_song0_fm_4ch_pattern7:
+  .byte $e6, $18, $03, $ee, $fb, $48, $03, $e4, $f7, $24, $01, $e7, $89, $17, $48, $01
+  .byte $ee, $fb, $48, $01, $e5, $f7, $3c, $01, $e6, $18, $01, $e5, $30, $01, $ee, $fb
+  .byte $48, $03, $e4, $f7, $24, $01, $e7, $89, $17, $48, $01, $ee, $fb, $48, $01, $e5
+  .byte $f7, $30, $01, $e4, $24, $01, $e7, $89, $17, $48, $01, $ee, $fb, $48, $01, $e6
+  .byte $18, $01, $e4, $f7, $24, $01, $e7, $89, $17, $48, $01, $ee, $fb, $48, $01, $e5
+  .byte $f7, $3c, $01, $e4, $24, $01, $e7, $89, $17, $48, $01, $ee, $fb, $48, $01, $e6
+  .byte $18, $01, $e4, $f7, $24, $01, $24, $01, $24, $01, $24, $ff
+btm_song0_fm_5ch_pattern0:
+  .byte $e3, $89, $17, $15, $00, $00, $ff
+btm_song0_fm_5ch_pattern1:
+  .byte $e3, $89, $17, $13, $00, $00, $ff
+btm_song0_fm_5ch_pattern2:
+  .byte $f5, $00, $01, $00, $05, $eb, $26, $01, $00, $03, $27, $00, $26, $00, $24, $01
+  .byte $21, $01, $1f, $01, $26, $03, $27, $01, $28, $01, $00, $00, $00, $02, $ff, $28
+  .byte $01, $00, $03, $89, $1f, $28, $01, $00, $03, $89, $2f, $28, $01, $00, $02, $00
+  .byte $00, $f5, $24, $01, $7e, $01, $26, $01, $24, $01, $7e, $01, $2b, $ff
+btm_song0_fm_5ch_pattern3:
+  .byte $89, $17, $00, $00, $00, $0c, $ea, $1c, $0f, $e3, $21, $15, $eb, $f5, $24, $01
+  .byte $7e, $01, $26, $01, $24, $01, $7e, $01, $26, $ff
+btm_song0_fm_5ch_pattern4:
+  .byte $e3, $89, $17, $1a, $00, $00, $0c, $ea, $1c, $0f, $e3, $21, $0f, $22, $0f, $1a
+  .byte $ff
+btm_song0_fm_5ch_pattern5:
+  .byte $f5, $00, $01, $00, $05, $eb, $2b, $01, $00, $05, $27, $01, $26, $01, $24, $01
+  .byte $26, $01, $00, $03, $24, $00, $00, $00, $00, $00, $00, $02, $ff, $24, $01, $00
+  .byte $03, $89, $1f, $24, $01, $00, $03, $89, $2f, $24, $01, $00, $02, $00, $00, $f5
+  .byte $1c, $01, $1f, $00, $7e, $00, $21, $01, $24, $01, $26, $01, $22, $ff
+btm_song0_fm_5ch_pattern6:
+  .byte $f5, $00, $01, $00, $04, $7e, $00, $eb, $2b, $03, $00, $03, $2b, $01, $00, $01
+  .byte $29, $01, $28, $03, $26, $01, $24, $01, $00, $03, $7e, $01, $2e, $02, $7e, $00
+  .byte $2f, $01, $30, $01, $7e, $01, $2b, $02, $00, $02, $2d, $01, $7e, $01, $27, $01
+  .byte $26, $01, $7e, $01, $24, $ff
+btm_song0_fm_5ch_pattern7:
+  .byte $f5, $00, $01, $00, $01, $eb, $1f, $03, $7e, $01, $1f, $01, $27, $01, $26, $05
+  .byte $24, $01, $1f, $01, $7e, $01, $1f, $01, $2b, $01, $29, $03, $28, $01, $24, $03
+  .byte $7e, $01, $1f, $01, $29, $01, $28, $03, $2d, $01, $2b, $01, $29, $01, $28, $01
+  .byte $29, $01, $2b, $01, $2d, $ff
+btm_song0_fm_5ch_pattern8:
+  .byte $eb, $f5, $2e, $07, $ed, $37, $05, $39, $00, $3b, $00, $3c, $05, $45, $01, $7e
+  .byte $03, $41, $03, $00, $03, $45, $01, $7e, $01, $3c, $01, $37, $01, $7e, $01, $3c
+  .byte $03, $00, $00, $00, $00, $37, $01, $7e, $01, $3f, $01, $3e, $01, $3c, $01, $3e
+  .byte $ff
+btm_song0_fm_5ch_pattern9:
+  .byte $f5, $00, $01, $00, $01, $ed, $40, $01, $00, $01, $ef, $28, $00, $00, $00, $26
+  .byte $01, $24, $00, $7e, $00, $24, $05, $28, $00, $00, $01, $ed, $3e, $00, $40, $01
+  .byte $3e, $01, $3c, $00, $7e, $00, $3e, $03, $00, $01, $3c, $01, $7e, $01, $43, $03
+  .byte $43, $01, $7e, $01, $40, $01, $41, $01, $43, $01, $45, $01, $7e, $01, $3c, $ff
+btm_song0_fm_6ch_pattern0:
+  .byte $e3, $89, $17, $15, $00, $00, $ff
+btm_song0_fm_6ch_pattern1:
+  .byte $e3, $89, $17, $13, $00, $00, $ff
+btm_song0_fm_6ch_pattern2:
+  .byte $00, $00, $eb, $89, $15, $26, $03, $00, $05, $26, $01, $00, $03, $27, $00, $26
+  .byte $00, $24, $01, $21, $01, $1f, $01, $26, $03, $27, $01, $28, $01, $00, $00, $00
+  .byte $02, $89, $1f, $28, $01, $00, $03, $89, $2f, $28, $01, $00, $03, $89, $3f, $28
+  .byte $01, $00, $02, $00, $00, $89, $15, $24, $01, $7e, $01, $26, $01, $24, $01, $7e
+  .byte $ff
+btm_song0_fm_6ch_pattern3:
+  .byte $89, $17, $00, $00, $00, $0c, $e3, $1c, $0f, $24, $18, $eb, $89, $15, $24, $01
+  .byte $7e, $01, $26, $01, $24, $01, $7e, $ff
+btm_song0_fm_6ch_pattern4:
+  .byte $e3, $89, $17, $1d, $00, $00, $0c, $1c, $0f, $24, $0f, $26, $0f, $1d, $ff
+btm_song0_fm_6ch_pattern5:
+  .byte $00, $00, $eb, $89, $15, $2b, $03, $00, $05, $2b, $01, $00, $05, $27, $01, $26
+  .byte $01, $24, $01, $26, $01, $00, $03, $24, $00, $00, $00, $00, $00, $00, $02, $89
+  .byte $1f, $24, $01, $00, $03, $89, $2f, $24, $01, $00, $03, $89, $3f, $24, $01, $00
+  .byte $02, $00, $00, $89, $15, $1c, $01, $1f, $00, $7e, $00, $21, $01, $24, $01, $26
+  .byte $ff
+btm_song0_fm_6ch_pattern6:
+  .byte $00, $00, $89, $15, $00, $03, $00, $03, $00, $00, $7e, $00, $eb, $2b, $03, $00
+  .byte $03, $2b, $01, $00, $01, $29, $01, $28, $03, $26, $01, $24, $01, $00, $03, $7e
+  .byte $01, $2e, $02, $7e, $00, $2f, $01, $30, $01, $7e, $01, $2b, $02, $00, $02, $2d
+  .byte $01, $7e, $01, $27, $01, $26, $01, $7e, $ff
+btm_song0_fm_6ch_pattern7:
+  .byte $00, $00, $eb, $89, $15, $2b, $03, $00, $01, $1f, $03, $7e, $01, $1f, $01, $27
+  .byte $01, $26, $05, $24, $01, $1f, $01, $7e, $01, $1f, $01, $2b, $01, $29, $03, $28
+  .byte $01, $24, $03, $7e, $01, $1f, $01, $29, $01, $28, $03, $2d, $01, $2b, $01, $29
+  .byte $01, $28, $01, $29, $01, $2b, $ff
+btm_song0_fm_6ch_pattern8:
+  .byte $89, $15, $00, $00, $eb, $2d, $01, $2e, $07, $ed, $89, $10, $37, $05, $39, $00
+  .byte $3b, $00, $3c, $05, $45, $01, $7e, $03, $41, $03, $00, $03, $45, $01, $7e, $01
+  .byte $3c, $01, $37, $01, $7e, $01, $3c, $03, $00, $00, $00, $00, $37, $01, $7e, $01
+  .byte $3f, $01, $3e, $01, $3c, $ff
+btm_song0_fm_6ch_pattern9:
+  .byte $89, $10, $00, $00, $ed, $3e, $03, $00, $01, $40, $01, $00, $01, $ef, $28, $01
+  .byte $26, $01, $24, $00, $7e, $00, $24, $01, $00, $01, $00, $01, $28, $00, $00, $01
+  .byte $ed, $3e, $00, $40, $01, $3e, $01, $3c, $00, $7e, $00, $3e, $03, $00, $01, $3c
+  .byte $01, $7e, $01, $43, $03, $43, $01, $7e, $01, $40, $01, $41, $01, $43, $01, $45
+  .byte $01, $7e, $01, $3c, $ff
+btm_song0_ssg_1ch_pattern0:
+  .byte $ec, $f2, $28, $00, $f4, $00, $00, $f6, $00, $00, $f8, $00, $00, $fa, $00, $00
+  .byte $fc, $00, $02, $00, $ff
+btm_song0_ssg_1ch_pattern1:
+  .byte $ec, $f9, $28, $00, $fa, $00, $00, $fb, $00, $00, $fc, $00, $04, $00, $2f, $fb
+  .byte $00, $ff
+btm_song0_ssg_1ch_pattern2:
+  .byte $fa, $00, $00, $f9, $00, $00, $e9, $ff, $30, $01, $7e, $03, $30, $03, $7e, $01
+  .byte $2f, $01, $7e, $01, $2f, $03, $28, $00, $7e, $00, $2f, $05, $2d, $03, $2d, $01
+  .byte $7e, $03, $2d, $03, $7e, $01, $2b, $01, $7e, $01, $2b, $01, $2f, $05, $2e, $03
+  .byte $2d, $ff
+btm_song0_ssg_1ch_pattern3:
+  .byte $00, $01, $e9, $2d, $01, $7e, $03, $2d, $03, $7e, $01, $2f, $01, $7e, $01, $2f
+  .byte $03, $28, $00, $7e, $00, $2f, $05, $30, $03, $ff, $30, $01, $7e, $03, $30, $03
+  .byte $7e, $01, $2f, $01, $7e, $01, $2b, $01, $7e, $03, $28, $01, $2b, $03, $30, $ff
+btm_song0_ssg_1ch_pattern4:
+  .byte $00, $01, $e9, $ff, $2d, $01, $7e, $03, $30, $03, $7e, $01, $2f, $01, $7e, $01
+  .byte $2f, $03, $28, $00, $7e, $00, $2f, $05, $2d, $03, $2d, $01, $7e, $03, $2d, $03
+  .byte $7e, $01, $2b, $01, $7e, $01, $2b, $01, $2f, $05, $2e, $03, $2d, $ff
+btm_song0_ssg_1ch_pattern5:
+  .byte $00, $01, $e9, $2d, $01, $7e, $03, $2d, $03, $7e, $01, $2f, $01, $7e, $01, $2f
+  .byte $03, $28, $00, $7e, $00, $2f, $05, $30, $03, $ff, $30, $01, $7e, $03, $30, $03
+  .byte $7e, $01, $2f, $01, $7e, $01, $2b, $01, $7e, $03, $28, $01, $2b, $03, $30, $ff
+btm_song0_ssg_1ch_pattern6:
+  .byte $ec, $fd, $1d, $03, $fc, $00, $01, $fb, $00, $01, $fd, $21, $03, $fc, $00, $01
+  .byte $fd, $21, $03, $fc, $00, $01, $fb, $00, $0b, $fd, $1f, $03, $fc, $00, $01, $fb
+  .byte $00, $01, $fd, $23, $03, $fc, $00, $01, $fd, $1f, $03, $fc, $00, $01, $fb, $00
+  .byte $ff
+btm_song0_ssg_1ch_pattern7:
+  .byte $ec, $fd, $21, $03, $fc, $00, $01, $fb, $00, $01, $fd, $28, $03, $fc, $00, $01
+  .byte $fd, $28, $03, $fc, $00, $01, $fb, $00, $0b, $fd, $28, $03, $fc, $00, $01, $fb
+  .byte $00, $01, $fd, $27, $03, $fc, $00, $01, $fb, $00, $01, $fd, $26, $03, $fc, $00
+  .byte $01, $fb, $00, $01, $fd, $25, $03, $fc, $00, $01, $fb, $00, $ff
+btm_song0_ssg_2ch_pattern0:
+  .byte $ec, $f2, $2d, $00, $f4, $00, $00, $f6, $00, $00, $f8, $00, $00, $fa, $00, $00
+  .byte $fc, $00, $02, $00, $ff
+btm_song0_ssg_2ch_pattern1:
+  .byte $ec, $f9, $2f, $00, $fa, $00, $00, $fb, $00, $00, $fc, $00, $04, $00, $2f, $fb
+  .byte $00, $ff
+btm_song0_ssg_2ch_pattern2:
+  .byte $fa, $00, $00, $f9, $00, $00, $e9, $ff, $2d, $01, $7e, $03, $2d, $03, $7e, $01
+  .byte $2c, $01, $7e, $01, $2c, $03, $23, $00, $7e, $00, $2c, $05, $28, $03, $28, $01
+  .byte $7e, $03, $28, $03, $7e, $01, $24, $01, $7e, $01, $24, $01, $7e, $01, $2b, $02
+  .byte $00, $00, $2b, $03, $2b, $ff
+btm_song0_ssg_2ch_pattern3:
+  .byte $00, $01, $e9, $29, $01, $7e, $03, $29, $03, $7e, $01, $2c, $01, $7e, $01, $2c
+  .byte $03, $23, $00, $7e, $00, $2c, $05, $2b, $03, $ff, $2b, $01, $7e, $03, $2b, $03
+  .byte $7e, $01, $2b, $01, $7e, $01, $28, $01, $7e, $01, $26, $01, $23, $01, $28, $03
+  .byte $2d, $ff
+btm_song0_ssg_2ch_pattern4:
+  .byte $00, $01, $e9, $ff, $24, $01, $7e, $03, $2d, $03, $7e, $01, $2c, $01, $7e, $01
+  .byte $2c, $03, $23, $00, $7e, $00, $2c, $05, $28, $03, $28, $01, $7e, $03, $28, $03
+  .byte $7e, $01, $24, $01, $7e, $01, $24, $01, $7e, $01, $2b, $03, $2b, $03, $2b, $ff
+btm_song0_ssg_2ch_pattern5:
+  .byte $00, $01, $e9, $29, $01, $7e, $03, $29, $03, $7e, $01, $2c, $01, $7e, $01, $2c
+  .byte $03, $23, $00, $7e, $00, $2c, $05, $2b, $03, $ff, $2b, $01, $7e, $03, $2b, $03
+  .byte $7e, $01, $2b, $01, $7e, $01, $28, $01, $7e, $01, $26, $01, $23, $01, $28, $03
+  .byte $2d, $ff
+btm_song0_ssg_2ch_pattern6:
+  .byte $ec, $fd, $21, $03, $fc, $00, $01, $fb, $00, $01, $fd, $24, $03, $fc, $00, $01
+  .byte $fd, $24, $03, $fc, $00, $01, $fb, $00, $0b, $fd, $23, $03, $fc, $00, $01, $fb
+  .byte $00, $01, $fd, $26, $03, $fc, $00, $01, $fd, $23, $03, $fc, $00, $01, $fb, $00
+  .byte $ff
+btm_song0_ssg_2ch_pattern7:
+  .byte $ec, $fd, $24, $03, $fc, $00, $01, $fb, $00, $01, $fd, $2d, $03, $fc, $00, $01
+  .byte $fd, $2d, $03, $fc, $00, $01, $fb, $00, $0b, $fd, $2b, $03, $fc, $00, $01, $fb
+  .byte $00, $01, $fd, $2a, $03, $fc, $00, $01, $fb, $00, $01, $fd, $29, $03, $fc, $00
+  .byte $01, $fb, $00, $01, $fd, $28, $03, $fc, $00, $01, $fb, $00, $ff
+btm_song0_ssg_3ch_pattern0:
+  .byte $ec, $f2, $32, $00, $f4, $00, $00, $f6, $00, $00, $f8, $00, $00, $fa, $00, $00
+  .byte $fc, $00, $02, $00, $ff
+btm_song0_ssg_3ch_pattern1:
+  .byte $ec, $f9, $32, $00, $fa, $00, $00, $fb, $00, $00, $fc, $00, $04, $00, $2f, $fb
+  .byte $00, $ff
+btm_song0_ssg_3ch_pattern2:
+  .byte $fa, $00, $00, $f9, $00, $00, $e9, $ff, $28, $01, $7e, $03, $28, $03, $7e, $01
+  .byte $26, $01, $7e, $01, $26, $03, $20, $00, $7e, $00, $26, $05, $24, $03, $24, $01
+  .byte $7e, $03, $24, $03, $7e, $01, $22, $01, $7e, $01, $22, $01, $7e, $03, $26, $01
+  .byte $28, $03, $28, $ff
+btm_song0_ssg_3ch_pattern3:
+  .byte $00, $01, $e9, $24, $01, $7e, $03, $24, $03, $7e, $01, $26, $01, $7e, $01, $26
+  .byte $03, $20, $00, $7e, $00, $26, $05, $28, $03, $ff, $28, $01, $7e, $03, $28, $03
+  .byte $7e, $01, $28, $01, $7e, $01, $23, $01, $7e, $03, $1f, $01, $23, $03, $28, $ff
+btm_song0_ssg_3ch_pattern4:
+  .byte $00, $01, $e9, $ff, $28, $01, $7e, $03, $28, $03, $7e, $01, $26, $01, $7e, $01
+  .byte $26, $03, $20, $00, $7e, $00, $26, $05, $24, $03, $24, $01, $7e, $03, $24, $03
+  .byte $7e, $01, $22, $01, $7e, $01, $22, $01, $7e, $03, $26, $01, $28, $03, $28, $ff
+btm_song0_ssg_3ch_pattern5:
+  .byte $00, $01, $e9, $24, $01, $7e, $03, $24, $03, $7e, $01, $26, $01, $7e, $01, $26
+  .byte $03, $20, $00, $7e, $00, $26, $05, $28, $03, $ff, $28, $01, $7e, $03, $28, $03
+  .byte $7e, $01, $28, $01, $7e, $01, $23, $01, $7e, $03, $1f, $01, $23, $03, $28, $ff
+btm_song0_ssg_3ch_pattern6:
+  .byte $ec, $fd, $24, $03, $fc, $00, $01, $fb, $00, $01, $fd, $29, $03, $fc, $00, $01
+  .byte $fd, $28, $03, $fc, $00, $01, $fb, $00, $0b, $fd, $28, $03, $fc, $00, $01, $fb
+  .byte $00, $01, $fd, $2b, $03, $fc, $00, $01, $fd, $26, $03, $fc, $00, $01, $fb, $00
+  .byte $ff
+btm_song0_ssg_3ch_pattern7:
+  .byte $ec, $fd, $28, $03, $fc, $00, $01, $fb, $00, $01, $fd, $30, $03, $fc, $00, $01
+  .byte $fd, $2f, $03, $fc, $00, $01, $fb, $00, $0b, $fd, $2d, $03, $fc, $00, $01, $fb
+  .byte $00, $01, $fd, $2c, $03, $fc, $00, $01, $fb, $00, $01, $fd, $2b, $03, $fc, $00
+  .byte $01, $fb, $00, $01, $fd, $2a, $03, $fc, $00, $01, $fb, $00, $ff
+btm_song0_rhythm_bass_drum_pattern0:
+  .byte $89, $10, $48, $0d, $89, $1a, $48, $03, $48, $01, $48, $09, $24, $07, $24, $09
+  .byte $89, $10, $24, $05, $89, $1a, $24, $ff
+btm_song0_rhythm_bass_drum_pattern1:
+  .byte $89, $10, $48, $0d, $89, $1a, $48, $03, $48, $01, $48, $09, $24, $07, $24, $09
+  .byte $89, $10, $24, $03, $89, $1a, $24, $03, $89, $10, $24, $ff
+btm_song0_rhythm_bass_drum_pattern2:
+  .byte $89, $10, $48, $0d, $89, $1a, $48, $03, $48, $01, $48, $09, $24, $07, $24, $09
+  .byte $89, $10, $24, $05, $89, $1a, $24, $ff
+btm_song0_rhythm_bass_drum_pattern3:
+  .byte $89, $10, $48, $0d, $89, $1a, $48, $03, $48, $01, $48, $09, $24, $07, $24, $09
+  .byte $89, $10, $24, $05, $89, $1a, $24, $ff
+btm_song0_rhythm_bass_drum_pattern4:
+  .byte $89, $10, $30, $0f, $89, $1a, $30, $0f, $30, $0f, $30, $ff
+btm_song0_rhythm_bass_drum_pattern5:
+  .byte $89, $10, $30, $0f, $89, $1a, $30, $15, $24, $0f, $24, $ff
+btm_song0_rhythm_snare_drum_pattern0:
+  .byte $00, $35, $f8, $24, $00, $ff, $24, $00, $89, $14, $24, $01, $24, $ff
+btm_song0_rhythm_snare_drum_pattern1:
+  .byte $89, $18, $00, $07, $48, $0f, $48, $09, $24, $05, $24, $05, $24, $03, $24, $05
+  .byte $24, $05, $24, $ff
+btm_song0_rhythm_snare_drum_pattern2:
+  .byte $89, $18, $00, $07, $48, $0f, $48, $09, $24, $05, $24, $05, $24, $03, $24, $03
+  .byte $24, $01, $24, $01, $24, $01, $24, $01, $24, $ff
+btm_song0_rhythm_snare_drum_pattern3:
+  .byte $89, $18, $00, $07, $48, $0f, $48, $09, $24, $05, $24, $05, $24, $03, $24, $05
+  .byte $24, $03, $24, $01, $24, $ff
+btm_song0_rhythm_snare_drum_pattern4:
+  .byte $89, $18, $00, $07, $48, $0f, $48, $09, $24, $05, $24, $05, $24, $03, $24, $05
+  .byte $24, $01, $24, $01, $24, $01, $24, $ff
+btm_song0_rhythm_snare_drum_pattern5:
+  .byte $89, $18, $00, $07, $30, $0f, $30, $0f, $30, $0f, $30, $01, $30, $01, $30, $01
+  .byte $30, $ff
+btm_song0_rhythm_snare_drum_pattern6:
+  .byte $89, $18, $00, $07, $30, $0f, $30, $07, $24, $07, $24, $07, $24, $07, $24, $01
+  .byte $24, $01, $24, $01, $24, $ff
+btm_song0_rhythm_top_cymbal_pattern0:
+  .byte $89, $18, $48, $ff
+btm_song0_rhythm_top_cymbal_pattern1:
+  .byte $89, $18, $48, $ff
+btm_song0_rhythm_top_cymbal_pattern2:
+  .byte $89, $18, $18, $03, $ff, $18, $07, $18, $07, $18, $07, $18, $07, $18, $07, $18
+  .byte $07, $18, $07, $18, $ff
+btm_song0_rhythm_top_cymbal_pattern3:
+  .byte $00, $03, $ff, $18, $07, $18, $07, $18, $07, $18, $07, $18, $07, $18, $07, $18
+  .byte $07, $18, $ff
+btm_song0_rhythm_hi_hat_pattern0:
+  .byte $00, $3b, $f4, $24, $01, $f2, $24, $ff
+btm_song0_rhythm_hi_hat_pattern1:
+  .byte $f4, $48, $01, $f2, $48, $01, $f4, $48, $01, $f2, $48, $01, $f4, $48, $01, $f2
+  .byte $48, $01, $f4, $48, $01, $f2, $48, $01, $f4, $48, $01, $f2, $48, $01, $f4, $48
+  .byte $01, $f2, $48, $01, $f4, $48, $01, $f2, $48, $01, $f4, $48, $01, $f2, $48, $01
+  .byte $f4, $48, $01, $f2, $48, $01, $f4, $48, $01, $f2, $48, $01, $f4, $48, $01, $f2
+  .byte $48, $01, $f4, $48, $01, $f2, $48, $01, $f4, $48, $01, $f2, $48, $01, $f4, $48
+  .byte $01, $f2, $48, $01, $f4, $48, $01, $f2, $48, $01, $f4, $48, $01, $f2, $48, $ff
+btm_song0_rhythm_hi_hat_pattern2:
+  .byte $f4, $48, $01, $f2, $48, $01, $f4, $48, $01, $f2, $48, $01, $f4, $48, $01, $f2
+  .byte $48, $01, $f4, $48, $01, $f2, $48, $01, $f4, $48, $01, $f2, $48, $01, $f4, $48
+  .byte $01, $f2, $48, $01, $f4, $48, $01, $f2, $48, $01, $f4, $48, $01, $f2, $48, $01
+  .byte $f4, $48, $01, $f2, $48, $01, $f4, $48, $01, $f2, $48, $01, $f4, $48, $01, $f2
+  .byte $48, $01, $f4, $48, $01, $f2, $48, $01, $f4, $48, $01, $f2, $48, $01, $f4, $48
+  .byte $01, $f2, $48, $01, $f4, $48, $01, $f2, $48, $01, $f4, $48, $01, $f2, $48, $ff
+btm_song0_rhythm_hi_hat_pattern3:
+  .byte $f4, $18, $07, $18, $01, $f2, $18, $05, $f4, $18, $07, $18, $01, $f2, $18, $05
+  .byte $f4, $18, $07, $18, $01, $f2, $18, $05, $f4, $18, $07, $18, $01, $f2, $18, $ff
+btm_song0_rhythm_tom_pattern0:
+  .byte $00, $3b, $89, $14, $18, $01, $18, $ff
+btm_song0_rhythm_tom_pattern1:
+  .byte $89, $10, $00, $0d, $3c, $03, $3c, $0b, $3c, $0f, $3c, $03, $3c, $0b, $3c, $00
+  .byte $3c, $ff
+btm_song0_rhythm_tom_pattern2:
+  .byte $89, $10, $00, $0d, $3c, $03, $3c, $0b, $3c, $0f, $24, $ff

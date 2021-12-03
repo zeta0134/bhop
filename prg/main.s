@@ -28,9 +28,10 @@ current_track: .byte $00
         .scope SONG_0
         ;.include "../ftm/MMBN2.asm"
         ;.include "../ftm/tremolo_axy_test.asm"
-        .include "../ftm/waltz.asm"
+        ;.include "../ftm/waltz.asm"
         ;.include "../ftm/fixed_arp_test.asm"
         ;.include "../ftm/love3.asm"
+        .include "../ftm/epsm_test.asm"
         .endscope
 
         .segment "SONG_1"
