@@ -1,12 +1,12 @@
         .setcpu "6502"
 
-        .include "bhop.inc"
+        .include "bhop/bhop.inc"
         .include "branch_checks.inc"
         .include "input.inc"
         .include "mmc3.inc"
         .include "nes.inc"
         .include "ppu.inc"
-        .include "word_util.inc"
+        .include "bhop/word_util.inc"
         .include "zeropage.inc"
 
 .scope PRG3_E000

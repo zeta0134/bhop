@@ -1,12 +1,7 @@
-.include "bhop.inc"
-.include "bhop_internal.inc"
-
-.scope BHOP
-
         .zeropage
 cmd_ptr: .word $0000
 
-        .segment "PRG_8000"
+        .segment BHOP_PLAYER_SEGMENT
         .export command_table
 
 command_table:
@@ -353,5 +348,3 @@ loop:
         bne loop
         rts
 .endproc
-
-.endscope

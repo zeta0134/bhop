@@ -1,5 +1,7 @@
-.include "bhop.inc"
-.include "bhop_internal.inc"
+.include "bhop/config.inc"
+.include "bhop/bhop_internal.inc"
+
+; TODO: do not rely on external libraries!
 .include "nes.inc"
 
 ; TODO: this library must NOT provide mapper specific code.
@@ -9,6 +11,9 @@
 .macpack longbranch
 
 .scope BHOP
+
+.include "bhop/commands.asm"
+.include "bhop/effects.asm"        
 
         .zeropage
 ; scratch ptr, used for all sorts of indirect reads
@@ -89,13 +94,13 @@ effect_skip_target: .byte $00
 .export effect_note_delay, effect_cut_delay, effect_skip_target, apply_release
 
 
-        .segment "PRG_8000"
+        .segment BHOP_PLAYER_SEGMENT
         ; global
         .export bhop_init, bhop_play
         ; internal
         .export load_instrument, set_speed
 
-.include "midi_lut.inc"
+.include "bhop/midi_lut.inc"
 .export ntsc_period_low, ntsc_period_high, pal_period_low, pal_period_high
 
 .macro prepare_ptr address
@@ -149,7 +154,7 @@ positive:
         sta frame_counter
 
         ; switch to the requested song
-        prepare_ptr MUSIC_BASE + FtModuleHeader::song_list
+        prepare_ptr BHOP_MUSIC_BASE + FtModuleHeader::song_list
 
         pla
         asl ; song list is made of words
@@ -827,7 +832,7 @@ no_wrap:
 ;   channel_index points to desired channel
 ;   channel_selected_instrument[channel_index] contains desired instrument index
 .proc load_instrument
-        prepare_ptr MUSIC_BASE + FtModuleHeader::instrument_list
+        prepare_ptr BHOP_MUSIC_BASE + FtModuleHeader::instrument_list
         ldx channel_index
         lda channel_selected_instrument, x
         asl ; select one word
@@ -1670,7 +1675,7 @@ cleanup:
         beq done
 
         ; using the current note, read the sample table
-        prepare_ptr MUSIC_BASE + FtModuleHeader::sample_list
+        prepare_ptr BHOP_MUSIC_BASE + FtModuleHeader::sample_list
         lda channel_base_note + DPCM_INDEX
 
         sta scratch_byte
@@ -1699,7 +1704,7 @@ no_delta_set:
         ; this is the index into the samples table, here it is pre-multiplied
         ; so we can use it directly
         tay
-        prepare_ptr MUSIC_BASE + FtModuleHeader::samples
+        prepare_ptr BHOP_MUSIC_BASE + FtModuleHeader::samples
         ; the sample table should contain, in order:
         ; - location byte
         ; - size byte
