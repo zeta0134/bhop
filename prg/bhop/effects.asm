@@ -1,6 +1,3 @@
-.include "bhop.inc"
-.include "bhop_internal.inc"
-
 .scope BHOP
 
         .segment "RAM"
@@ -19,7 +16,7 @@ channel_volume_slide_accumulator: .res ::NUM_CHANNELS
 
 scratch_target_frequency: .res 2
 
-        .segment "PRG_8000"
+        .segment BHOP_PLAYER_SEGMENT
 .include "vibrato_lut.inc"
 
 ; Vibrato LUT: there are 16 tables, each containing the first 1/4 of a sine
