@@ -2,7 +2,6 @@
 cmd_ptr: .word $0000
 
         .segment BHOP_PLAYER_SEGMENT
-        .export command_table
 
 command_table:
     .word cmd_instrument           ;CMD_INSTRUMENT
@@ -70,7 +69,6 @@ command_table:
         jmp (cmd_ptr)
         ; dispatched command executes rts
 .endproc
-.export dispatch_command
 
 .proc skip_command
         and #$7F ; mask off the high bit
@@ -96,7 +94,6 @@ not_reset_duration:
 no_parameter_byte:
         rts
 .endproc
-.export skip_command
 
 ; Note: Every command begins with channel_index conveniently in x. This does
 ; not need to be explicitly restored (calling code does that), but initialization
@@ -338,7 +335,7 @@ done:
         lda #0
         sta tempo
         ; immediately mute all channels
-        ldx #NUM_CHANNELS
+        ldx #BHOP_NUM_CHANNELS
 loop:
         dex
         lda channel_status, x

@@ -1,12 +1,13 @@
+BHOP_NUM_CHANNELS = 5 ;  note: this might change with expansion support
 .include "bhop/config.inc"
+
+.scope BHOP
 .include "bhop/bhop_internal.inc"
 .include "bhop/longbranch.inc"
 
 ; TODO: this library must NOT provide mapper specific code.
 ; Once you're done testing, REMOVE THIS!
 .include "mmc3.inc"
-
-.scope BHOP
 
 .include "bhop/commands.asm"
 .include "bhop/effects.asm"        
@@ -20,8 +21,6 @@ pattern_ptr: .word $0000
 channel_index: .byte $00
 scratch_byte: .byte $00
 
-.exportzp bhop_ptr, pattern_ptr, channel_index, scratch_byte
-
         .segment BHOP_RAM_SEGMENT
 tempo_counter: .word $0000
 tempo_cmp: .word $0000
@@ -30,7 +29,6 @@ row_counter: .byte $00
 row_cmp: .byte $00
 frame_counter: .byte $00
 frame_cmp: .byte $00
-.export row_counter, row_cmp, frame_counter, frame_cmp, tempo
 
 song_ptr: .word $0000
 frame_ptr: .word $0000
@@ -39,65 +37,57 @@ shadow_pulse1_freq_hi: .byte $00
 shadow_pulse2_freq_hi: .byte $00
 
 ; channel state tables
-channel_pattern_ptr_low: .res ::NUM_CHANNELS
-channel_pattern_ptr_high: .res ::NUM_CHANNELS
-channel_status: .res ::NUM_CHANNELS
-channel_global_duration: .res ::NUM_CHANNELS
-channel_row_delay_counter: .res ::NUM_CHANNELS
-channel_base_note: .res ::NUM_CHANNELS
-channel_relative_note_offset:  .res ::NUM_CHANNELS
-channel_base_frequency_low: .res ::NUM_CHANNELS
-channel_base_frequency_high: .res ::NUM_CHANNELS
-channel_relative_frequency_low: .res ::NUM_CHANNELS
-channel_relative_frequency_high: .res ::NUM_CHANNELS
-channel_detuned_frequency_low: .res ::NUM_CHANNELS
-channel_detuned_frequency_high: .res ::NUM_CHANNELS
-channel_volume: .res ::NUM_CHANNELS
-channel_tremolo_volume: .res ::NUM_CHANNELS
-channel_duty: .res ::NUM_CHANNELS
-channel_instrument_volume: .res ::NUM_CHANNELS
-channel_instrument_duty: .res ::NUM_CHANNELS
-channel_selected_instrument: .res ::NUM_CHANNELS
-channel_pitch_effects_active: .res ::NUM_CHANNELS
-.export channel_status, channel_global_duration, channel_row_delay_counter, channel_selected_instrument, channel_pitch_effects_active
-.export channel_detuned_frequency_low, channel_detuned_frequency_high, channel_relative_frequency_low, channel_relative_frequency_high
-.export channel_base_note, channel_duty, channel_volume, channel_tremolo_volume, channel_instrument_duty
+channel_pattern_ptr_low: .res ::BHOP_NUM_CHANNELS
+channel_pattern_ptr_high: .res ::BHOP_NUM_CHANNELS
+channel_status: .res ::BHOP_NUM_CHANNELS
+channel_global_duration: .res ::BHOP_NUM_CHANNELS
+channel_row_delay_counter: .res ::BHOP_NUM_CHANNELS
+channel_base_note: .res ::BHOP_NUM_CHANNELS
+channel_relative_note_offset:  .res ::BHOP_NUM_CHANNELS
+channel_base_frequency_low: .res ::BHOP_NUM_CHANNELS
+channel_base_frequency_high: .res ::BHOP_NUM_CHANNELS
+channel_relative_frequency_low: .res ::BHOP_NUM_CHANNELS
+channel_relative_frequency_high: .res ::BHOP_NUM_CHANNELS
+channel_detuned_frequency_low: .res ::BHOP_NUM_CHANNELS
+channel_detuned_frequency_high: .res ::BHOP_NUM_CHANNELS
+channel_volume: .res ::BHOP_NUM_CHANNELS
+channel_tremolo_volume: .res ::BHOP_NUM_CHANNELS
+channel_duty: .res ::BHOP_NUM_CHANNELS
+channel_instrument_volume: .res ::BHOP_NUM_CHANNELS
+channel_instrument_duty: .res ::BHOP_NUM_CHANNELS
+channel_selected_instrument: .res ::BHOP_NUM_CHANNELS
+channel_pitch_effects_active: .res ::BHOP_NUM_CHANNELS
 
 ; sequence state tables
-sequences_enabled: .res ::NUM_CHANNELS
-sequences_active: .res ::NUM_CHANNELS
-volume_sequence_ptr_low: .res ::NUM_CHANNELS
-volume_sequence_ptr_high: .res ::NUM_CHANNELS
-volume_sequence_index: .res ::NUM_CHANNELS
-arpeggio_sequence_ptr_low: .res ::NUM_CHANNELS
-arpeggio_sequence_ptr_high: .res ::NUM_CHANNELS
-arpeggio_sequence_index: .res ::NUM_CHANNELS
-pitch_sequence_ptr_low: .res ::NUM_CHANNELS
-pitch_sequence_ptr_high: .res ::NUM_CHANNELS
-pitch_sequence_index: .res ::NUM_CHANNELS
-hipitch_sequence_ptr_low: .res ::NUM_CHANNELS
-hipitch_sequence_ptr_high: .res ::NUM_CHANNELS
-hipitch_sequence_index: .res ::NUM_CHANNELS
-duty_sequence_ptr_low: .res ::NUM_CHANNELS
-duty_sequence_ptr_high: .res ::NUM_CHANNELS
-duty_sequence_index: .res ::NUM_CHANNELS
+sequences_enabled: .res ::BHOP_NUM_CHANNELS
+sequences_active: .res ::BHOP_NUM_CHANNELS
+volume_sequence_ptr_low: .res ::BHOP_NUM_CHANNELS
+volume_sequence_ptr_high: .res ::BHOP_NUM_CHANNELS
+volume_sequence_index: .res ::BHOP_NUM_CHANNELS
+arpeggio_sequence_ptr_low: .res ::BHOP_NUM_CHANNELS
+arpeggio_sequence_ptr_high: .res ::BHOP_NUM_CHANNELS
+arpeggio_sequence_index: .res ::BHOP_NUM_CHANNELS
+pitch_sequence_ptr_low: .res ::BHOP_NUM_CHANNELS
+pitch_sequence_ptr_high: .res ::BHOP_NUM_CHANNELS
+pitch_sequence_index: .res ::BHOP_NUM_CHANNELS
+hipitch_sequence_ptr_low: .res ::BHOP_NUM_CHANNELS
+hipitch_sequence_ptr_high: .res ::BHOP_NUM_CHANNELS
+hipitch_sequence_index: .res ::BHOP_NUM_CHANNELS
+duty_sequence_ptr_low: .res ::BHOP_NUM_CHANNELS
+duty_sequence_ptr_high: .res ::BHOP_NUM_CHANNELS
+duty_sequence_index: .res ::BHOP_NUM_CHANNELS
 
 ; memory for various effects
-effect_note_delay: .res ::NUM_CHANNELS
-effect_cut_delay: .res ::NUM_CHANNELS
+effect_note_delay: .res ::BHOP_NUM_CHANNELS
+effect_cut_delay: .res ::BHOP_NUM_CHANNELS
 effect_skip_target: .byte $00
-
-.export effect_note_delay, effect_cut_delay, effect_skip_target, apply_release
 
 
         .segment BHOP_PLAYER_SEGMENT
         ; global
         .export bhop_init, bhop_play
-        ; internal
-        .export load_instrument, set_speed
 
 .include "bhop/midi_lut.inc"
-.export ntsc_period_low, ntsc_period_high, pal_period_low, pal_period_high
 
 .macro prepare_ptr address
         lda address
@@ -207,7 +197,7 @@ positive:
 
         ; clear out special effects
         lda #0
-        ldx #NUM_CHANNELS
+        ldx #BHOP_NUM_CHANNELS
 effect_init_loop:
         dex
         sta effect_note_delay, x
