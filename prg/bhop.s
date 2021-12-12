@@ -1,7 +1,6 @@
-.macpack longbranch
-
 .include "bhop/config.inc"
 .include "bhop/bhop_internal.inc"
+.include "bhop/longbranch.inc"
 
 ; TODO: this library must NOT provide mapper specific code.
 ; Once you're done testing, REMOVE THIS!
