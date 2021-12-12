@@ -1,3 +1,224 @@
+btm_instrument_list:
+  .word btm_instrument_0 ; Instrument 0
+  .word btm_instrument_1 ; 4th
+  .word btm_instrument_2 ; Phaser Bass
+  .word btm_instrument_3 ; Chords 4th
+  .word btm_instrument_4 ; Snare
+  .word btm_instrument_5 ; Tom
+  .word btm_instrument_6 ; Bass Drum
+  .word btm_instrument_7 ; Hihat
+  .word btm_instrument_8 ; Seinfeld Bass (Regular)
+  .word btm_instrument_9 ; Instrument 9
+  .word btm_instrument_10 ; Chords 4th
+  .word btm_instrument_11 ; Square Lead 5 (Movement 2)
+  .word btm_instrument_12 ; Instrument 12
+  .word btm_instrument_13 ; Instrument 13
+  .word btm_instrument_14 ; Instrument 14
+  .word btm_instrument_15 ; 4th
+  .word btm_instrument_16 ; Chords 4th
+btm_instrument_0:
+  ; Instrument 0
+  .byte 32 ; FM
+  .word btm_fm_patch_default
+btm_instrument_1:
+  ; 4th
+  .byte 32 ; FM
+  .word btm_fm_patch_1
+btm_instrument_2:
+  ; Phaser Bass
+  .byte 32 ; FM
+  .word btm_fm_patch_2
+btm_instrument_3:
+  ; Chords 4th
+  .byte 32 ; FM
+  .word btm_fm_patch_3
+btm_instrument_4:
+  ; Snare
+  .byte 32 ; FM
+  .word btm_fm_patch_4
+btm_instrument_5:
+  ; Tom
+  .byte 32 ; FM
+  .word btm_fm_patch_5
+btm_instrument_6:
+  ; Bass Drum
+  .byte 32 ; FM
+  .word btm_fm_patch_6
+btm_instrument_7:
+  ; Hihat
+  .byte 32 ; FM
+  .word btm_fm_patch_7
+btm_instrument_8:
+  ; Seinfeld Bass (Regular)
+  .byte 32 ; FM
+  .word btm_fm_patch_8
+btm_instrument_9:
+  ; Instrument 9
+  .byte 33 ; SSG
+  ; UNIMPLEMENTED!
+btm_instrument_10:
+  ; Chords 4th
+  .byte 32 ; FM
+  .word btm_fm_patch_9
+btm_instrument_11:
+  ; Square Lead 5 (Movement 2)
+  .byte 32 ; FM
+  .word btm_fm_patch_10
+btm_instrument_12:
+  ; Instrument 12
+  .byte 33 ; SSG
+  ; UNIMPLEMENTED!
+btm_instrument_13:
+  ; Instrument 13
+  .byte 32 ; FM
+  .word btm_fm_patch_11
+btm_instrument_14:
+  ; Instrument 14
+  .byte 32 ; FM
+  .word btm_fm_patch_12
+btm_instrument_15:
+  ; 4th
+  .byte 32 ; FM
+  .word btm_fm_patch_13
+btm_instrument_16:
+  ; Chords 4th
+  .byte 32 ; FM
+  .word btm_fm_patch_14
+btm_fm_patch_default:
+  .byte $04 ; algorithm / feedback
+  .byte $0f ; operators enabled
+  ; operator definitions:
+  ;     D/M  TL   KSAR DR   SR   SLRR SSG
+  .byte $00, $20, $1f, $00, $00, $07, $00
+  .byte $00, $00, $1f, $00, $00, $07, $00
+  .byte $00, $20, $1f, $00, $00, $07, $00
+  .byte $00, $00, $1f, $00, $00, $07, $00
+btm_fm_patch_1:
+  .byte $04 ; algorithm / feedback
+  .byte $0f ; operators enabled
+  ; operator definitions:
+  ;     D/M  TL   KSAR DR   SR   SLRR SSG
+  .byte $08, $16, $5b, $15, $00, $54, $08
+  .byte $00, $07, $5f, $0b, $01, $18, $08
+  .byte $38, $16, $5b, $15, $00, $54, $08
+  .byte $28, $0b, $5f, $0b, $01, $18, $08
+btm_fm_patch_2:
+  .byte $31 ; algorithm / feedback
+  .byte $0f ; operators enabled
+  ; operator definitions:
+  ;     D/M  TL   KSAR DR   SR   SLRR SSG
+  .byte $38, $16, $0a, $05, $00, $2f, $08
+  .byte $18, $2f, $05, $06, $02, $4f, $08
+  .byte $08, $19, $5f, $00, $02, $8f, $08
+  .byte $18, $00, $14, $02, $06, $1f, $08
+btm_fm_patch_3:
+  .byte $3c ; algorithm / feedback
+  .byte $0f ; operators enabled
+  ; operator definitions:
+  ;     D/M  TL   KSAR DR   SR   SLRR SSG
+  .byte $00, $1b, $1f, $00, $00, $00, $08
+  .byte $00, $00, $07, $00, $05, $0c, $08
+  .byte $00, $14, $1f, $00, $00, $00, $08
+  .byte $00, $06, $07, $00, $05, $0c, $08
+btm_fm_patch_4:
+  .byte $3c ; algorithm / feedback
+  .byte $0f ; operators enabled
+  ; operator definitions:
+  ;     D/M  TL   KSAR DR   SR   SLRR SSG
+  .byte $00, $07, $1f, $00, $00, $06, $08
+  .byte $00, $00, $5f, $0f, $0e, $2f, $08
+  .byte $00, $00, $1f, $17, $0f, $c6, $08
+  .byte $00, $00, $1f, $0f, $0f, $0f, $08
+btm_fm_patch_5:
+  .byte $3b ; algorithm / feedback
+  .byte $0f ; operators enabled
+  ; operator definitions:
+  ;     D/M  TL   KSAR DR   SR   SLRR SSG
+  .byte $00, $00, $1f, $04, $00, $01, $08
+  .byte $18, $18, $5f, $15, $04, $61, $08
+  .byte $00, $00, $1f, $1a, $00, $df, $08
+  .byte $00, $00, $1f, $00, $0c, $0f, $08
+btm_fm_patch_6:
+  .byte $35 ; algorithm / feedback
+  .byte $0f ; operators enabled
+  ; operator definitions:
+  ;     D/M  TL   KSAR DR   SR   SLRR SSG
+  .byte $00, $14, $1f, $1b, $00, $f0, $08
+  .byte $00, $06, $1f, $1b, $00, $f8, $08
+  .byte $00, $06, $1f, $10, $00, $f8, $08
+  .byte $00, $06, $1f, $10, $00, $f8, $08
+btm_fm_patch_7:
+  .byte $3c ; algorithm / feedback
+  .byte $0f ; operators enabled
+  ; operator definitions:
+  ;     D/M  TL   KSAR DR   SR   SLRR SSG
+  .byte $00, $13, $1f, $00, $00, $00, $08
+  .byte $00, $03, $1f, $0f, $11, $1f, $08
+  .byte $00, $05, $1f, $00, $00, $00, $08
+  .byte $00, $00, $1f, $17, $0e, $5f, $08
+btm_fm_patch_8:
+  .byte $3b ; algorithm / feedback
+  .byte $0f ; operators enabled
+  ; operator definitions:
+  ;     D/M  TL   KSAR DR   SR   SLRR SSG
+  .byte $18, $22, $1f, $0e, $00, $47, $08
+  .byte $00, $23, $1f, $0a, $00, $58, $08
+  .byte $38, $0a, $1f, $13, $00, $55, $08
+  .byte $00, $00, $1f, $1f, $00, $08, $08
+btm_fm_patch_9:
+  .byte $3c ; algorithm / feedback
+  .byte $0f ; operators enabled
+  ; operator definitions:
+  ;     D/M  TL   KSAR DR   SR   SLRR SSG
+  .byte $00, $1b, $1f, $00, $00, $00, $08
+  .byte $00, $00, $07, $00, $05, $0c, $08
+  .byte $00, $14, $1f, $00, $00, $00, $08
+  .byte $00, $06, $07, $00, $05, $0c, $08
+btm_fm_patch_10:
+  .byte $3c ; algorithm / feedback
+  .byte $0f ; operators enabled
+  ; operator definitions:
+  ;     D/M  TL   KSAR DR   SR   SLRR SSG
+  .byte $38, $19, $1f, $00, $00, $00, $08
+  .byte $38, $00, $1f, $00, $00, $0c, $08
+  .byte $38, $19, $1f, $06, $00, $40, $08
+  .byte $18, $00, $1f, $0f, $00, $2c, $08
+btm_fm_patch_11:
+  .byte $3b ; algorithm / feedback
+  .byte $0f ; operators enabled
+  ; operator definitions:
+  ;     D/M  TL   KSAR DR   SR   SLRR SSG
+  .byte $00, $28, $df, $09, $03, $e5, $08
+  .byte $18, $29, $54, $07, $00, $f5, $08
+  .byte $30, $26, $df, $0b, $00, $25, $08
+  .byte $18, $00, $8f, $04, $00, $0a, $08
+btm_fm_patch_12:
+  .byte $3c ; algorithm / feedback
+  .byte $0f ; operators enabled
+  ; operator definitions:
+  ;     D/M  TL   KSAR DR   SR   SLRR SSG
+  .byte $38, $13, $1f, $00, $00, $00, $08
+  .byte $18, $00, $1f, $11, $0b, $4f, $08
+  .byte $00, $05, $1f, $00, $00, $00, $08
+  .byte $00, $00, $1f, $17, $0e, $5f, $08
+btm_fm_patch_13:
+  .byte $04 ; algorithm / feedback
+  .byte $0f ; operators enabled
+  ; operator definitions:
+  ;     D/M  TL   KSAR DR   SR   SLRR SSG
+  .byte $08, $16, $5b, $15, $00, $54, $08
+  .byte $00, $07, $5f, $0b, $01, $18, $08
+  .byte $38, $16, $5b, $15, $00, $54, $08
+  .byte $28, $0b, $5f, $0b, $01, $18, $08
+btm_fm_patch_14:
+  .byte $3c ; algorithm / feedback
+  .byte $0f ; operators enabled
+  ; operator definitions:
+  ;     D/M  TL   KSAR DR   SR   SLRR SSG
+  .byte $00, $1b, $1f, $00, $00, $00, $08
+  .byte $00, $00, $14, $00, $05, $0c, $08
+  .byte $00, $14, $1f, $00, $00, $00, $08
+  .byte $00, $06, $14, $00, $05, $0c, $08
 btm_song0_frames:
   .word btm_song0_frame0
   .word btm_song0_frame1
@@ -185,7 +406,7 @@ btm_song0_frame10:
   .word btm_song0_fm_2ch_pattern2
   .word btm_song0_fm_3ch_pattern5
   .word btm_song0_fm_4ch_pattern6
-  .word unspecified_empty_pattern
+  .word btm_song0_fm_5ch_pattern10
   .word unspecified_empty_pattern
   .word unspecified_empty_pattern
   .word unspecified_empty_pattern
@@ -363,6 +584,8 @@ btm_song0_fm_5ch_pattern9:
   .byte $01, $24, $00, $7e, $00, $24, $05, $28, $00, $00, $01, $ed, $3e, $00, $40, $01
   .byte $3e, $01, $3c, $00, $7e, $00, $3e, $03, $00, $01, $3c, $01, $7e, $01, $43, $03
   .byte $43, $01, $7e, $01, $40, $01, $41, $01, $43, $01, $45, $01, $7e, $01, $3c, $ff
+btm_song0_fm_5ch_pattern10:
+  .byte $24, $ff
 btm_song0_fm_6ch_pattern0:
   .byte $e3, $89, $17, $15, $00, $00, $ff
 btm_song0_fm_6ch_pattern1:

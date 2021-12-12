@@ -3,7 +3,7 @@
 
 ; Module header
 	.word ft_song_list
-	.word ft_instrument_list
+	.word btm_instrument_list
 	.word ft_sample_list
 	.word ft_samples
 	.word ft_groove_list
@@ -53,22 +53,6 @@ ft_song_0:
 ;
 ; Pattern and frame data for all songs below
 ;
-
-; Bank 0
-ft_s0_frames:
-	.word ft_s0f0
-ft_s0f0:
-	.word ft_s0p0c0, ft_s0p0c1, ft_s0p0c1, ft_s0p0c1, ft_s0p0c1
-
-
-; Bank 0
-ft_s0p0c0:
-	.byte $E0, $25, $3F
-
-
-; Bank 0
-ft_s0p0c1:
-	.byte $00, $3F
 
 unspecified_empty_pattern:
 	.byte $00, $3F
