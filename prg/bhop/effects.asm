@@ -1,18 +1,14 @@
-.scope BHOP
-
         .segment BHOP_RAM_SEGMENT
-channel_vibrato_settings: .res ::NUM_CHANNELS
-channel_vibrato_accumulator: .res ::NUM_CHANNELS
-channel_tuning: .res ::NUM_CHANNELS
-channel_arpeggio_settings: .res ::NUM_CHANNELS
-channel_arpeggio_counter: .res ::NUM_CHANNELS
-channel_pitch_effect_settings: .res ::NUM_CHANNELS
-channel_tremolo_settings: .res ::NUM_CHANNELS
-channel_tremolo_accumulator: .res ::NUM_CHANNELS
-channel_volume_slide_settings: .res ::NUM_CHANNELS
-channel_volume_slide_accumulator: .res ::NUM_CHANNELS
-.export channel_vibrato_settings, channel_vibrato_accumulator, channel_tuning, channel_arpeggio_settings, channel_arpeggio_counter
-.export channel_pitch_effect_settings, channel_tremolo_settings, channel_tremolo_accumulator, channel_volume_slide_settings, channel_volume_slide_accumulator
+channel_vibrato_settings: .res ::BHOP_NUM_CHANNELS
+channel_vibrato_accumulator: .res ::BHOP_NUM_CHANNELS
+channel_tuning: .res ::BHOP_NUM_CHANNELS
+channel_arpeggio_settings: .res ::BHOP_NUM_CHANNELS
+channel_arpeggio_counter: .res ::BHOP_NUM_CHANNELS
+channel_pitch_effect_settings: .res ::BHOP_NUM_CHANNELS
+channel_tremolo_settings: .res ::BHOP_NUM_CHANNELS
+channel_tremolo_accumulator: .res ::BHOP_NUM_CHANNELS
+channel_volume_slide_settings: .res ::BHOP_NUM_CHANNELS
+channel_volume_slide_accumulator: .res ::BHOP_NUM_CHANNELS
 
 scratch_target_frequency: .res 2
 
@@ -89,7 +85,6 @@ invert_read:
 done:
         rts
 .endproc
-.export update_vibrato
 
 .proc update_tuning
         ldx channel_index
@@ -98,7 +93,6 @@ done:
         sadd16_split_x channel_detuned_frequency_low, channel_detuned_frequency_high, scratch_byte
         rts
 .endproc
-.export update_tuning
 
 ; prep: 
 ;   channel_index set for the desired channel
@@ -156,7 +150,6 @@ increment_arp_counter:
 done:
         rts
 .endproc
-.export update_arp
 
 ; sortof a dispatch function, since pitch effects are all processed at
 ; the same time but have subtly different behavior
@@ -210,7 +203,6 @@ check_note_down:
 done:
         rts
 .endproc
-.export update_pitch_effects
 
 ; 1xx: unconditional slide upwards; amount in xx
 .proc update_pitch_slide_up
@@ -411,7 +403,6 @@ done:
         jsr update_volume_slide
         rts
 .endproc
-.export update_volume_effects
 
 .proc update_tremolo
         lda channel_tremolo_settings, x
@@ -535,5 +526,3 @@ zero_volume:
 done:
         rts
 .endproc
-
-.endscope

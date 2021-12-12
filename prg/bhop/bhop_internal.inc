@@ -23,8 +23,6 @@
         initial_bank .byte
 .endstruct
 
-NUM_CHANNELS = 5 ;  note: this might change with expansion support
-
 PULSE_1_INDEX = 0
 PULSE_2_INDEX = 1
 TRIANGLE_INDEX = 2
@@ -87,41 +85,6 @@ done:
 .endscope
 .endmacro
 
-.import ntsc_period_low, ntsc_period_high, pal_period_low, pal_period_high
-
-; various RAM and zeropage structures
-.importzp bhop_ptr, pattern_ptr, channel_index, scratch_byte
-.import row_counter, row_cmp, frame_counter, frame_cmp, tempo
-.import channel_status, channel_global_duration, channel_row_delay_counter, channel_selected_instrument, channel_pitch_effects_active
-.import channel_base_note, channel_duty, channel_volume, channel_tremolo_volume, channel_instrument_duty
-.import channel_detuned_frequency_low, channel_detuned_frequency_high, channel_relative_frequency_low, channel_relative_frequency_high
-.import channel_vibrato_settings, channel_vibrato_accumulator, channel_tuning, channel_arpeggio_settings, channel_arpeggio_counter
-.import channel_pitch_effect_settings, channel_tremolo_settings, channel_tremolo_accumulator, channel_volume_slide_settings, channel_volume_slide_accumulator
-
-.import sequences_enabled
-.import sequences_active
-.import volume_sequence_ptr_low
-.import volume_sequence_ptr_high
-.import volume_sequence_index
-.import arpeggio_sequence_ptr_low
-.import arpeggio_sequence_ptr_high
-.import arpeggio_sequence_index
-.import pitch_sequence_ptr_low
-.import pitch_sequence_ptr_high
-.import pitch_sequence_index
-.import hipitch_sequence_ptr_low
-.import hipitch_sequence_ptr_high
-.import hipitch_sequence_index
-.import duty_sequence_ptr_low
-.import duty_sequence_ptr_high
-.import duty_sequence_index
-
-.import effect_note_delay, effect_cut_delay, effect_skip_target
-
-; various methods, mostly used by commands
-.import load_instrument, set_speed
-.import dispatch_command, skip_command, update_vibrato, update_tuning, update_arp, update_pitch_effects, update_volume_effects
-
 ; Inline collections of utility macros from various sources, collected here
 ; to reduce the number of individual files needed for the sound driver to be
 ; included in another project
@@ -180,8 +143,6 @@ done:
     CMD_EFF_S5B_ENV_RATE_LO
     CMD_EFF_S5B_NOISE
 .endenum
-
-.import command_table
 
 
 ; =============================================
