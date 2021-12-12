@@ -1,6 +1,6 @@
 .scope BHOP
 
-        .segment "RAM"
+        .segment BHOP_RAM_SEGMENT
 channel_vibrato_settings: .res ::NUM_CHANNELS
 channel_vibrato_accumulator: .res ::NUM_CHANNELS
 channel_tuning: .res ::NUM_CHANNELS

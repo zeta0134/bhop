@@ -1,4 +1,4 @@
-        .zeropage
+        .segment BHOP_ZP_SEGMENT
 cmd_ptr: .word $0000
 
         .segment BHOP_PLAYER_SEGMENT
