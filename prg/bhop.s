@@ -1,21 +1,18 @@
+.macpack longbranch
+
 .include "bhop/config.inc"
 .include "bhop/bhop_internal.inc"
-
-; TODO: do not rely on external libraries!
-.include "nes.inc"
 
 ; TODO: this library must NOT provide mapper specific code.
 ; Once you're done testing, REMOVE THIS!
 .include "mmc3.inc"
-
-.macpack longbranch
 
 .scope BHOP
 
 .include "bhop/commands.asm"
 .include "bhop/effects.asm"        
 
-        .zeropage
+        .segment BHOP_ZP_SEGMENT
 ; scratch ptr, used for all sorts of indirect reads
 bhop_ptr: .word $0000 
 ; pattern pointers, read repeatedly when updating
@@ -26,7 +23,7 @@ scratch_byte: .byte $00
 
 .exportzp bhop_ptr, pattern_ptr, channel_index, scratch_byte
 
-        .segment "RAM"
+        .segment BHOP_RAM_SEGMENT
 tempo_counter: .word $0000
 tempo_cmp: .word $0000
 tempo: .byte $00
