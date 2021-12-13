@@ -24,11 +24,16 @@ lowest_performance: .word $0000
 highest_performance: .word $0000
 current_track: .byte $00
 
+; For the demo harness, we've set each SONG bank to start at $A000, and
+; switch entire modules by swapping banks:
+bhop_music_data = $A000
+.export bhop_music_data
+
         .segment "SONG_0"
         .scope SONG_0
-        ;.include "../ftm/MMBN2.asm"
+        .include "../ftm/MMBN2.asm"
         ;.include "../ftm/tremolo_axy_test.asm"
-        .include "../ftm/waltz.asm"
+        ;.include "../ftm/waltz.asm"
         ;.include "../ftm/fixed_arp_test.asm"
         ;.include "../ftm/love3.asm"
         .endscope
@@ -72,6 +77,18 @@ current_track: .byte $00
 
         .segment "PRG_E000"
         .export start, nmi, irq
+
+; BHOP specific configuration:
+
+.proc bhop_apply_dpcm_bank
+        pha ; preserve bank number on the stack
+        lda #(MMC3_BANKING_MODE + $6)
+        sta MMC3_BANK_SELECT
+        pla ; restore bank number
+        sta MMC3_BANK_DATA
+        rts
+.endproc
+.export bhop_apply_dpcm_bank
 
 timing_nametable:
         .incbin "performance_display.nam"

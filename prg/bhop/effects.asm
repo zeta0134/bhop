@@ -1,14 +1,14 @@
         .segment BHOP_RAM_SEGMENT
-channel_vibrato_settings: .res ::BHOP_NUM_CHANNELS
-channel_vibrato_accumulator: .res ::BHOP_NUM_CHANNELS
-channel_tuning: .res ::BHOP_NUM_CHANNELS
-channel_arpeggio_settings: .res ::BHOP_NUM_CHANNELS
-channel_arpeggio_counter: .res ::BHOP_NUM_CHANNELS
-channel_pitch_effect_settings: .res ::BHOP_NUM_CHANNELS
-channel_tremolo_settings: .res ::BHOP_NUM_CHANNELS
-channel_tremolo_accumulator: .res ::BHOP_NUM_CHANNELS
-channel_volume_slide_settings: .res ::BHOP_NUM_CHANNELS
-channel_volume_slide_accumulator: .res ::BHOP_NUM_CHANNELS
+channel_vibrato_settings: .res BHOP::NUM_CHANNELS
+channel_vibrato_accumulator: .res BHOP::NUM_CHANNELS
+channel_tuning: .res BHOP::NUM_CHANNELS
+channel_arpeggio_settings: .res BHOP::NUM_CHANNELS
+channel_arpeggio_counter: .res BHOP::NUM_CHANNELS
+channel_pitch_effect_settings: .res BHOP::NUM_CHANNELS
+channel_tremolo_settings: .res BHOP::NUM_CHANNELS
+channel_tremolo_accumulator: .res BHOP::NUM_CHANNELS
+channel_volume_slide_settings: .res BHOP::NUM_CHANNELS
+channel_volume_slide_accumulator: .res BHOP::NUM_CHANNELS
 
 scratch_target_frequency: .res 2
 
