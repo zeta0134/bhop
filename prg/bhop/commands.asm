@@ -335,7 +335,7 @@ done:
         lda #0
         sta tempo
         ; immediately mute all channels
-        ldx #BHOP_NUM_CHANNELS
+        ldx #NUM_CHANNELS
 loop:
         dex
         lda channel_status, x
