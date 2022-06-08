@@ -7,7 +7,7 @@ A Work-In-Progress attempt to build a new music driver for NES / FamiCom, with e
 ## Implemented
 - Bytecode reading, basic module playback, NTSC configuration
 - Volume, Arpeggio, Pitch, and Duty envelopes
-- Effects: `0xy`, `1xx`, `2xx`, `3xx`, `4xy`, `700`, `Axy`, `Bxx`, `Fxx`, `Gxx`, `Pxx`, `Qxy`, `Rxy`, `Sxx`
+- Effects: `0xy`, `1xx`, `2xx`, `3xx`, `4xy`, `700`, `Axy`, `Bxx`, `Fxx`, `Gxx`, `Pxx`, `Qxy`, `Rxy`, `Sxx`, `Yxx`, `Zxx`
 - Register pitch mode
 - DPCM Sample playback, with rudimentary bank switching support
 
@@ -47,11 +47,11 @@ A Work-In-Progress attempt to build a new music driver for NES / FamiCom, with e
 
 # Usage Notes
 
-If you'd like to hear the project mangle your music in its current state, that's great! I'm here to help.
+So you'd like to hear my project mangle your music in its current state? That's great! I'm here to help.
 
 ## Quickstart guide
 
-First off, export your music using the Dn-FamiTracker UI, and select "Assembly Source" as the format. It defaults to "music.asm" so let's stick with that.
+First off, export your music using the Dn-FamiTracker UI. Select "Assembly Source" as the format. It defaults to "music.asm" so let's stick with that.
 
 Add the following files to your project structure, and make sure `bhop.s` is set to be compiled and linked by your project:
 ```
@@ -69,10 +69,11 @@ bhop.s
 music.asm
 ```
 
-Somewhere in your project, import your music data. Make sure it all fits on one page and has a label, so bhop knows where to find it:
+Somewhere in your project, import your music data. Make sure it all fits in memory at once. Export the label, so bhop knows where to find it:
 ```
 bhop_music_data:
   .include "music.asm"
+  .export bhop_music_data
 ```
 
 Double-check `bhop/config.inc` and look over the segment names and other settings. Tweak as required.
@@ -93,16 +94,28 @@ Finally, about once per frame, call the update routine. Usually you'll want to d
 ```
 nmi:
   ; perform OAM DMA, do PPU activity, etc
-  jsr bhop_update
+  jsr bhop_play
   ; do anything else that isn't timing sensitive
   rti
 ```
+
+If your project uses banking, make sure both the music player and the page containing `bhop_music_data` are swapped in before calling `bhop_init` or `bhop_play`. Once these routines exit, both may be paged out as needed. Only DPCM samples need to remain banked in throughout playback.
 
 ## DPCM Banking
 
 If your project's mapper supports banking the region from $C000 onwards, then you can have bhop automatically switch that bank out on the fly. With some effort, this enables using more than 16kB of DPCM samples during music playback.
 
-Right now there's not an especially ideal way to export DPCM bank allocations, so if you have a lot of samples, expect to tweak some of the data by hand. I like to let ca65 do the work for me:
+Right now there's not an especially ideal way to export DPCM bank allocations, so if you have a lot of samples, expect to tweak some of the data by hand. If you're working with a standard Dn-FamiTracker export, the data looks like this:
+
+```
+; DPCM samples list (location, size, bank)
+ft_samples:
+  .byte 0, 18, 0
+  .byte 5, 7, 1
+  .byte 7, 15, 2
+```
+
+I like to rework this data to reference the sample label instead, so that ca65 will fill in the bank number and offset, like this:
 
 ```
 ; DPCM samples list (location, size, bank)
@@ -112,33 +125,23 @@ ft_samples:
   .byte <((ft_sample_2  - $C000) >> 6),  130, <.bank(ft_sample_2)
 ```
 
-But if you're dealing with a standard export, it'll look like this instead:
-```
-; DPCM samples list (location, size, bank)
-ft_samples:
-  .byte 0, 18, 0
-  .byte 5, 7, 1
-  .byte 7, 15, 2
-```
-
-Now, in `bhop/config.inc` make sure BHOP_DPCM_BANKING is set to 1, and the procedure name provided works for your project. Tweak to taste:
+Once your data is prepared, in `bhop/config.inc` set BHOP_DPCM_BANKING is set to 1, and the procedure name provided works for your project. Tweak to taste:
 ```
 BHOP_DPCM_BANKING = 1
-BHOP_DPCM_SWITCH_PROC = bhop_apply_dpcm_bank
 ```
 
-Finally, anywhere in your project, fill out this function and export it so bhop can see it. The desired DPCM bank will be in the `a` register. For example, here's the function I use to switch out the 8k bank at $C000 on an MMC3, running in PRG Mode 1:
+Finally, anywhere in your project, fill out the banking function and export it so bhop can see it. The desired DPCM bank will be in the `a` register. For example, here's the function I use to switch out the 8k bank at $C000 on an MMC3, running in PRG Mode 1:
 
 ```
 ; project global
 MMC3_BANKING_MODE = %01000000
 
 .proc bhop_apply_dpcm_bank
+        pha ; preserve the incoming bank number in a
         lda #(MMC3_BANKING_MODE + $6)
         sta MMC3_BANK_SELECT
-        lda bank_number
+        pla ; restore the bank number
         sta MMC3_BANK_DATA
-        mmc3_select_bank $6, scratch_byte
         rts
 .endproc
 .export bhop_apply_dpcm_bank
@@ -148,9 +151,9 @@ MMC3_BANKING_MODE = %01000000
 
 FamiTracker, and thus bhop, assume that DPCM samples are indexed relative to 0xC000. FamiTracker forks *other* than Dn-FamiTracker tend to assume an NSF configuration is in use, and may use an inconvenient bank size; I've seen 12k banks in use, which NSF permits but most standard game mappers do not. If you're using a lot of samples, do double-check the `.asm` output, especially the `ft_samples` table. You will probably need to massage the export data somewhat manually.
 
-Typically you'll call `jsr bhop_play` once per frame for a 60 Hz tick rate on NTSC, or a 50 Hz tick rate on PAL. If you want to use a different engine speed, you'll need to handle the timing yourself and call `bhop_play` at the appropriate rate. Mind that engine speeds faster than 120 Hz are highly impractical, and likely to cause lag.
+Typically you'll call `jsr bhop_play` once per frame for a 60 Hz tick rate on NTSC, or a 50 Hz tick rate on PAL. If you want to use a different engine speed, you'll need to handle the timing yourself and call `bhop_play` at the appropriate rate. Engine speeds faster than 120 Hz are highly impractical for gameplay, and engine speeds much higher than 240 Hz start to become impractical on real NES hardware, though many NSF players can handle this just fine.
 
-There is no need to use just one `.asm` file. The only requirement is that the start of this file be located at a set location in memory. You can easily include several locations on different PRG banks, or even copy the data into RAM if you've got the headroom. This can help to work around music size limitations, especially if you start to run out of instruments on a large project. Make sure to call `bhop_init` every time you swap the bank out however; if `bhop_play` is ever called with the wrong music data loaded, it can get stuck playing invalid bytecode. This will certainly sound unpleasant, and may crash the program.
+There is no need to use just one `.asm` file. The only requirement is that the start of this file be located at a set location in memory. You can easily include several locations on different PRG banks, or even copy the data into RAM if you've got the headroom. This can help to work around music size limitations, especially if you start to run out of instruments on a large project. Make sure to call `bhop_init` every time you switch modules or tracks, especially if banking in new data. If `bhop_play` is ever called with the wrong music data loaded, it can get stuck playing invalid bytecode. This will certainly sound unpleasant, and may crash the program.
 
 There is no stop function; if you need to stop playback, include a silent song in your export data. While a SFX feature to mute channels is planned, none is currently implemented. My apologies, it's _on the TODO list._ Enjoy at your own peril!
 
