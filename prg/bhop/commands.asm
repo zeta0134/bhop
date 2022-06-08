@@ -26,8 +26,8 @@ command_table:
     .word cmd_eff_duty             ;CMD_EFF_DUTY
     .word cmd_eff_delay            ;CMD_EFF_DELAY
     .word cmd_unimplemented        ;CMD_EFF_SWEEP
-    .word cmd_unimplemented        ;CMD_EFF_DAC
-    .word cmd_unimplemented        ;CMD_EFF_OFFSET
+    .word cmd_eff_dac              ;CMD_EFF_DAC
+    .word cmd_eff_offset           ;CMD_EFF_OFFSET
     .word cmd_eff_slide_up         ;CMD_EFF_SLIDE_UP
     .word cmd_eff_slide_down       ;CMD_EFF_SLIDE_DOWN
     .word cmd_eff_vol_slide        ;CMD_EFF_VOL_SLIDE
@@ -343,5 +343,23 @@ loop:
         sta channel_status, x
         cpx #0
         bne loop
+        rts
+.endproc
+
+.proc cmd_eff_dac
+        ; this command is applied immediately, but we still need to ignore it
+        ; if the channel is suppressed
+        ; TODO: THIS
+
+
+        ; immediately set the DPCM level
+        fetch_pattern_byte
+        sta $4011
+        rts
+.endproc
+
+.proc cmd_eff_offset
+        fetch_pattern_byte
+        sta effect_dpcm_offset
         rts
 .endproc
