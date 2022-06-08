@@ -17,7 +17,6 @@ A Work-In-Progress attempt to build a new music driver for NES / FamiCom, with e
 - PAL configuration
 - Linear pitch mode
 - Grooves
-- Program-controlled channel muting
 - SFX
 
 # Goals
@@ -172,8 +171,10 @@ FamiTracker, and thus bhop, assume that DPCM samples are indexed relative to 0xC
 
 Typically you'll call `jsr bhop_play` once per frame for a 60 Hz tick rate on NTSC, or a 50 Hz tick rate on PAL. If you want to use a different engine speed, you'll need to handle the timing yourself and call `bhop_play` at the appropriate rate. Engine speeds faster than 120 Hz are highly impractical for gameplay, and engine speeds much higher than 240 Hz start to become impractical on real NES hardware, though many NSF players can handle this just fine.
 
-There is no need to use just one `.asm` file. The only requirement is that the start of this file be located at a set location in memory. You can easily include several locations on different PRG banks, or even copy the data into RAM if you've got the headroom. This can help to work around music size limitations, especially if you start to run out of instruments on a large project. Make sure to call `bhop_init` every time you switch modules or tracks, especially if banking in new data. If `bhop_play` is ever called with the wrong music data loaded, it can get stuck playing invalid bytecode. This will certainly sound unpleasant, and may crash the program.
+There is no need to use just one `music.asm` file. The only requirement is that the start of this data be located at a fixed location in memory. You can easily include several locations on different PRG banks, or even copy the data into RAM if you've got the headroom. This can help to work around music size limitations, especially if you start to run out of instruments on a large project. Make sure to call `bhop_init` every time you switch modules or tracks, especially when banking in new data. If `bhop_play` is ever called with the wrong music data loaded, it can get stuck playing invalid bytecode. This will certainly sound unpleasant, and may crash the program.
 
-There is no stop function; if you need to stop playback, include a silent song in your export data. While a SFX feature to mute channels is planned, none is currently implemented. My apologies, it's _on the TODO list._ Enjoy at your own peril!
+There is no stop function; if you need to stop playback, include a silent song in your export data.
+
+Enjoy at your own peril!
 
 (These notes are likely to become out of date quickly, and if nothing else, I'd like to simplify these steps once the project is more stable.)
