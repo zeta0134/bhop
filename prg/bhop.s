@@ -82,7 +82,7 @@ effect_dpcm_offset: .byte $00
 
         .segment BHOP_PLAYER_SEGMENT
         ; global
-        .export bhop_init, bhop_play
+        .export bhop_init, bhop_play, bhop_mute_channel, bhop_unmute_channel
 
 .include "bhop/midi_lut.inc"
 
@@ -1453,7 +1453,9 @@ release_sequence SEQUENCE_DUTY, duty_sequence_ptr_low, duty_sequence_ptr_high, d
 
 .proc tick_registers
 tick_pulse1:
+        lda #CHANNEL_SUPPRESSED
         bit channel_status + PULSE_1_INDEX
+        bne tick_pulse2
         bmi pulse1_muted
 
         ; apply the combined channel and instrument volume
@@ -1502,8 +1504,11 @@ pulse1_muted:
         sta $4000
 
 tick_pulse2:
+        lda #CHANNEL_SUPPRESSED
         bit channel_status + PULSE_2_INDEX
+        bne tick_triangle
         bmi pulse2_muted
+
 
         ; apply the combined channel and instrument volume
         lda channel_tremolo_volume + PULSE_2_INDEX
@@ -1551,8 +1556,11 @@ pulse2_muted:
         sta $4004
 
 tick_triangle:
+        lda #CHANNEL_SUPPRESSED
         bit channel_status + TRIANGLE_INDEX
+        bne tick_noise
         bmi triangle_muted
+
         ; triangle additionally should mute here if either channel volume,
         ; or instrument volume is zero
         ; (but don't clobber a)
@@ -1578,7 +1586,9 @@ triangle_muted:
         sta $4008
 
 tick_noise:
+        lda #CHANNEL_SUPPRESSED
         bit channel_status + NOISE_INDEX
+        bne cleanup
         bmi noise_muted
 
         ; apply the combined channel and instrument volume
@@ -1652,6 +1662,10 @@ cleanup:
 .endproc
 
 .proc play_dpcm_samples
+        lda channel_status + DPCM_INDEX
+        and #CHANNEL_SUPPRESSED
+        bne done
+
         lda channel_status + DPCM_INDEX
         and #(CHANNEL_MUTED | CHANNEL_RELEASED)
         bne dpcm_muted
@@ -1735,6 +1749,37 @@ dpcm_muted:
         jsr tick_envelopes_and_effects
         jsr tick_registers
         ; D:
+        rts
+.endproc
+
+; channel index in A
+.proc bhop_mute_channel
+        tax
+        lda #(CHANNEL_SUPPRESSED)
+        ora channel_status, x
+        sta channel_status, x
+        ; if this is a pulse channel, make sure our next update
+        ; after we un-mute writes a new frequency value
+check_pulse_1:
+        cpx #0
+        bne check_pulse_2
+        lda #$FF
+        sta shadow_pulse1_freq_hi
+check_pulse_2:
+        cpx #1
+        bne done
+        lda #$FF
+        sta shadow_pulse2_freq_hi
+done:
+        rts
+.endproc
+
+; channel index in A
+.proc bhop_unmute_channel
+        tax
+        lda #($FF - CHANNEL_SUPPRESSED)
+        and channel_status, x
+        sta channel_status, x
         rts
 .endproc
 
