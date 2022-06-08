@@ -31,11 +31,7 @@ bhop_music_data = $A000
 
         .segment "SONG_0"
         .scope SONG_0
-        .include "../ftm/MMBN2.asm"
-        ;.include "../ftm/tremolo_axy_test.asm"
-        ;.include "../ftm/waltz.asm"
-        ;.include "../ftm/fixed_arp_test.asm"
-        ;.include "../ftm/love3.asm"
+        .include "../ftm/in_this_together.asm"
         .endscope
 
         .segment "SONG_1"
@@ -60,12 +56,12 @@ bhop_music_data = $A000
         
         .segment "SONG_5"
         .scope SONG_5
-        .include "../ftm/bark.asm"
+        .include "../ftm/MMBN2.asm"
         .endscope
 
         .segment "SONG_6"
         .scope SONG_6
-        .include "../ftm/nary.asm"
+        .include "../ftm/waltz.asm"
         .endscope
 
         .segment "SONG_7"
