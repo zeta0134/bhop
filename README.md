@@ -2,6 +2,9 @@
 
 A Work-In-Progress attempt to build a new music driver for NES / FamiCom, with eventual feature parity for FamiTracker projects. This will be a brand new driver, built from scratch with the goal of eventually becoming a drop-in replacement for the original. Right now it is complete enough to play many modules, but is still lacking several effects, hi-pitch envelopes, and all expansion audio channels.
 
+There is a live demo here: https://rusticnes.reploid.cafe/wasm/?cartridge=bhop.nes
+(Use the arrow keys to change tracks. Also check out the [Jam] tab to peek at what the audio channels are doing.)
+
 # Project Status
 
 ## Implemented
