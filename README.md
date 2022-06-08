@@ -101,6 +101,25 @@ nmi:
 
 If your project uses banking, make sure both the music player and the page containing `bhop_music_data` are swapped in before calling `bhop_init` or `bhop_play`. Once these routines exit, both may be paged out as needed. Only DPCM samples need to remain banked in throughout playback.
 
+## Sound Effects
+
+The music engine does not include any handling of SFX data. If your game engine needs to play a sound effect, channels may be temporarily muted by their index number:
+
+```
+lda #0
+jsr bhop_mute_channel ; suppress the first pulse channel. Clobbers a, x, and y
+```
+
+After this call, bhop will continue to update this channel in the background, but immediately ceases any and all register writes. Once your SFX is done playing, you can unmute the channel the same way:
+
+```
+lda #0
+jsr bhop_unmute_channel ; hand control of the first pulse back to bhop. Clobbers a, x, and y
+```
+
+This will resume updating the channel immediately, typically continuing whichever note was interrupted, or silencing the channel if there is a rest in the music.
+Note that channel suppressions are reset when `bhop_init` is called to switch tracks.
+
 ## DPCM Banking
 
 If your project's mapper supports banking the region from $C000 onwards, then you can have bhop automatically switch that bank out on the fly. With some effort, this enables using more than 16kB of DPCM samples during music playback.
