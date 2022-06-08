@@ -77,6 +77,7 @@ duty_sequence_index: .res BHOP::NUM_CHANNELS
 effect_note_delay: .res BHOP::NUM_CHANNELS
 effect_cut_delay: .res BHOP::NUM_CHANNELS
 effect_skip_target: .byte $00
+effect_dpcm_offset: .byte $00
 
 
         .segment BHOP_PLAYER_SEGMENT
@@ -206,6 +207,9 @@ effect_init_loop:
         sta channel_tremolo_settings, x
         sta channel_duty, x
         bne effect_init_loop
+
+        sta effect_skip_target
+        sta effect_dpcm_offset
 
         ; finally, enable all channels except DMC
         lda #%00001111
@@ -1691,9 +1695,14 @@ no_delta_set:
         ; - location byte
         ; - size byte
         ; - bank to switch in
+        
         lda (bhop_ptr), y
-        iny
+        ; cheaper to just do this unconditionally
+        clc
+        adc effect_dpcm_offset
         sta $4012
+        iny
+
         lda (bhop_ptr), y
         sta $4013
 
