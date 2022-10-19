@@ -31,7 +31,8 @@ bhop_music_data = $A000
 
         .segment "SONG_0"
         .scope SONG_0
-        .include "../ftm/in_this_together.asm"
+        ;.include "../ftm/in_this_together.asm"
+        .include "../ftm/blarggsaw.asm"
         .endscope
 
         .segment "SONG_1"
