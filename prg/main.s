@@ -387,10 +387,10 @@ gameloop:
         pha
 
         ; do the sprite thing
-        lda #$00
-        sta OAMADDR
-        lda #$02
-        sta OAM_DMA
+        ;lda #$00
+        ;sta OAMADDR
+        ;lda #$02
+        ;sta OAM_DMA
 
         inc nmi_counter
 

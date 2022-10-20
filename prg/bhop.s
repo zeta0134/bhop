@@ -270,42 +270,50 @@ loop:
 
         ; Pulse 1
         lda (bhop_ptr), y
-        sta channel_pattern_ptr_low+0
+        sta channel_pattern_ptr_low+PULSE_1_INDEX
         iny
         lda (bhop_ptr), y
-        sta channel_pattern_ptr_high+0
+        sta channel_pattern_ptr_high+PULSE_1_INDEX
         iny
 
         ; Pulse 2
         lda (bhop_ptr), y
-        sta channel_pattern_ptr_low+1
+        sta channel_pattern_ptr_low+PULSE_2_INDEX
         iny
         lda (bhop_ptr), y
-        sta channel_pattern_ptr_high+1
+        sta channel_pattern_ptr_high+PULSE_2_INDEX
         iny
 
         ; Triangle
         lda (bhop_ptr), y
-        sta channel_pattern_ptr_low+2
+        sta channel_pattern_ptr_low+TRIANGLE_INDEX
         iny
         lda (bhop_ptr), y
-        sta channel_pattern_ptr_high+2
+        sta channel_pattern_ptr_high+TRIANGLE_INDEX
         iny
 
         ; Noise
         lda (bhop_ptr), y
-        sta channel_pattern_ptr_low+3
+        sta channel_pattern_ptr_low+NOISE_INDEX
         iny
         lda (bhop_ptr), y
-        sta channel_pattern_ptr_high+3
+        sta channel_pattern_ptr_high+NOISE_INDEX
+        iny
+
+        ; BLARGGSAW
+        lda (bhop_ptr), y
+        sta channel_pattern_ptr_low+BLARGGSAW_INDEX
+        iny
+        lda (bhop_ptr), y
+        sta channel_pattern_ptr_high+BLARGGSAW_INDEX
         iny
 
         ; DPCM
         lda (bhop_ptr), y
-        sta channel_pattern_ptr_low+4
+        sta channel_pattern_ptr_low+DPCM_INDEX
         iny
         lda (bhop_ptr), y
-        sta channel_pattern_ptr_high+4
+        sta channel_pattern_ptr_high+DPCM_INDEX
         iny
 
         ; reset all the row counters to 0
@@ -314,6 +322,7 @@ loop:
         sta channel_row_delay_counter + PULSE_2_INDEX
         sta channel_row_delay_counter + TRIANGLE_INDEX
         sta channel_row_delay_counter + NOISE_INDEX
+        sta channel_row_delay_counter + BLARGGSAW_INDEX
         sta channel_row_delay_counter + DPCM_INDEX
 
         rts
@@ -682,6 +691,11 @@ done:
 
         ; NOISE
         lda #NOISE_INDEX
+        sta channel_index
+        jsr skip_channel_row
+
+        ; BLARGGSAW
+        lda #BLARGGSAW_INDEX
         sta channel_index
         jsr skip_channel_row
 
@@ -1765,8 +1779,8 @@ done:
 dpcm_muted:
         ; simply disable the channel and exit (whatever is in the sample playback buffer will
         ; finish, up to 8 bits, there is no way to disable this)
-        lda #%00001111
-        sta $4015
+        ;lda #%00001111
+        ;sta $4015
 
         rts
 .endproc
@@ -1789,27 +1803,37 @@ dpcm_muted:
         ; go from 4-bit to 6-bit
         asl
         asl
-        sta saw_volume
+        ;sta saw_volume
+        sta zetasaw_volume
         beq blarggsaw_muted
 
         ; blarggsaw will use the tracked note directly
         lda channel_base_note + BLARGGSAW_INDEX
-        sec
-        sbc #20
-        ;clc
-        ;adc #12
+        ;tax        
+        ;lda blarggsaw_note_offsets, x
+        ;sta table_entry
+        asl
         tax
-        ; TODO: offset?
-        lda blarggsaw_note_offsets, x
-        sta table_entry
+
+        sei ; briefly disable interrupts, for pointer safety
+        lda blarggsaw_note_lists, x 
+        sta zetasaw_ptr
+        lda blarggsaw_note_lists+1, x 
+        sta zetasaw_ptr+1
+        cli ; the pointer is valid, it should be safe to re-enable interrupts again
 
         ; Now, if we were just triggered, start the sample playback from scratch
         lda channel_status + BLARGGSAW_INDEX
         and #CHANNEL_TRIGGERED
         beq skip
 
-        lda blarggsaw_note_offsets, x
-        sta table_pos
+        ;lda blarggsaw_note_offsets, x
+        ;sta table_pos
+        sei ; briefly disable interrupts (again) to start a new note
+        lda #0
+        sta zetasaw_pos
+        lda #1
+        sta zetasaw_count
 
         ; set up the sample address and size
         lda #<((all_00_byte - $C000) >> 6)
@@ -1834,7 +1858,6 @@ blarggsaw_muted:
         lda #0
         sta $4010
         ; acknowledge interrupt?
-
 
         sei ; disable interrupts
 skip:

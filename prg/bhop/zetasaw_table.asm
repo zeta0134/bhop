@@ -1,4 +1,5 @@
 blarggsaw_note_lists:
+  .word blarggsaw_note_period_23
   .word blarggsaw_note_period_24
   .word blarggsaw_note_period_25
   .word blarggsaw_note_period_26
@@ -59,7 +60,10 @@ blarggsaw_note_lists:
   .word blarggsaw_note_period_81
   .word blarggsaw_note_period_82
   .word blarggsaw_note_period_83
-
+blarggsaw_note_period_23:
+; Note: B1, Target Frequency: 30.87, Actual Frequency: 30.87, Tuning Error: 0.00
+  .byte $ff, $08, $2c, $08, $02, $09, $02, $0a
+  .byte $02, $0b, $02, $0d, $02, $0e, $00
 blarggsaw_note_period_24:
 ; Note: C2, Target Frequency: 32.70, Actual Frequency: 32.70, Tuning Error: 0.00
   .byte $ff, $08, $17, $08, $03, $09, $03, $0a

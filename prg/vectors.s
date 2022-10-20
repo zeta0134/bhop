@@ -64,5 +64,5 @@ reset:
         .addr nmi
         .addr reset
         ;.addr irq
-        .addr blarggsaw_irq
+        .addr zetasaw_irq
 .endscope

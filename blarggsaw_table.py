@@ -143,7 +143,7 @@ if __name__ == '__main__':
     print("Generating pitch table...")
     pitch_table = generate_pitch_table()
     print("Finding ideal dpcm rate sequences for NTSC...")
-    midi_sequences = find_midi_sequences(24, 84, pitch_table, 1789773)
+    midi_sequences = find_midi_sequences(23, 84, pitch_table, 1789773)
 
     with open(output_filename, "w") as output_file:
       # generate the table of pointers

@@ -3,13 +3,18 @@
 ; Tables and IRQ routine referenced from http://slack.net/~ant/misc/nes-saw/
 ; (I'm planning to expand these later to support lower notes than the original proof of concept)
 
-.export blarggsaw_irq
+.export blarggsaw_irq, zetasaw_irq
 
 .segment BHOP_ZP_SEGMENT
 
 table_entry: .res 1
 table_pos: .res 1
 saw_volume: .res 1
+
+zetasaw_ptr: .res 2
+zetasaw_pos: .res 1
+zetasaw_volume: .res 1
+zetasaw_count: .res 1
 
 
 .segment BHOP_PLAYER_SEGMENT
@@ -36,6 +41,44 @@ mid_wave:
       sta   $4015
       pla                     ; restore A
       rti
+
+zetasaw_irq:
+      pha ; save A and Y
+      tya
+      pha
+      ; decrement the RLE counter
+      dec zetasaw_count
+      ; if this is still positive, simply continue playing the last sample
+      bne restart_dmc
+      ; otherwise it's time to load the next entry
+      ldy zetasaw_pos
+      lda (zetasaw_ptr), y
+      bne load_entry
+      ; if the count is zero, it's time to reset the sequence. First write the volume
+      ; to the PCM level
+      lda zetasaw_volume
+      sta $4011
+      ; then reset the postion counter to the beginning
+      ldy #0
+      lda (zetasaw_ptr), y
+load_entry:
+      sta zetasaw_count
+      iny
+      lda (zetasaw_ptr), y
+      ora #$80 ; set the interrupt flag
+      sta $4010 ; set the period + interrupt for this sample
+      iny
+      sty zetasaw_pos
+restart_dmc:
+      lda #$1F
+      sta $4015
+      pla ; restore A and Y
+      tay
+      pla
+      rti
+
+       ; next period entry
+
 
 blarggsaw_note_offsets:     ; offset into note_periods for a given MIDI note
       .byte $00,$06,$0C,$12,$18,$1E,$23,$29,$2E,$34,$39,$3D,$42,$47,$4D,$53
@@ -88,7 +131,11 @@ blarggsaw_note_periods:     ; set of DMC periods for a particular note
       .byte $0E,$8E,$8E
       .byte $00
 
+.include "bhop/zetasaw_table.asm"
+
 ; TODO: perhaps be less stupid about this
+
+.segment "PRG_E000"
 
 .align 64
 
