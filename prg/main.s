@@ -303,6 +303,12 @@ done:
         sta PPUMASK ; disable rendering
         sta PPUCTRL ; and NMI
 
+        ; disable unusual IRQ sources
+        lda #%01000000
+        sta $4017 ; APU frame counter
+        lda #0
+        sta $4010 ; DMC DMA
+
         ; do init things
 
         ; bhop init
@@ -370,6 +376,9 @@ gameloop:
 .endproc
 
 .proc nmi
+        ; allow interrupts during nmi
+        cli
+        
         ; preserve registers
         pha
         txa

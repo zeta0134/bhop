@@ -3,10 +3,11 @@
 .include "bhop/bhop_internal.inc"
 .include "bhop/longbranch.inc"
 
-NUM_CHANNELS = 5 ;  note: this might change with expansion support
+NUM_CHANNELS = 6 ;  note: this might change with expansion support
 
 .include "bhop/commands.asm"
-.include "bhop/effects.asm"        
+.include "bhop/effects.asm"    
+.include "bhop/blarggsaw.asm"    
 
         .segment BHOP_ZP_SEGMENT
 ; scratch ptr, used for all sorts of indirect reads
@@ -175,6 +176,7 @@ positive:
         sta channel_volume + PULSE_2_INDEX
         sta channel_volume + TRIANGLE_INDEX
         sta channel_volume + NOISE_INDEX
+        sta channel_volume + BLARGGSAW_INDEX
 
         ; disable any active effects
         lda #0
@@ -183,6 +185,7 @@ positive:
         sta channel_pitch_effects_active + TRIANGLE_INDEX
         sta channel_pitch_effects_active + NOISE_INDEX
         sta channel_pitch_effects_active + DPCM_INDEX
+        sta channel_pitch_effects_active + BLARGGSAW_INDEX
 
         ; reset every channel's status
         lda #(CHANNEL_MUTED)
@@ -191,6 +194,7 @@ positive:
         sta channel_status + TRIANGLE_INDEX
         sta channel_status + NOISE_INDEX
         sta channel_status + DPCM_INDEX
+        sta channel_status + BLARGGSAW_INDEX
 
         ; clear out special effects
         lda #0
@@ -647,6 +651,11 @@ done:
         jsr advance_channel_row
         jsr fix_noise_freq
 
+        ; BLARGGSAW
+        lda #BLARGGSAW_INDEX
+        sta channel_index
+        jsr advance_channel_row
+
         ; DPCM
         lda #DPCM_INDEX
         sta channel_index
@@ -793,6 +802,19 @@ done_with_cut_delay:
         lda #DPCM_INDEX
         sta channel_index
         jsr tick_delayed_effects
+
+        ; BLARGGSAW
+        lda #BLARGGSAW_INDEX
+        sta channel_index
+        jsr tick_delayed_effects        
+        jsr update_volume_effects
+        jsr tick_volume_envelope
+        ; TODO:
+        ; blarggsaw can in theory support arp effects, but this
+        ; needs special handling because the concept of pitch doesn't exist.
+        ; I'm putting this off until the basics are working. 
+        ;jsr update_arp
+        ;jsr tick_arp_envelope
 
         rts
 .endproc
@@ -1636,6 +1658,7 @@ noise_muted:
 
 cleanup:
         jsr play_dpcm_samples
+        jsr play_blarggsaw
 
         ; clear the triggered flag from every instrument
         lda channel_status + PULSE_1_INDEX
@@ -1653,6 +1676,10 @@ cleanup:
         lda channel_status + NOISE_INDEX
         and #($FF - CHANNEL_TRIGGERED)
         sta channel_status + NOISE_INDEX
+
+        lda channel_status + BLARGGSAW_INDEX
+        and #($FF - CHANNEL_TRIGGERED)
+        sta channel_status + BLARGGSAW_INDEX
 
         lda channel_status + DPCM_INDEX
         and #($FF - CHANNEL_TRIGGERED)
@@ -1741,6 +1768,77 @@ dpcm_muted:
         lda #%00001111
         sta $4015
 
+        rts
+.endproc
+
+.proc play_blarggsaw
+        lda #CHANNEL_SUPPRESSED
+        bit channel_status + BLARGGSAW_INDEX
+        bne skip
+        bmi blarggsaw_muted
+
+        ; apply the combined channel and instrument volume
+        lda channel_tremolo_volume + BLARGGSAW_INDEX
+        asl
+        asl
+        asl
+        asl
+        ora channel_instrument_volume + BLARGGSAW_INDEX
+        tax
+        lda volume_table, x
+        ; go from 4-bit to 6-bit
+        asl
+        asl
+        sta saw_volume
+        beq blarggsaw_muted
+
+        ; blarggsaw will use the tracked note directly
+        lda channel_base_note + BLARGGSAW_INDEX
+        sec
+        sbc #20
+        ;clc
+        ;adc #12
+        tax
+        ; TODO: offset?
+        lda blarggsaw_note_offsets, x
+        sta table_entry
+
+        ; Now, if we were just triggered, start the sample playback from scratch
+        lda channel_status + BLARGGSAW_INDEX
+        and #CHANNEL_TRIGGERED
+        beq skip
+
+        lda blarggsaw_note_offsets, x
+        sta table_pos
+
+        ; set up the sample address and size
+        lda #<((all_00_byte - $C000) >> 6)
+        sta $4012
+        lda #0
+        sta $4013
+        ; start it up (the IRQ will take over future starts after this)
+        lda #$8F
+        sta $4010
+        lda #$1F
+        sta $4015
+
+        ; in... *theory* that's enough?
+        cli ; enable interrupts
+        rts
+
+blarggsaw_muted:
+        ; halt playback
+        lda #$0F
+        sta $4015
+        ; disable interrupt
+        lda #0
+        sta $4010
+        ; acknowledge interrupt?
+
+
+        sei ; disable interrupts
+skip:
+        ; Do not pass go. Do not collect $200
         rts
 .endproc
 

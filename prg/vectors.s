@@ -1,3 +1,4 @@
+.include "bhop/bhop.inc"
 .include "mmc3.inc"
 .include "nes.inc"
 
@@ -62,5 +63,6 @@ reset:
         .segment "VECTORS"
         .addr nmi
         .addr reset
-        .addr irq
+        ;.addr irq
+        .addr blarggsaw_irq
 .endscope

@@ -28,6 +28,9 @@ clean:
 run: dir $(ROM_NAME)
 	rusticnes-sdl $(ROM_NAME)
 
+beta: dir $(ROM_NAME)
+	/home/zeta0134/Downloads/MesenBeta/Mesen $(ROM_NAME)
+
 $(ROM_NAME): $(SOURCEDIR)/mmc3.cfg $(O_FILES)
 	ld65 -m $(BUILDDIR)/map.txt --dbgfile $(DBG_NAME) -o $@ -C $^
 
