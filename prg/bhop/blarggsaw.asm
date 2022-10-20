@@ -42,39 +42,39 @@ mid_wave:
       pla                     ; restore A
       rti
 
-zetasaw_irq:
-      pha ; save A and Y
-      tya
-      pha
+zetasaw_irq: ; (7)
+      pha ; (3) save A and Y
+      tya ; (2)
+      pha ; (3)
       ; decrement the RLE counter
-      dec zetasaw_count
+      dec zetasaw_count ; (5)
       ; if this is still positive, simply continue playing the last sample
-      bne restart_dmc
+      bne restart_dmc ; (2) (3t)
       ; otherwise it's time to load the next entry
-      ldy zetasaw_pos
-      lda (zetasaw_ptr), y
-      bne load_entry
+      ldy zetasaw_pos ; (3)
+      lda (zetasaw_ptr), y ; (5)
+      bne load_entry ; (2) (3t)
       ; if the count is zero, it's time to reset the sequence. First write the volume
       ; to the PCM level
-      lda zetasaw_volume
-      sta $4011
+      lda zetasaw_volume ; (3)
+      sta $4011 ; (4)
       ; then reset the postion counter to the beginning
-      ldy #0
-      lda (zetasaw_ptr), y
+      ldy #0 ; (2)
+      lda (zetasaw_ptr), y ; (5)
 load_entry:
-      sta zetasaw_count
-      iny
-      lda (zetasaw_ptr), y
-      ora #$80 ; set the interrupt flag
-      sta $4010 ; set the period + interrupt for this sample
-      iny
-      sty zetasaw_pos
+      sta zetasaw_count ; (3)
+      iny ; (2)
+      lda (zetasaw_ptr), y ; (5)
+      ora #$80 ; (2) set the interrupt flag
+      sta $4010 ; (4) set the period + interrupt for this sample
+      iny ; (2)
+      sty zetasaw_pos ; (3)
 restart_dmc:
-      lda #$1F
-      sta $4015
-      pla ; restore A and Y
-      tay
-      pla
+      lda #$1F ; (2)
+      sta $4015 ; (4)
+      pla ; (4) restore A and Y
+      tay ; (2)
+      pla ; (4)
       rti
 
        ; next period entry
