@@ -26,9 +26,11 @@ ft_instrument_list:
 ; Instruments
 ft_inst_0:
 	.byte 9
-	.byte $01
-	.word ft_seq_n163_0
-	.byte $08
+	.byte $13
+	.word ft_seq_n163_5
+	.word ft_seq_n163_1
+	.word ft_seq_n163_4
+	.byte $10
 	.byte $00
 	.word ft_waves_1
 
@@ -106,12 +108,23 @@ ft_seq_2a03_40:
 	.byte $06, $FF, $00, $00, $0F, $06, $04, $02, $01, $00
 ft_seq_2a03_45:
 	.byte $05, $03, $00, $00, $0F, $09, $06, $06, $04
-ft_seq_n163_0:
+ft_seq_n163_1:
+	.byte $01, $00, $00, $00, $0C
+ft_seq_n163_4:
+	.byte $01, $FF, $00, $00, $02
+ft_seq_n163_5:
 	.byte $10, $FF, $06, $00, $0F, $0F, $0F, $0E, $0D, $0C, $03, $03, $03, $02, $02, $02, $01, $01, $01, $00
 
 ; N163 waves
 ft_waves_1:
-	.byte $10, $32, $54, $76, $98, $BA, $DC, $FE
+	.byte $10, $32, $54, $76, $98, $BA, $DC, $FE, $10, $32, $54, $76, $98, $BA, $DC, $FE
+	.byte $10, $32, $54, $76, $98, $BA, $DC, $FE, $10, $32, $54, $76, $98, $BA, $DC, $FE
+	.byte $00, $00, $00, $00, $00, $00, $00, $00, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF
+	.byte $00, $00, $00, $00, $00, $00, $00, $00, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF
+	.byte $10, $32, $54, $76, $98, $BA, $DC, $FE, $EF, $CD, $AB, $89, $67, $45, $23, $01
+	.byte $10, $32, $54, $76, $98, $BA, $DC, $FE, $EF, $CD, $AB, $89, $67, $45, $23, $01
+	.byte $10, $32, $54, $76, $98, $BA, $DC, $FE, $EF, $CD, $AB, $89, $67, $45, $23, $01
+	.byte $10, $32, $54, $76, $98, $BA, $DC, $FE, $EF, $CD, $AB, $89, $67, $45, $23, $01
 
 ; DPCM instrument list (pitch, sample index)
 ft_sample_list:

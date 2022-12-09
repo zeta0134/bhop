@@ -7,7 +7,7 @@ NUM_CHANNELS = 6 ;  note: this might change with expansion support
 
 .include "bhop/commands.asm"
 .include "bhop/effects.asm"    
-.include "bhop/blarggsaw.asm"    
+.include "bhop/zsaw.asm"
 
         .segment BHOP_ZP_SEGMENT
 ; scratch ptr, used for all sorts of indirect reads
@@ -176,7 +176,7 @@ positive:
         sta channel_volume + PULSE_2_INDEX
         sta channel_volume + TRIANGLE_INDEX
         sta channel_volume + NOISE_INDEX
-        sta channel_volume + BLARGGSAW_INDEX
+        sta channel_volume + ZSAW_INDEX
 
         ; disable any active effects
         lda #0
@@ -185,7 +185,7 @@ positive:
         sta channel_pitch_effects_active + TRIANGLE_INDEX
         sta channel_pitch_effects_active + NOISE_INDEX
         sta channel_pitch_effects_active + DPCM_INDEX
-        sta channel_pitch_effects_active + BLARGGSAW_INDEX
+        sta channel_pitch_effects_active + ZSAW_INDEX
 
         ; reset every channel's status
         lda #(CHANNEL_MUTED)
@@ -194,7 +194,7 @@ positive:
         sta channel_status + TRIANGLE_INDEX
         sta channel_status + NOISE_INDEX
         sta channel_status + DPCM_INDEX
-        sta channel_status + BLARGGSAW_INDEX
+        sta channel_status + ZSAW_INDEX
 
         ; clear out special effects
         lda #0
@@ -300,12 +300,12 @@ loop:
         sta channel_pattern_ptr_high+NOISE_INDEX
         iny
 
-        ; BLARGGSAW
+        ; Z-Saw
         lda (bhop_ptr), y
-        sta channel_pattern_ptr_low+BLARGGSAW_INDEX
+        sta channel_pattern_ptr_low+ZSAW_INDEX
         iny
         lda (bhop_ptr), y
-        sta channel_pattern_ptr_high+BLARGGSAW_INDEX
+        sta channel_pattern_ptr_high+ZSAW_INDEX
         iny
 
         ; DPCM
@@ -322,7 +322,7 @@ loop:
         sta channel_row_delay_counter + PULSE_2_INDEX
         sta channel_row_delay_counter + TRIANGLE_INDEX
         sta channel_row_delay_counter + NOISE_INDEX
-        sta channel_row_delay_counter + BLARGGSAW_INDEX
+        sta channel_row_delay_counter + ZSAW_INDEX
         sta channel_row_delay_counter + DPCM_INDEX
 
         rts
@@ -660,8 +660,8 @@ done:
         jsr advance_channel_row
         jsr fix_noise_freq
 
-        ; BLARGGSAW
-        lda #BLARGGSAW_INDEX
+        ; Z-Saw
+        lda #ZSAW_INDEX
         sta channel_index
         jsr advance_channel_row
 
@@ -694,8 +694,8 @@ done:
         sta channel_index
         jsr skip_channel_row
 
-        ; BLARGGSAW
-        lda #BLARGGSAW_INDEX
+        ; Z-Saw
+        lda #ZSAW_INDEX
         sta channel_index
         jsr skip_channel_row
 
@@ -817,14 +817,15 @@ done_with_cut_delay:
         sta channel_index
         jsr tick_delayed_effects
 
-        ; BLARGGSAW
-        lda #BLARGGSAW_INDEX
+        ; Z-Saw
+        lda #ZSAW_INDEX
         sta channel_index
         jsr tick_delayed_effects        
         jsr update_volume_effects
         jsr tick_volume_envelope
+        jsr tick_duty_envelope_zsaw
         ; TODO:
-        ; blarggsaw can in theory support arp effects, but this
+        ; zsaw can in theory support arp effects, but this
         ; needs special handling because the concept of pitch doesn't exist.
         ; I'm putting this off until the basics are working. 
         ;jsr update_arp
@@ -1045,6 +1046,58 @@ done:
         ror
         ; safety
         and #%11000000
+        ldy channel_index
+        sta channel_instrument_duty, y
+
+        ; tick the sequence counter and exit
+        jsr tick_sequence_counter
+
+        ; have we reached the end of the sequence?
+        ldy #SequenceHeader::length
+        lda (bhop_ptr), y
+        sta scratch_byte
+        cpx scratch_byte
+        bne end_not_reached
+        
+        ; this sequence is finished! Disable the sequence flag and exit
+        ldy channel_index
+        lda sequences_active, y
+        and #($FF - SEQUENCE_DUTY)
+        sta sequences_active, y
+        rts
+
+end_not_reached:
+        ; write the new sequence index (should still be in x)
+        ldy channel_index
+        txa
+        sta duty_sequence_index, y
+
+done:
+        rts
+.endproc
+
+; a variant without all the shifting and masking business
+.proc tick_duty_envelope_zsaw
+        ldy channel_index
+        lda sequences_active, y
+        and #SEQUENCE_DUTY
+        beq done ; if sequence isn't enabled, bail fast
+
+        ; prepare the duty pointer for reading
+        lda duty_sequence_ptr_low, y
+        sta bhop_ptr
+        lda duty_sequence_ptr_high, y
+        sta bhop_ptr + 1
+
+        ; read the current sequence byte, and set instrument_volume to this
+        lda duty_sequence_index, y
+        tax ; stash for later
+        ; for reading the sequence, +4
+        clc
+        adc #4
+        tay
+        lda (bhop_ptr), y
+        ; shift this into place before storing
         ldy channel_index
         sta channel_instrument_duty, y
 
@@ -1672,7 +1725,7 @@ noise_muted:
 
 cleanup:
         jsr play_dpcm_samples
-        jsr play_blarggsaw
+        jsr play_zsaw
 
         ; clear the triggered flag from every instrument
         lda channel_status + PULSE_1_INDEX
@@ -1691,9 +1744,9 @@ cleanup:
         and #($FF - CHANNEL_TRIGGERED)
         sta channel_status + NOISE_INDEX
 
-        lda channel_status + BLARGGSAW_INDEX
+        lda channel_status + ZSAW_INDEX
         and #($FF - CHANNEL_TRIGGERED)
-        sta channel_status + BLARGGSAW_INDEX
+        sta channel_status + ZSAW_INDEX
 
         lda channel_status + DPCM_INDEX
         and #($FF - CHANNEL_TRIGGERED)
@@ -1785,81 +1838,40 @@ dpcm_muted:
         rts
 .endproc
 
-.proc play_blarggsaw
+.proc play_zsaw
         lda #CHANNEL_SUPPRESSED
-        bit channel_status + BLARGGSAW_INDEX
+        bit channel_status + ZSAW_INDEX
         bne skip
-        bmi blarggsaw_muted
+        bmi zsaw_muted
+
+        lda channel_instrument_duty + ZSAW_INDEX
+        and #%00000111
+        jsr zsaw_set_timbre
 
         ; apply the combined channel and instrument volume
-        lda channel_tremolo_volume + BLARGGSAW_INDEX
+        lda channel_tremolo_volume + ZSAW_INDEX
         asl
         asl
         asl
         asl
-        ora channel_instrument_volume + BLARGGSAW_INDEX
+        ora channel_instrument_volume + ZSAW_INDEX
         tax
         lda volume_table, x
+        beq zsaw_muted
         ; go from 4-bit to 6-bit
         asl
         asl
-        ;sta saw_volume
-        sta zetasaw_volume
-        beq blarggsaw_muted
+        jsr zsaw_set_volume
 
-        ; blarggsaw will use the tracked note directly
-        lda channel_base_note + BLARGGSAW_INDEX
-        ;tax        
-        ;lda blarggsaw_note_offsets, x
-        ;sta table_entry
-        asl
-        tax
-
-        sei ; briefly disable interrupts, for pointer safety
-        lda blarggsaw_note_lists, x 
-        sta zetasaw_ptr
-        lda blarggsaw_note_lists+1, x 
-        sta zetasaw_ptr+1
-        cli ; the pointer is valid, it should be safe to re-enable interrupts again
-
-        ; Now, if we were just triggered, start the sample playback from scratch
-        lda channel_status + BLARGGSAW_INDEX
-        and #CHANNEL_TRIGGERED
-        beq skip
-
-        ;lda blarggsaw_note_offsets, x
-        ;sta table_pos
-        sei ; briefly disable interrupts (again) to start a new note
-        lda #0
-        sta zetasaw_pos
-        lda #1
-        sta zetasaw_count
-
-        ; set up the sample address and size
-        lda #<((all_00_byte - $C000) >> 6)
-        sta $4012
-        lda #0
-        sta $4013
-        ; start it up (the IRQ will take over future starts after this)
-        lda #$8F
-        sta $4010
-        lda #$1F
-        sta $4015
-
-        ; in... *theory* that's enough?
-        cli ; enable interrupts
+        ; z-saw will use the tracked note directly
+        ; TODO: or, for arps, maybe we copy tracked note to one of the "pitch" variables?
+        lda channel_base_note + ZSAW_INDEX
+        jsr zsaw_play_note
         rts
 
-blarggsaw_muted:
-        ; halt playback
-        lda #$0F
-        sta $4015
-        ; disable interrupt
-        lda #0
-        sta $4010
-        ; acknowledge interrupt?
+zsaw_muted:
+        jsr zsaw_silence
 
-        sei ; disable interrupts
 skip:
         ; Do not pass go. Do not collect $200
         rts

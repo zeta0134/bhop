@@ -1,6 +1,7 @@
         .setcpu "6502"
 
         .include "bhop/bhop.inc"
+        .include "bhop/zsaw.inc"
         .include "branch_checks.inc"
         .include "input.inc"
         .include "mmc3.inc"
@@ -73,7 +74,7 @@ bhop_music_data = $A000
         NUM_TRACKS = 8
 
         .segment "PRG_E000"
-        .export start, nmi, irq
+        .export start, bhop_nmi, irq
 
 ; BHOP specific configuration:
 
@@ -311,6 +312,9 @@ done:
 
         ; do init things
 
+        ; z-saw init
+        jsr zsaw_init
+
         ; bhop init
         lda #0 ; song index
         sta current_track
@@ -375,10 +379,7 @@ gameloop:
         rti
 .endproc
 
-.proc nmi
-        ; allow interrupts during nmi
-        cli
-        
+.proc bhop_nmi
         ; preserve registers
         pha
         txa
@@ -387,6 +388,8 @@ gameloop:
         pha
 
         ; do the sprite thing
+        ; not for the z-saw build
+        
         ;lda #$00
         ;sta OAMADDR
         ;lda #$02
@@ -413,7 +416,7 @@ gameloop:
         pla
 
         ; all done
-        rti
+        rts
 .endproc
 
 .endscope

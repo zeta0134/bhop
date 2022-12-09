@@ -1,4 +1,4 @@
-.include "bhop/bhop.inc"
+.include "bhop/zsaw.inc"
 .include "mmc3.inc"
 .include "nes.inc"
 
@@ -61,8 +61,7 @@ reset:
         ; Labels nmi/reset/irq are part of prg3_e000.s
         ;
         .segment "VECTORS"
-        .addr nmi
+        .addr zsaw_nmi
         .addr reset
-        ;.addr irq
-        .addr zetasaw_irq
+        .addr zsaw_irq
 .endscope
