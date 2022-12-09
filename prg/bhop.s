@@ -26,6 +26,7 @@ row_counter: .byte $00
 row_cmp: .byte $00
 frame_counter: .byte $00
 frame_cmp: .byte $00
+zsaw_relative_note: .byte $00
 
 song_ptr: .word $0000
 frame_ptr: .word $0000
@@ -493,6 +494,8 @@ write_relative_frequency:
         sta channel_relative_frequency_low, x
         lda channel_base_frequency_high, x
         sta channel_relative_frequency_high, x
+        lda channel_base_note, x
+        sta zsaw_relative_note
 
 portamento_active:
         ; finally, set the channel status as triggered
@@ -824,12 +827,12 @@ done_with_cut_delay:
         jsr update_volume_effects
         jsr tick_volume_envelope
         jsr tick_duty_envelope_zsaw
+        jsr tick_arp_envelope_zsaw
         ; TODO:
         ; zsaw can in theory support arp effects, but this
         ; needs special handling because the concept of pitch doesn't exist.
         ; I'm putting this off until the basics are working. 
         ;jsr update_arp
-        ;jsr tick_arp_envelope
 
         rts
 .endproc
@@ -1358,6 +1361,124 @@ done:
         rts
 .endproc
 
+; and yet another variant for z-saw, which simply copies the base note into the
+; relative frequency byte (which is then played back directly)
+.proc tick_arp_envelope_zsaw
+        ldx channel_index
+        lda sequences_active, x
+        and #SEQUENCE_ARP
+        beq early_exit ; if sequence isn't enabled, bail fast
+
+        ; prepare the arp pointer for reading
+        lda arpeggio_sequence_ptr_low, x
+        sta bhop_ptr
+        lda arpeggio_sequence_ptr_high, x
+        sta bhop_ptr + 1
+
+        ; For fixed arps, we need to "reset" the channel if the envelope finishes, so we're doing
+        ; the length check first thing
+
+        lda arpeggio_sequence_index, x
+        sta scratch_byte
+        ; have we reached the end of the sequence?
+        ldy #SequenceHeader::length
+        lda (bhop_ptr), y
+        cmp scratch_byte
+        bne end_not_reached
+        
+        ; this sequence is finished! Disable the sequence flag
+        lda sequences_active, x
+        and #($FF - SEQUENCE_ARP)
+        sta sequences_active, x
+
+        ; is this a fixed arp?
+        ldy #SequenceHeader::mode
+        lda (bhop_ptr), y
+        cmp #ARP_MODE_FIXED
+        bne early_exit
+
+        ; apply the current base note as the channel frequency,
+        ; then exit:
+        lda channel_base_note, x
+        sta zsaw_relative_note
+early_exit:
+        rts
+
+end_not_reached:
+        ; read the current sequence byte, and set instrument_volume to this
+        lda arpeggio_sequence_index, x
+        pha ; stash for later
+        ; for reading the sequence, +4
+        clc
+        adc #4
+        tay
+        lda (bhop_ptr), y
+        sta scratch_byte ; will affect the note, depending on mode
+        clc
+
+        ; what we actually *do* with the arp byte depends on the mode
+        ldy #SequenceHeader::mode
+        lda (bhop_ptr), y
+        cmp #ARP_MODE_ABSOLUTE
+        beq arp_absolute
+        cmp #ARP_MODE_RELATIVE
+        beq arp_relative
+        cmp #ARP_MODE_FIXED
+        beq arp_fixed
+        ; ARP SCHEME, unimplemented! for now, treat this just like absolute
+arp_absolute:
+        ; arp is an offset from base note to apply each frame
+        lda channel_base_note, x
+        clc
+        adc scratch_byte
+        tay
+        jmp apply_arp
+arp_relative:
+        ; were we just triggered? if so, reset the relative offset
+        lda channel_status, x
+        and #CHANNEL_TRIGGERED
+        beq not_triggered
+        lda #0
+        sta channel_relative_note_offset, x
+not_triggered:
+        ; arp accumulates an offset each frame, from the previous frame
+        lda channel_relative_note_offset, x
+        clc
+        adc scratch_byte
+        sta channel_relative_note_offset, x
+        ; this offset is then applied to base_note
+        lda channel_base_note, x
+        clc
+        adc channel_relative_note_offset, x
+        ; stuff that result in y, and apply it
+        tay
+        jmp apply_arp
+arp_fixed:
+        ; the arp value +1 is the note to apply
+        lda scratch_byte
+        clc
+        adc #1
+        tay
+        ; fall through to apply_arp
+apply_arp:
+        sty zsaw_relative_note
+
+done_applying_arp:
+        pla ; unstash the sequence counter
+        tax ; move into x, which tick_sequence_counter expects
+
+        ; tick the sequence counter and exit
+        jsr tick_sequence_counter
+
+        ; write the new sequence index (should still be in x)
+        ldy channel_index
+        txa
+        sta arpeggio_sequence_index, y
+
+done:
+        rts
+.endproc
+
 ; If this channel has a pitch envelope active, process that
 ; envelope. Upon return, relative_pitch is set
 ; setup: 
@@ -1865,7 +1986,7 @@ dpcm_muted:
 
         ; z-saw will use the tracked note directly
         ; TODO: or, for arps, maybe we copy tracked note to one of the "pitch" variables?
-        lda channel_base_note + ZSAW_INDEX
+        lda zsaw_relative_note
         jsr zsaw_play_note
         rts
 
