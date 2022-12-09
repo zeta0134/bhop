@@ -827,12 +827,12 @@ done_with_cut_delay:
         jsr update_volume_effects
         jsr tick_volume_envelope
         jsr tick_duty_envelope_zsaw
+        jsr update_arp_zsaw
         jsr tick_arp_envelope_zsaw
         ; TODO:
         ; zsaw can in theory support arp effects, but this
         ; needs special handling because the concept of pitch doesn't exist.
         ; I'm putting this off until the basics are working. 
-        ;jsr update_arp
 
         rts
 .endproc

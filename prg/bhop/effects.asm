@@ -151,6 +151,60 @@ done:
         rts
 .endproc
 
+; prep: 
+;   channel_index set for the desired channel
+;   base_note contains the tracked note
+; effects:
+;   relative_frequency gets the arp'd note
+.proc update_arp_zsaw
+        ldx channel_index
+        lda channel_pitch_effects_active, x
+        and #(PITCH_EFFECT_ARP)
+        beq done
+
+        ; the current arp counter determines which offset we apply to base_note
+        lda channel_arpeggio_counter, x
+        beq first_tick
+        cmp #1
+        beq second_tick
+third_tick:
+        ; add the low nybble to the base note
+        lda channel_arpeggio_settings, x
+        and #$0F
+        clc
+        adc channel_base_note, x
+        tay
+        jmp apply_adjusted_note
+second_tick:
+        ; add the high nybble to the base note
+        lda channel_arpeggio_settings, x
+        lsr
+        lsr
+        lsr
+        lsr
+        clc
+        adc channel_base_note, x
+        tay
+        jmp apply_adjusted_note
+first_tick:
+        ; use the base_note directly
+        lda channel_base_note, x
+        tay
+        ; fall through to:
+apply_adjusted_note:
+        sty zsaw_relative_note
+increment_arp_counter:
+        inc channel_arpeggio_counter, x
+        lda #3
+        cmp channel_arpeggio_counter, x
+        bne done
+        lda #0
+        sta channel_arpeggio_counter, x
+
+done:
+        rts
+.endproc
+
 ; sortof a dispatch function, since pitch effects are all processed at
 ; the same time but have subtly different behavior
 ; prep: 
