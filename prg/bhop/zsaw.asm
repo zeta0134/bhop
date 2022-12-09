@@ -317,15 +317,7 @@ done_picking_phase:
         lda #$1F ; (2)
         sta $4015 ; (4)
         ; Now for housekeeping.
-        ; At this point it is safe for NMI interrupt the IRQ routine
-        inc irq_active
-        ; If we need to perform a manual NMI, do that now
-        bit zsaw_nmi_pending
-        bpl no_nmi_needed
-        inc zsaw_nmi_pending
-        jsr zsaw_manual_nmi ; this should preserve all registers, including X
-no_nmi_needed:
-        ; Similarly, if NMI asked us to perform OAM DMA, do that here
+        ; First, if NMI asked us to perform OAM DMA, do that here
         bit zsaw_oam_pending
         bpl no_oam_needed
         lda #$00
@@ -334,6 +326,14 @@ no_nmi_needed:
         sta $4014 ; OAM DMA
         inc zsaw_oam_pending
 no_oam_needed:
+        ; At this point it is safe for NMI interrupt the IRQ routine
+        inc irq_active
+        ; If we need to perform a manual NMI, do that now
+        bit zsaw_nmi_pending
+        bpl no_nmi_needed
+        inc zsaw_nmi_pending
+        jsr zsaw_manual_nmi ; this should preserve all registers, including X
+no_nmi_needed:
         pla ; (4) restore A and Y
         tay ; (2)
         pla ; (4)
@@ -446,6 +446,18 @@ zsaw_note_lists:
   .word zsaw_note_period_82
   .word zsaw_note_period_83
   .word zsaw_note_period_84
+  .word zsaw_note_period_85
+  .word zsaw_note_period_86
+  .word zsaw_note_period_87
+  .word zsaw_note_period_88
+  .word zsaw_note_period_89
+  .word zsaw_note_period_90
+  .word zsaw_note_period_91
+  .word zsaw_note_period_92
+  .word zsaw_note_period_93
+  .word zsaw_note_period_94
+  .word zsaw_note_period_95
+  .word zsaw_note_period_96
 zsaw_note_period_23:
 ; Note: B1, Target Frequency: 30.87, Actual Frequency: 30.87, Tuning Error: 0.00
   .byte $20, $08, $03, $0a, $02, $0b, $03, $0c
@@ -656,4 +668,40 @@ zsaw_note_period_83:
 zsaw_note_period_84:
 ; Note: C7, Target Frequency: 1046.50, Actual Frequency: 1055.29, Tuning Error: 8.79
   .byte $01, $0b, $01, $0d, $00
+zsaw_note_period_85:
+; Note: Cs7, Target Frequency: 1108.73, Actual Frequency: 1055.29, Tuning Error: 53.44
+  .byte $02, $0c, $00
+zsaw_note_period_86:
+; Note: D7, Target Frequency: 1174.66, Actual Frequency: 1177.48, Tuning Error: 2.82
+  .byte $01, $08, $00
+zsaw_note_period_87:
+; Note: Ds7, Target Frequency: 1244.51, Actual Frequency: 1177.48, Tuning Error: 67.03
+  .byte $01, $0c, $01, $0d, $00
+zsaw_note_period_88:
+; Note: E7, Target Frequency: 1318.51, Actual Frequency: 1331.68, Tuning Error: 13.17
+  .byte $02, $0d, $00
+zsaw_note_period_89:
+; Note: F7, Target Frequency: 1396.91, Actual Frequency: 1398.26, Tuning Error: 1.35
+  .byte $01, $09, $00
+zsaw_note_period_90:
+; Note: Fs7, Target Frequency: 1479.98, Actual Frequency: 1398.26, Tuning Error: 81.72
+  .byte $01, $09, $00
+zsaw_note_period_91:
+; Note: G7, Target Frequency: 1567.98, Actual Frequency: 1575.50, Tuning Error: 7.52
+  .byte $01, $0a, $00
+zsaw_note_period_92:
+; Note: Gs7, Target Frequency: 1661.22, Actual Frequency: 1575.50, Tuning Error: 85.71
+  .byte $01, $0a, $00
+zsaw_note_period_93:
+; Note: A7, Target Frequency: 1760.00, Actual Frequency: 1747.83, Tuning Error: 12.17
+  .byte $01, $0b, $00
+zsaw_note_period_94:
+; Note: As7, Target Frequency: 1864.66, Actual Frequency: 1747.83, Tuning Error: 116.83
+  .byte $01, $0b, $00
+zsaw_note_period_95:
+; Note: B7, Target Frequency: 1975.53, Actual Frequency: 2110.58, Tuning Error: 135.05
+  .byte $01, $0c, $00
+zsaw_note_period_96:
+; Note: C8, Target Frequency: 2093.00, Actual Frequency: 2110.58, Tuning Error: 17.58
+  .byte $01, $0c, $00
 
