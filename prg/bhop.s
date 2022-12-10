@@ -1982,6 +1982,7 @@ dpcm_muted:
         ; go from 4-bit to 6-bit
         asl
         asl
+        ;asl ; 7bit!
         jsr zsaw_set_volume
 
         ; z-saw will use the tracked note directly
