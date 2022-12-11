@@ -33,45 +33,50 @@ bhop_music_data = $A000
         .segment "SONG_0"
         .scope SONG_0
         ;.include "../ftm/in_this_together.asm"
-        .include "../ftm/blarggsaw.asm"
+        ;.include "../ftm/blarggsaw.asm"
+        ;.include "../ftm/mimiga_zsaw.asm"
+        .include "../ftm/zmooth.asm"
         .endscope
 
         .segment "SONG_1"
         .scope SONG_1
-        .include "../ftm/1-1.asm"
+        ;.include "../ftm/1-1.asm"
+        .include "../ftm/mimiga_zsaw.asm"
         .endscope
 
         .segment "SONG_2"
         .scope SONG_2
-        .include "../ftm/sanctuary.asm"
+        ;.include "../ftm/sanctuary.asm"
+        .include "../ftm/zsaw_tcg.asm"
         .endscope
 
         .segment "SONG_3"
         .scope SONG_3
-        .include "../ftm/corneriaz.asm"
+        ;.include "../ftm/corneriaz.asm"
+        .include "../ftm/zsaw_tactus.asm"
         .endscope
 
         .segment "SONG_4"
         .scope SONG_4
-        .include "../ftm/yakra.asm"
+        ;.include "../ftm/yakra.asm"
         .endscope
         
         .segment "SONG_5"
         .scope SONG_5
-        .include "../ftm/MMBN2.asm"
+        ;.include "../ftm/MMBN2.asm"
         .endscope
 
         .segment "SONG_6"
         .scope SONG_6
-        .include "../ftm/waltz.asm"
+        ;.include "../ftm/waltz.asm"
         .endscope
 
         .segment "SONG_7"
         .scope SONG_7
-        .include "../ftm/moonlight.asm"
+        ;.include "../ftm/moonlight.asm"
         .endscope        
 
-        NUM_TRACKS = 8
+        NUM_TRACKS = 4
 
         .segment "PRG_E000"
         .export start, bhop_nmi, irq
