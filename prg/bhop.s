@@ -81,6 +81,9 @@ effect_cut_delay: .res BHOP::NUM_CHANNELS
 effect_skip_target: .byte $00
 effect_dpcm_offset: .byte $00
 
+; memory specific to zsaw
+dpcm_active: .byte $00
+
 
         .segment BHOP_PLAYER_SEGMENT
         ; global
@@ -215,6 +218,9 @@ effect_init_loop:
 
         sta effect_skip_target
         sta effect_dpcm_offset
+
+        ; if zsaw happens to be playing, silence it
+        jsr zsaw_silence
 
         ; finally, enable all channels except DMC
         lda #%00001111
@@ -494,6 +500,12 @@ write_relative_frequency:
         sta channel_relative_frequency_low, x
         lda channel_base_frequency_high, x
         sta channel_relative_frequency_high, x
+
+        ; for z-saw only, we initialize the relative frequency here as a note index,
+        ; since it does not do pitch bends
+        
+        cpx #ZSAW_INDEX
+        bne portamento_active
         lda channel_base_note, x
         sta zsaw_relative_note
 
@@ -829,10 +841,6 @@ done_with_cut_delay:
         jsr tick_duty_envelope_zsaw
         jsr update_arp_zsaw
         jsr tick_arp_envelope_zsaw
-        ; TODO:
-        ; zsaw can in theory support arp effects, but this
-        ; needs special handling because the concept of pitch doesn't exist.
-        ; I'm putting this off until the basics are working. 
 
         rts
 .endproc
@@ -1887,7 +1895,15 @@ cleanup:
 
         lda channel_status + DPCM_INDEX
         and #CHANNEL_TRIGGERED
-        beq done
+        beq check_for_inactive
+
+        ; We're about to trigger a DPCM sample, so silence zsaw. DPCM
+        ; will always have higher priority
+        jsr zsaw_silence
+        ; Tell Z-Saw that DPCM is active, so it knows not to queue
+        ; up another note and ruin our work
+        lda #1
+        sta dpcm_active
 
         ; using the current note, read the sample table
         prepare_ptr BHOP_MUSIC_BASE + FtModuleHeader::sample_list
@@ -1951,15 +1967,42 @@ done:
         rts
 
 dpcm_muted:
+        ; If the DPCM channel is currently in control of playback...
+        lda dpcm_active
+        beq done
         ; simply disable the channel and exit (whatever is in the sample playback buffer will
         ; finish, up to 8 bits, there is no way to disable this)
-        ;lda #%00001111
-        ;sta $4015
+        lda #%00001111
+        sta $4015
+
+        lda #0
+        sta dpcm_active
+
+check_for_inactive:
+        ; If the DPCM channel is in control of playback...
+        lda dpcm_active
+        beq done
+
+        ; See if that playback has finished:
+        lda $4015
+        and #%00010000
+        bne done
+
+        ; If it has, mark dpcm as inactive; this enables the z-saw channel
+        ; to initiate playback on the next tick
+        lda #0
+        sta dpcm_active
 
         rts
 .endproc
 
 .proc play_zsaw
+        ; Safety: if the DPCM channel is currently playing, DO NOTHING.
+        lda dpcm_active
+        beq safe_to_continue
+        rts
+
+safe_to_continue:
         lda #CHANNEL_SUPPRESSED
         bit channel_status + ZSAW_INDEX
         bne skip
