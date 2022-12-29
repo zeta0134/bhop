@@ -35,7 +35,7 @@ bhop_music_data = $A000
         ;.include "../ftm/in_this_together.asm"
         ;.include "../ftm/blarggsaw.asm"
         ;.include "../ftm/mimiga_zsaw.asm"
-        .include "../ftm/zmooth.asm"
+        .include "../ftm/zsaw_winters.asm"
         .endscope
 
         .segment "SONG_1"
@@ -58,6 +58,7 @@ bhop_music_data = $A000
 
         .segment "SONG_4"
         .scope SONG_4
+        .include "../ftm/zmooth.asm"
         ;.include "../ftm/yakra.asm"
         .endscope
         
@@ -76,7 +77,7 @@ bhop_music_data = $A000
         ;.include "../ftm/moonlight.asm"
         .endscope        
 
-        NUM_TRACKS = 4
+        NUM_TRACKS = 5
 
         .segment "PRG_E000"
         .export start, bhop_nmi, irq
