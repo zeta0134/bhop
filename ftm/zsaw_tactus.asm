@@ -365,7 +365,7 @@ ft_s0p1c3:
 
 ; Bank 0
 ft_s0p1c5:
-	.byte $E3, $FC, $10, $1F, $10, $1F
+	.byte $E3, $FF, $10, $1F, $10, $1F
 
 ; Bank 0
 ft_s0p2c2:
