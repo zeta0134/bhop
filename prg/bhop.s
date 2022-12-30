@@ -1996,6 +1996,21 @@ check_for_inactive:
         rts
 .endproc
 
+; These are used to more or less match N163 volumes in Fn-FamiTracker,
+; which helps to keep the mix as close as possible between the tracker
+; and the in-engine result. 
+zsaw_n163_equivalence_table:
+zsaw_00_volume_table:
+.byte   0,   3,   5,   8 
+.byte  11,  13,  16,  19 
+.byte  22,  25,  28,  31 
+.byte  34,  38,  41,  44
+zsaw_7F_volume_table:
+.byte 127, 122, 116, 111
+.byte 106, 101,  96,  92
+.byte  87,  83,  79,  74
+.byte  70,  66,  62,  59
+
 .proc play_zsaw
         ; Safety: if the DPCM channel is currently playing, DO NOTHING.
         lda dpcm_active
@@ -2022,10 +2037,29 @@ safe_to_continue:
         tax
         lda volume_table, x
         beq zsaw_muted
+
+        ; Old Approach: just sorta blindly shift this volume into place
+        ; pros: quick, mostly effective
+        ; con: result is somewhat consistently too loud
+
         ; go from 4-bit to 6-bit
-        asl
-        asl
+        ;asl
+        ;asl
         ;asl ; 7bit!
+        ;jsr zsaw_set_volume
+
+        ; New approach: use the tracked volume to index into our N163 equivalence lookup table
+        ; First we need to pick which table, so do that based on the timbre
+        sta scratch_byte
+        lda channel_instrument_duty + ZSAW_INDEX
+        and #%00000001
+        asl
+        asl
+        asl
+        asl
+        ora scratch_byte
+        tax
+        lda zsaw_n163_equivalence_table, x
         jsr zsaw_set_volume
 
         ; z-saw will use the tracked note directly
