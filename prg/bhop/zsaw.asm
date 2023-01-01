@@ -13,7 +13,6 @@ zsaw_volume: .res 1
 zsaw_count: .res 1
 zsaw_parity_counter: .res 1
 zsaw_timbre_index: .res 1
-zsaw_effective_timbre_index: .res 1
 zsaw_timbre_ptr: .res 2
 zsaw_current_note: .res 1
 zsaw_current_timbre: .res 1
@@ -64,12 +63,7 @@ all_55_byte: .byte $55
 ; desired timbre in A
 ; note: will not take effect until next play_note command
 .proc zsaw_set_timbre
-        sta zsaw_timbre_index
-        sta zsaw_effective_timbre_index
-        cmp #5
-        bne done
-        jsr compute_fake_square_behavior
-done:
+        sta zsaw_timbre_index        
         rts
 .endproc
 
@@ -88,17 +82,12 @@ done:
         beq inverted
         cpx #3
         beq inverted
-        cpx #5
-        beq fake_square
         rts
 inverted: 
         lda #$7F
         sec
         sbc zsaw_volume
         sta zsaw_volume
-        rts
-fake_square:
-        jsr compute_fake_square_behavior
         rts
 .endproc
 
@@ -108,9 +97,9 @@ timbre_behavior_lut:
         .addr timbre_square_00
         .addr timbre_square_7F
         .addr timbre_triangle
-        .addr timbre_fake_square_distorted
-        .addr timbre_fake_square_standard
-        .addr timbre_fake_square_inverted
+        .addr timbre_triangle ; note: we mask to 8 timbres, so the extra entries are mostly for safety
+        .addr timbre_triangle
+        .addr timbre_triangle
         
 
 timbre_sample_lut:
@@ -119,9 +108,9 @@ timbre_sample_lut:
         .byte <((all_55_byte - $C000) >> 6) ; square, floor
         .byte <((all_55_byte - $C000) >> 6) ; square, ceiling
         .byte <((all_FF_byte - $C000) >> 6) ; triangle, starts ceiling and alternates
-        .byte <((all_FF_byte - $C000) >> 6) ; fake_square
-        .byte <((all_FF_byte - $C000) >> 6) ; fake_square
-        .byte <((all_FF_byte - $C000) >> 6) ; fake_square
+        .byte <((all_FF_byte - $C000) >> 6) ; triangle again
+        .byte <((all_FF_byte - $C000) >> 6) ; triangle again
+        .byte <((all_FF_byte - $C000) >> 6) ; triangle again
 
 ; note index in A, clobbers X
 ; assumes interrupts are already enabled
@@ -135,7 +124,7 @@ timbre_sample_lut:
         ; or the note index is different from what's currently playing
         ; otherwise we reset the phase for no good reason, and this tends
         ; to annoy music engines
-        ldx zsaw_effective_timbre_index
+        ldx zsaw_timbre_index
         cpx zsaw_current_timbre
         bne play_note
         cmp zsaw_current_note
@@ -160,16 +149,9 @@ play_note:
         lda #1
         sta zsaw_count
 
-        ; if the current tambre is fakesquare, recompute the effective timbre here, in case
-        ; the new note selection changed it
-        lda zsaw_timbre_index
-        cmp #5
-        bne standard_timbre
-        jsr compute_fake_square_behavior
-
 standard_timbre:
         ; here also set the timbre pointer, using the LUT
-        lda zsaw_effective_timbre_index
+        lda zsaw_timbre_index
         and #%00000111
         asl
         tax
@@ -183,7 +165,7 @@ standard_timbre:
         sta zsaw_parity_counter
 
         ; set up the sample address and size
-        ldx zsaw_effective_timbre_index
+        ldx zsaw_timbre_index
         lda timbre_sample_lut, x
 
         sta $4012
@@ -205,34 +187,6 @@ standard_timbre:
         sta irq_enabled 
 done:
         cli ; enable interrupts
-        rts
-.endproc
-
-.proc compute_fake_square_behavior
-        ; first work out the travel distance for the chosen note
-        ldx zsaw_current_note
-        lda zsaw_note_travel_amounts, x
-        ; special case: if the travel distance happens to be negative, then the only
-        ; valid behavior type is inverted, so do that
-        bmi select_inverted
-        ; if the travel distance + the current volume would exceed 127...
-        clc
-        adc zsaw_volume
-        bpl select_standard
-        ; ... then this is a distorted note ([A] from the chart)
-select_distorted:
-        lda #ZSAW_TIMBRE_FAKE_SQUARE+0
-        sta zsaw_effective_timbre_index
-        rts
-        ; otherwise standard behavior will get the job done ([B] and [C] from the chart)
-select_standard:
-        lda #ZSAW_TIMBRE_FAKE_SQUARE+1
-        sta zsaw_effective_timbre_index
-        rts
-select_inverted:
-        ; ([D] from the chart)
-        lda #ZSAW_TIMBRE_FAKE_SQUARE+2
-        sta zsaw_effective_timbre_index
         rts
 .endproc
 
@@ -389,107 +343,6 @@ done_picking_phase:
         jmp restart_dmc
 .endproc
 
-.proc timbre_fake_square_distorted
-        lda #$80                  ; (2)
-        eor zsaw_parity_counter ; (3)
-        sta zsaw_parity_counter ; (3)
-        bmi odd_phase           
-even_phase:
-        ; Upwards direction
-        lda #<((all_FF_byte - $C000) >> 6)
-        sta $4012 ; (4)
-        ; Le = V
-        lda zsaw_volume
-        sta $4011
-        jmp restart_dmc ; (3)
-odd_phase:
-        ; Downwards direction
-        lda #<((all_00_byte - $C000) >> 6)
-        sta $4012 ; (4)
-        ; Lo = 127 - V
-        lda #$7F
-        sec
-        sbc zsaw_volume
-        sta $4011
-        jmp restart_dmc
-.endproc
-
-.proc timbre_fake_square_standard
-        lda #$80                  ; (2)
-        eor zsaw_parity_counter ; (3)
-        sta zsaw_parity_counter ; (3)
-        bmi odd_phase           
-even_phase:
-        ; Upwards direction
-        lda #<((all_FF_byte - $C000) >> 6)
-        sta $4012 ; (4)
-        ; Le = V
-        lda zsaw_volume
-        sta $4011
-        jmp restart_dmc ; (3)
-odd_phase:
-        ; Downwards direction
-        lda #<((all_00_byte - $C000) >> 6)
-        sta $4012 ; (4)
-        ; Lo = T
-        ldy zsaw_current_note
-        lda zsaw_note_travel_amounts, y
-        lsr ; ???
-        sta $4011
-        jmp restart_dmc
-.endproc
-
-.proc timbre_fake_square_inverted
-        lda #$80                  ; (2)
-        eor zsaw_parity_counter ; (3)
-        sta zsaw_parity_counter ; (3)
-        bmi odd_phase           
-even_phase:
-        ; Upwards direction
-        lda #<((all_FF_byte - $C000) >> 6)
-        sta $4012 ; (4)
-        ; Le = 16
-        ;lda #16
-        ;sta $4011
-        lda zsaw_volume
-        sta $4011
-        jmp restart_dmc ; (3)
-odd_phase:
-        ; Downwards direction
-        lda #<((all_00_byte - $C000) >> 6)
-        sta $4012 ; (4)
-        ; Lo = V
-        ;lda zsaw_volume
-        ;sta $4011
-        lda #32 ; ???????
-        sta $4011
-        jmp restart_dmc
-.endproc
-
-.proc timbre_fake_square
-        ; The fake square is more of an alternating sawtooth
-        ; The resulting waveform has alternating impulses in the same place that a square would, so
-        ; it sounds relatively square-like, but unfortunately we lose anything resembling real volume control
-        lda #$80                  ; (2)
-        eor zsaw_parity_counter ; (3)
-        sta zsaw_parity_counter ; (3)
-        bmi odd_phase           
-even_phase:
-        lda #<((all_FF_byte - $C000) >> 6)
-        sta $4012 ; (4)
-        lda zsaw_volume
-        sta $4011
-        jmp restart_dmc ; (3)
-odd_phase:
-        lda #<((all_00_byte - $C000) >> 6)
-        sta $4012 ; (4)
-        lda #$7F
-        sec
-        sbc zsaw_volume
-        sta $4011
-        jmp restart_dmc
-.endproc
-
 .proc zsaw_nmi
         ; penalty and jitter: 14 cycles
         bit irq_active ; (3)
@@ -608,18 +461,6 @@ zsaw_note_lists:
   .word zsaw_note_period_94
   .word zsaw_note_period_95
   .word zsaw_note_period_96
-
-zsaw_note_travel_amounts:
-  .byte $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f
-  .byte $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f
-  .byte $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f
-  .byte $7f, $70, $70, $7f, $70, $7f, $7f, $7f
-  .byte $7f, $7f, $40, $70, $60, $70, $70, $50
-  .byte $50, $30, $40, $30, $10, $30, $10, $20
-  .byte $10, $30, $20, $00, $10, $10, $00, $00
-  .byte $10, $00, $00, $10, $00, $00, $00, $f0
-  .byte $00, $00, $f0, $00, $f0, $f0, $f0, $f0
-  .byte $f0, $f0
 
 zsaw_note_period_23:
 ; Note: B1, Target Frequency: 30.87, Actual Frequency: 30.87, Tuning Error: 0.00
