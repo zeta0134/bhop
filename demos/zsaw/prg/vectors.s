@@ -1,4 +1,4 @@
-        .include "nes.inc"
+        .include "../../common/nes.inc"
 
 .import zsaw_irq, zsaw_nmi
 
