@@ -1,3 +1,6 @@
+.ifndef __BHOP_CONFIG
+__BHOP_CONFIG = 1
+
 ; Configuration variables, adjust these to taste for your specific project
 
 ; Where should BHOP live?
@@ -22,7 +25,9 @@ BHOP_DPCM_BANKING = 1
 ; A register before calling. It does not expect any registers
 ; or flags to be preserved.
 
-.if BHOP::BHOP_DPCM_BANKING
+.if ::BHOP_DPCM_BANKING
 .import bhop_apply_dpcm_bank
 BHOP_DPCM_SWITCH_ROUTINE = bhop_apply_dpcm_bank
 .endif
+
+.endif ; __BHOP_CONFIG

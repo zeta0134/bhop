@@ -1,12 +1,48 @@
-.ifndef __ZSAW_CONFIG
-__ZSAW_CONFIG = 1
+__BHOP_CONFIG = 1 ; should break the build by failing to define directives
 
+; Demo-specific config for NROM + ZSAW
+
+; WARNING: This copy of bhop/config.inc is used to override the project
+; defaults. Do not rely on any of its contents, as it may be somewhat out of sync
+; with the main config located at bhop/config.inc in the project root.
+
+; Where should BHOP live?
+.define BHOP_PLAYER_SEGMENT "PRG0_8000"
+.define BHOP_RAM_SEGMENT "RAM"
+.define BHOP_ZP_SEGMENT "ZEROPAGE"
+
+.import bhop_music_data
+
+; To play a module, export "music.asm" from FamiTracker, and
+; place it in memory here. Ensure this memory is paged in
+; during bhop_init and bhop_play.
+BHOP_MUSIC_BASE = bhop_music_data
+
+; DPCM banking support. Disabled by default, as the relevant
+; mapper code is project specific.
+BHOP_DPCM_BANKING = 0
+
+; When DPCM bank switching is enabled, make sure the following
+; routine is exported, preferably from one of your fixed
+; code banks. Bhop will place the desired bank number in the
+; A register before calling. It does not expect any registers
+; or flags to be preserved.
+
+.if ::BHOP_DPCM_BANKING
+.import bhop_apply_dpcm_bank
+BHOP_DPCM_SWITCH_ROUTINE = bhop_apply_dpcm_bank
+.endif
+
+
+
+; For ZSAW purposes, we need to override that config file as well
+__ZSAW_CONFIG = 1
 
 ; Z-Saw requires 11 bytes in zeropage
 .define ZSAW_ZP_SEGMENT "ZEROPAGE"
 ; interrupt vectors and lookup tables
-.define ZSAW_FIXED_SEGMENT "PRG_E000"
-.define ZSAW_SAMPLES_SEGMENT "PRG_E000"
+.define ZSAW_FIXED_SEGMENT "PRG1_C000"
+.define ZSAW_SAMPLES_SEGMENT "PRG1_C000"
 ; Shadow OAM high page, for OAM DMA
 ZSAW_SHADOW_OAM = $02
 ; Your custom NMI handler, will be called automatically when vblank begins
@@ -110,5 +146,3 @@ ZSAW_C8  = 73
 
 ZSAW_MINIMUM_INDEX = ZSAW_B1
 ZSAW_MAXIMUM_INDEX = ZSAW_C8
-
-.endif ; __ZSAW_CONFIG

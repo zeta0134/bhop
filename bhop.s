@@ -1,5 +1,7 @@
-.scope BHOP
 .include "bhop/config.inc"
+.include "bhop/zsaw.asm"
+
+.scope BHOP
 .include "bhop/bhop_internal.inc"
 .include "bhop/longbranch.inc"
 
@@ -7,7 +9,6 @@ NUM_CHANNELS = 6 ;  note: this might change with expansion support
 
 .include "bhop/commands.asm"
 .include "bhop/effects.asm"    
-.include "bhop/zsaw.asm"
 
         .segment BHOP_ZP_SEGMENT
 ; scratch ptr, used for all sorts of indirect reads
@@ -1951,7 +1952,7 @@ no_delta_set:
         lda (bhop_ptr), y
         sta $4013
 
-.if BHOP::BHOP_DPCM_BANKING
+.if ::BHOP_DPCM_BANKING
         iny
         lda (bhop_ptr), y
         jsr BHOP_DPCM_SWITCH_ROUTINE
