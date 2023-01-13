@@ -9,7 +9,7 @@
 .global player_update
 
 ; Note: be sure the demo scaffolding defines all of these
-.global MusicTrackCount
+.global music_track_count
 .global music_track_table
 .global player_bank_music
 .global player_bank_samples

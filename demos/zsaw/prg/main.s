@@ -1,6 +1,5 @@
         .setcpu "6502"
 
-        .include "../../common/input.inc"
         .include "../../common/nes.inc"
         .include "../../common/player.inc"
         .include "../../common/ppu.inc"
@@ -11,7 +10,7 @@
         .zeropage
 
         .segment "RAM"
-nmi_counter: .byte $00
+NmiCounter: .byte $00
 
         .segment "PRG0_8000"
         .export start, demo_nmi, bhop_music_data
@@ -19,16 +18,16 @@ nmi_counter: .byte $00
 bhop_music_data:
         .include "../music/zsaw_demo_tracks.asm"
 
-;                   Bank  Track#                         Title                        Artist
-;                    ---     ---  ----------------------------  ----------------------------
-song_heat_death: 
-        music_track    0,      0,        "Heat Death - Smooth",                   "zeta0134"
-song_tactus:     
-        music_track    0,      1,              "Tactus - Demo",                   "zeta0134"
+;                            Bank  Track#                         Title                        Artist
+;                             ---     ---  ----------------------------  ----------------------------
+song_heat_death: music_track    0,      0,        "Heat Death - Smooth",                   "zeta0134"
+song_tactus:     music_track    0,      1,              "Tactus - Demo",                   "zeta0134"
 
 music_track_table:
         .addr song_heat_death
         .addr song_tactus
+
+music_track_count: .byte 2
 
 ; NROM doesn't support banking at all, so stub both of these out
 .proc player_bank_music
@@ -40,9 +39,9 @@ music_track_table:
 .endproc
 
 .proc wait_for_nmi
-        lda nmi_counter
+        lda NmiCounter
 loop:
-        cmp nmi_counter
+        cmp NmiCounter
         beq loop
         rts
 .endproc        
@@ -74,7 +73,6 @@ loop:
         jsr wait_for_nmi ; safety sync
 
 gameloop:
-        jsr poll_input
         jsr player_update
         jsr wait_for_nmi ; safety sync
         jmp gameloop ; forever
@@ -89,7 +87,7 @@ gameloop:
         tya
         pha
 
-        inc nmi_counter
+        inc NmiCounter
 
         ; restore registers
         pla

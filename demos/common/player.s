@@ -1,5 +1,6 @@
         .setcpu "6502"
         .include "nes.inc"
+        .include "input.inc"
         .include "player.inc"
         .include "../../bhop/bhop.inc"
 
@@ -20,6 +21,8 @@ TrackPtr: .res 2
 
 .proc player_update
         jsr bhop_play
+        jsr poll_input
+        jsr handle_track_switching
         rts
 .endproc
 
@@ -50,5 +53,35 @@ TrackPtr: .res 2
         ldy #MusicTrack::TrackNumber
         lda (TrackPtr), y
         jsr bhop_init
+        rts
+.endproc
+
+.proc handle_track_switching
+check_right:
+        lda #KEY_RIGHT
+        bit ButtonsDown
+        beq check_left
+check_next_track:
+        lda CurrentTrack
+        clc
+        adc #1
+        cmp music_track_count
+        beq finished
+advance_to_next_track:
+        sta CurrentTrack
+        jsr initialize_current_track
+finished:
+        rts
+
+check_left:
+        lda #KEY_LEFT
+        bit ButtonsDown
+        beq finished
+check_previous_track:
+        lda CurrentTrack
+        beq finished
+advance_to_previous_track:
+        dec CurrentTrack        
+        jsr initialize_current_track
         rts
 .endproc
