@@ -51,7 +51,7 @@ ZSAW_SHADOW_OAM = $02
 ;   - Interrupts will be enabled upon entry
 ;   - DO remember to preserve registers
 ;   - Return with rts, not rti
-.define ZSAW_NMI_GAME_HANDLER bhop_nmi
+.define ZSAW_NMI_GAME_HANDLER demo_nmi
 
 .globalzp zsaw_oam_pending, zsaw_nmi_pending
 .global zsaw_irq, zsaw_nmi
