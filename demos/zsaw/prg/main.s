@@ -21,14 +21,14 @@ bhop_music_data:
 
 ;                   Bank  Track#                         Title                        Artist
 ;                    ---     ---  ----------------------------  ----------------------------
-song_tactus:     
-        music_track    0,      0,              "Tactus - Demo",                   "zeta0134"
 song_heat_death: 
-        music_track    0,      1,        "Heat Death - Smooth",                   "zeta0134"
+        music_track    0,      0,        "Heat Death - Smooth",                   "zeta0134"
+song_tactus:     
+        music_track    0,      1,              "Tactus - Demo",                   "zeta0134"
 
 music_track_table:
-        .addr song_tactus
         .addr song_heat_death
+        .addr song_tactus
 
 ; NROM doesn't support banking at all, so stub both of these out
 .proc player_bank_music

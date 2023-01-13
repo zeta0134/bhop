@@ -43,11 +43,11 @@ TrackPtr: .res 2
         lda music_track_table+1, x
         sta TrackPtr+1
 
-        ldy MusicTrack::BankNumber
+        ldy #MusicTrack::BankNumber
         lda (TrackPtr), y
         jsr player_bank_music
 
-        ldy MusicTrack::BankNumber
+        ldy #MusicTrack::TrackNumber
         lda (TrackPtr), y
         jsr bhop_init
         rts
