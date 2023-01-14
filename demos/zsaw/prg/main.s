@@ -13,7 +13,9 @@
 NmiCounter: .byte $00
 
         .segment "CHR0"
-        .incbin "../../common/bnuuy.chr"
+        .incbin "../../common/bnuuy_bg.chr"
+        .segment "CHR1"
+        .incbin "../../common/bnuuy_obj.chr"
 
         .segment "PRG0_8000"
         .export start, demo_nmi, bhop_music_data
@@ -69,7 +71,7 @@ loop:
         ; re-enable graphics and NMI
         lda #$1E
         sta PPUMASK
-        lda #(VBLANK_NMI | OBJ_0000 | BG_0000)
+        lda #(VBLANK_NMI | OBJ_1000 | BG_0000)
         sta PPUCTRL
 
         ; todo: setup for measuring performance?
