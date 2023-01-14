@@ -2,13 +2,86 @@
         .include "nes.inc"
         .include "input.inc"
         .include "player.inc"
+        .include "ppu.inc"
+        .include "word_util.inc"
+
         .include "../../bhop/bhop.inc"
 
         .zeropage
 CurrentTrack: .res 1
 TrackPtr: .res 2
 
+ScratchPtr: .res 2
+ScratchWord: .res 2
+
         .segment "CODE"
+
+bnuuy_nametable:
+        .incbin "bnuuy.nam"
+
+bnuuy_palette:
+        .incbin "bnuuy_pal.pal"
+
+bnuuy_sprite_layout:
+        .byte $40, $01, $00, $48
+        .byte $48, $11, $00, $48
+         
+        .byte $60, $89, $03, $31
+        .byte $68, $99, $03, $31
+        .byte $60, $8A, $03, $39
+        .byte $68, $9A, $03, $39
+        .byte $60, $8B, $03, $41
+        .byte $68, $9B, $03, $41
+        
+        .byte $23, $08, $01, $22
+        .byte $2B, $18, $01, $22
+        .byte $23, $09, $01, $2A
+        .byte $2B, $19, $01, $2A
+        .byte $23, $0A, $01, $32
+        .byte $2B, $1A, $01, $32
+        .byte $23, $0B, $01, $3A
+        .byte $2B, $1B, $01, $3A
+        
+        .byte $33, $0C, $01, $2B
+        .byte $3B, $1C, $01, $2A
+        .byte $33, $0D, $01, $3A
+        .byte $3B, $1D, $01, $3A
+        .byte $33, $0E, $01, $42
+        .byte $3B, $1E, $01, $42
+        .byte $43, $0F, $01, $2A
+        
+        .byte $4B, $C3, $01, $2D
+        .byte $4B, $C4, $01, $35
+        .byte $4B, $D3, $01, $3D
+        .byte $4B, $D4, $01, $45
+        .byte $53, $E0, $01, $2D
+        .byte $53, $E1, $01, $39
+        .byte $53, $E2, $01, $43
+        .byte $5B, $E3, $01, $30
+        .byte $5B, $E4, $01, $38
+        .byte $5C, $E5, $01, $40
+        .byte $63, $B4, $01, $3D
+        
+        .byte $6B, $ED, $01, $2D
+        .byte $6B, $EE, $01, $35
+        .byte $6B, $EF, $01, $3D
+        .byte $73, $FD, $01, $32
+        .byte $73, $FE, $01, $3A
+        
+        .byte $52, $04, $00, $38
+        
+        .byte $5B, $CE, $00, $35
+        .byte $5B, $CF, $00, $3D
+        .byte $63, $DF, $00, $3D
+        
+        .byte $4E, $FA, $02, $57
+        .byte $4E, $FB, $02, $5F
+        .byte $50, $E8, $02, $40
+        .byte $58, $F8, $02, $40
+        .byte $63, $AE, $02, $40
+bnuuy_sprite_layout_end:
+bnuuy_oam_length = (bnuuy_sprite_layout_end - bnuuy_sprite_layout)
+
 
 ; External Functions, declared in player.inc
 
@@ -16,6 +89,10 @@ TrackPtr: .res 2
         lda #0
         sta CurrentTrack
         jsr initialize_current_track
+
+        jsr demo_copy_palette
+        jsr demo_copy_nametable
+        jsr demo_bnuuy_sprites
         rts
 .endproc
 
@@ -83,5 +160,53 @@ check_previous_track:
 advance_to_previous_track:
         dec CurrentTrack        
         jsr initialize_current_track
+        rts
+.endproc
+
+.proc demo_copy_palette
+        lda #0
+        sta PPUCTRL ; VRAM mode +0
+        set_ppuaddr #$3F00
+        ldx #0
+loop:
+        lda bnuuy_palette, x
+        sta PPUDATA
+        inx
+        cpx #32
+        bne loop
+
+        rts
+.endproc
+
+; TODO: not this. We need to use the vram buffer later if we want to do this
+; during runtime.
+.proc demo_copy_nametable
+        lda #0
+        sta PPUCTRL ; VRAM mode +0
+        set_ppuaddr #$2000
+
+        st16 ScratchPtr, bnuuy_nametable
+        st16 ScratchWord, $0400
+        ldy #0
+loop:
+        lda (ScratchPtr), y
+        sta PPUDATA
+        inc16 ScratchPtr
+        dec16 ScratchWord
+        lda ScratchWord
+        ora ScratchWord+1
+        bne loop
+
+        rts
+.endproc
+
+.proc demo_bnuuy_sprites
+        ldx #0
+loop:
+        lda bnuuy_sprite_layout, x
+        sta $200, x
+        inx
+        cpx #bnuuy_oam_length
+        bne loop
         rts
 .endproc

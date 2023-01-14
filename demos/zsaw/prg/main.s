@@ -12,6 +12,9 @@
         .segment "RAM"
 NmiCounter: .byte $00
 
+        .segment "CHR0"
+        .incbin "../../common/bnuuy.chr"
+
         .segment "PRG0_8000"
         .export start, demo_nmi, bhop_music_data
 
@@ -88,6 +91,11 @@ gameloop:
         pha
 
         inc NmiCounter
+
+        lda PPUSTATUS
+        lda #0
+        sta PPUSCROLL
+        sta PPUSCROLL
 
         ; restore registers
         pla
