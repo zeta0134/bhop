@@ -1,4 +1,5 @@
         .setcpu "6502"
+        .include "charmap.inc"
         .include "nes.inc"
         .include "input.inc"
         .include "player.inc"
@@ -24,61 +25,54 @@ bnuuy_palette:
 
 bnuuy_sprite_layout:
         .byte $40, $01, $00, $48
-        .byte $48, $11, $00, $48
-         
-        .byte $60, $89, $03, $31
-        .byte $68, $99, $03, $31
-        .byte $60, $8A, $03, $39
-        .byte $68, $9A, $03, $39
-        .byte $60, $8B, $03, $41
-        .byte $68, $9B, $03, $41
-        
-        .byte $23, $08, $01, $22
-        .byte $2B, $18, $01, $22
-        .byte $23, $09, $01, $2A
-        .byte $2B, $19, $01, $2A
-        .byte $23, $0A, $01, $32
-        .byte $2B, $1A, $01, $32
-        .byte $23, $0B, $01, $3A
-        .byte $2B, $1B, $01, $3A
-        
-        .byte $33, $0C, $01, $2B
-        .byte $3B, $1C, $01, $2A
-        .byte $33, $0D, $01, $3A
-        .byte $3B, $1D, $01, $3A
-        .byte $33, $0E, $01, $42
-        .byte $3B, $1E, $01, $42
-        .byte $43, $0F, $01, $2A
-        
-        .byte $4B, $C3, $01, $2D
-        .byte $4B, $C4, $01, $35
-        .byte $4B, $D3, $01, $3D
-        .byte $4B, $D4, $01, $45
-        .byte $53, $E0, $01, $2D
-        .byte $53, $E1, $01, $39
-        .byte $53, $E2, $01, $43
-        .byte $5B, $E3, $01, $30
-        .byte $5B, $E4, $01, $38
-        .byte $5C, $E5, $01, $40
-        .byte $63, $B4, $01, $3D
-        
-        .byte $6B, $ED, $01, $2D
-        .byte $6B, $EE, $01, $35
-        .byte $6B, $EF, $01, $3D
-        .byte $73, $FD, $01, $32
-        .byte $73, $FE, $01, $3A
-        
-        .byte $52, $04, $00, $38
-        
-        .byte $5B, $CE, $00, $35
-        .byte $5B, $CF, $00, $3D
-        .byte $63, $DF, $00, $3D
-        
-        .byte $4E, $FA, $02, $57
-        .byte $4E, $FB, $02, $5F
-        .byte $50, $E8, $02, $40
-        .byte $58, $F8, $02, $40
-        .byte $63, $AE, $02, $40
+        .byte $48, $0b, $00, $48
+        .byte $60, $13, $03, $31
+        .byte $68, $16, $03, $31
+        .byte $60, $14, $03, $39
+        .byte $68, $17, $03, $39
+        .byte $60, $15, $03, $41
+        .byte $68, $18, $03, $41
+        .byte $23, $03, $01, $22
+        .byte $2B, $0c, $01, $22
+        .byte $23, $04, $01, $2A
+        .byte $2B, $0d, $01, $2A
+        .byte $23, $05, $01, $32
+        .byte $2B, $0e, $01, $32
+        .byte $23, $06, $01, $3A
+        .byte $2B, $0f, $01, $3A
+        .byte $33, $07, $01, $2B
+        .byte $3B, $10, $01, $2A
+        .byte $33, $08, $01, $3A
+        .byte $3B, $11, $01, $3A
+        .byte $33, $09, $01, $42
+        .byte $3B, $12, $01, $42
+        .byte $43, $0a, $01, $2A
+        .byte $4B, $1b, $01, $2D
+        .byte $4B, $1c, $01, $35
+        .byte $4B, $1f, $01, $3D
+        .byte $4B, $20, $01, $45
+        .byte $53, $22, $01, $2D
+        .byte $53, $23, $01, $39
+        .byte $53, $24, $01, $43
+        .byte $5B, $25, $01, $30
+        .byte $5B, $26, $01, $38
+        .byte $5C, $27, $01, $40
+        .byte $63, $1a, $01, $3D
+        .byte $6B, $29, $01, $2D
+        .byte $6B, $2a, $01, $35
+        .byte $6B, $2b, $01, $3D
+        .byte $73, $2f, $01, $32
+        .byte $73, $30, $01, $3A
+        .byte $52, $02, $00, $38
+        .byte $5B, $1d, $00, $35
+        .byte $5B, $1e, $00, $3D
+        .byte $63, $21, $00, $3D
+        .byte $4E, $2d, $02, $57
+        .byte $4E, $2e, $02, $5F
+        .byte $50, $28, $02, $40
+        .byte $58, $2c, $02, $40
+        .byte $63, $19, $02, $40
+
 bnuuy_sprite_layout_end:
 bnuuy_oam_length = (bnuuy_sprite_layout_end - bnuuy_sprite_layout)
 
