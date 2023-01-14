@@ -34,9 +34,15 @@ reset:
         spinwait_for_vblank
         spinwait_for_vblank
 
-        ; Initialize zero page and stack
+        ; Initialize main memory
         clear_page $0000
         clear_page $0100
+        clear_page $0200
+        clear_page $0300
+        clear_page $0400
+        clear_page $0500
+        clear_page $0600
+        clear_page $0700
 
         ; Jump to main
         jmp start
