@@ -342,67 +342,6 @@ loop:
         rts
 .endproc
 
-.proc dest_coords
-DestAddr := ScratchWord
-        lda StrPosY
-        sta DestAddr+0
-        lda #0
-        sta DestAddr+1
-        .repeat 5
-        asl DestAddr+0
-        rol DestAddr+1
-        .endrepeat
-        clc
-        lda StrPosX
-        adc DestAddr+0
-        sta DestAddr+0
-        lda #$20
-        adc DestAddr+1
-        sta DestAddr+1
-
-        rts
-.endproc
-
-.proc draw_text_field
-DestAddr := ScratchWord
-        jsr dest_coords ; sets DestAddr based on StrPosX and StrPosY
-
-        write_vram_header_ptr DestAddr, FieldWidth, VRAM_INC_1
-
-        ldx VRAM_TABLE_INDEX
-        ldy #0
-loop:
-        lda (StringPtr), y
-        beq end_of_string
-        sta VRAM_TABLE_START, x
-        inx
-        iny
-        jmp loop
-end_of_string:
-        cpy FieldWidth
-        beq finalize_vram_entry
-        ; At this point we have written Y characters, but we need to
-        ; fill out the entire field, to erase any previous contents. Here
-        ; we loop again, this time writing blank tiles to fill out the
-        ; FieldWidth
-padding_loop:
-        lda BLANK_TILE
-        sta VRAM_TABLE_START, x
-        inx
-        iny
-        cpy FieldWidth
-        bne padding_loop
-finalize_vram_entry:
-
-        stx VRAM_TABLE_INDEX
-        inc VRAM_TABLE_ENTRIES
-        rts
-.endproc
-
-blank_string:
-                ;0123456789012345678901234567
-        .asciiz "                            "
-
 .proc update_track_info
 FancyTextPtr := ScratchPtr
 TargetStringPtr := ScratchWord
