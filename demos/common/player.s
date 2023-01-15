@@ -121,6 +121,7 @@ hello_world_str:
         jsr demo_bnuuy_sprites
 
         jsr update_track_info
+        jsr update_track_counter
 
         rts
 .endproc
@@ -177,6 +178,7 @@ advance_to_next_track:
         sta CurrentTrack
         jsr initialize_current_track
         jsr update_track_info
+        jsr update_track_counter
 finished:
         rts
 
@@ -191,6 +193,7 @@ advance_to_previous_track:
         dec CurrentTrack        
         jsr initialize_current_track        
         jsr update_track_info
+        jsr update_track_counter
         rts
 .endproc
 
@@ -345,3 +348,149 @@ TargetStringPtr := ScratchWord
         rts
 .endproc
 
+.proc draw_8bit_number
+Number := ScratchByte
+CurrentDigit := (ScratchWord)
+LeadingCounter := (ScratchWord+1)
+        lda #0
+        sta CurrentDigit
+        sta LeadingCounter
+
+        lda #0
+        sta CurrentDigit
+hundreds_loop:
+        lda Number
+        cmp #100
+        bcc display_hundreds
+        inc CurrentDigit
+        lda Number
+        sec
+        sbc #100
+        sta Number
+        jmp hundreds_loop
+display_hundreds:
+        lda LeadingCounter
+        ora CurrentDigit
+        sta LeadingCounter
+        beq blank_hundreds
+        lda #NUMBERS_BASE
+        clc
+        adc CurrentDigit
+        jmp draw_hundreds
+draw_hundreds:
+        sta VRAM_TABLE_START, x
+        inx
+        iny
+blank_hundreds:
+
+        lda #0
+        sta CurrentDigit
+tens_loop:
+        lda Number
+        cmp #10
+        bcc display_tens
+        inc CurrentDigit
+        lda Number
+        sec
+        sbc #10
+        sta Number
+        jmp tens_loop
+display_tens:
+        lda LeadingCounter
+        ora CurrentDigit
+        sta LeadingCounter
+        beq blank_tens
+        lda #NUMBERS_BASE
+        clc
+        adc CurrentDigit
+        jmp draw_tens
+draw_tens:
+        sta VRAM_TABLE_START, x
+        inx
+        iny
+
+blank_tens:
+        lda #0
+        sta CurrentDigit
+ones_loop:
+        lda Number
+        cmp #1
+        bcc display_ones
+        inc CurrentDigit
+        dec Number
+        jmp ones_loop
+display_ones:
+        lda #NUMBERS_BASE
+        clc
+        adc CurrentDigit
+        sta VRAM_TABLE_START, x
+        inx
+        iny
+
+        rts
+.endproc
+
+.proc draw_string
+        ldy #0
+loop:
+        lda (StringPtr), y
+        beq end_of_string
+        sta VRAM_TABLE_START, x
+        inx
+        iny
+        jmp loop
+end_of_string:
+        rts
+.endproc
+
+leading_chevron_str: .asciiz "> "
+track_separator_str: .asciiz " / "
+
+.proc update_track_counter
+Number := ScratchByte
+        write_vram_header_imm $2224, #10, VRAM_INC_1
+        ldx VRAM_TABLE_INDEX
+        
+        ldy #0 ; number of bytes we have written so far
+        sty StrPosX
+        
+        st16 StringPtr, leading_chevron_str
+        jsr draw_string
+        tya
+        clc
+        adc StrPosX
+        sta StrPosX
+        tay
+        
+        lda CurrentTrack
+        clc
+        adc #1
+        sta Number
+        jsr draw_8bit_number
+
+        st16 StringPtr, track_separator_str
+        jsr draw_string
+        tya
+        clc
+        adc StrPosX
+        sta StrPosX
+        tay
+
+        lda music_track_count
+        sta Number
+        jsr draw_8bit_number
+
+        ; now we must write blank tiles to fill out the rest of the space
+padding_loop:
+        lda BLANK_TILE
+        sta VRAM_TABLE_START, x
+        inx
+        iny
+        cpy #10
+        bne padding_loop
+finalize_vram_entry:
+
+        stx VRAM_TABLE_INDEX
+        inc VRAM_TABLE_ENTRIES
+        rts
+.endproc
