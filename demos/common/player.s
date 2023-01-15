@@ -9,6 +9,18 @@
 
         .include "../../bhop/bhop.inc"
 
+.struct FancyTextDisplay
+        DestinationAddr .word
+        StringPtr .word        
+        CharacterPos .byte
+        DelayCounter .byte
+        State .byte
+.endstruct
+
+TEXT_STATE_FINISHED = 0
+TEXT_STATE_RESET = 1
+TEXT_STATE_DRAWING = 2
+
         .zeropage
 CurrentTrack: .res 1
 TrackPtr: .res 2
@@ -24,6 +36,9 @@ FieldWidth: .res 1
 
 CurrentPaletteIndex: .res 1
 PaletteFadeCounter: .res 1
+
+TitleFancyText: .res .sizeof(FancyTextDisplay)
+ArtistFancyText: .res .sizeof(FancyTextDisplay)
 
         .segment "CODE"
 
@@ -108,12 +123,6 @@ ARTIST_Y = 193
         .byte ARTIST_Y, $46, $03, ARTIST_X + 16
         .byte ARTIST_Y, $47, $03, ARTIST_X + 24
         .byte ARTIST_Y, $48, $03, ARTIST_X + 32
-
-
-
-
-
-
 bnuuy_sprite_layout_end:
 bnuuy_oam_length = (bnuuy_sprite_layout_end - bnuuy_sprite_layout)
 
@@ -123,6 +132,7 @@ hello_world_str:
 ; External Functions, declared in player.inc
 
 .proc player_init
+FancyTextPtr := ScratchPtr
         lda #0
         sta CurrentTrack
         jsr initialize_current_track
@@ -140,14 +150,37 @@ hello_world_str:
         sta PaletteFadeCounter
         jsr handle_palette_fade
 
+        st16 FancyTextPtr, TitleFancyText
+        ldy #FancyTextDisplay::DestinationAddr
+        lda #$C2
+        sta (FancyTextPtr), y
+        iny
+        lda #$22
+        sta (FancyTextPtr), y
+
+        st16 FancyTextPtr, ArtistFancyText
+        ldy #FancyTextDisplay::DestinationAddr
+        lda #$42
+        sta (FancyTextPtr), y
+        iny
+        lda #$23
+        sta (FancyTextPtr), y
+
         rts
 .endproc
 
 .proc player_update
+FancyTextPtr := ScratchPtr
         jsr bhop_play
         jsr poll_input
         jsr handle_track_switching
         jsr handle_palette_fade
+
+        st16 FancyTextPtr, TitleFancyText
+        jsr update_fancy_text
+        st16 FancyTextPtr, ArtistFancyText
+        jsr update_fancy_text
+
         rts
 .endproc
 
@@ -371,6 +404,7 @@ blank_string:
         .asciiz "                            "
 
 .proc update_track_info
+FancyTextPtr := ScratchPtr
 TargetStringPtr := ScratchWord
         lda CurrentTrack
         asl
@@ -380,34 +414,37 @@ TargetStringPtr := ScratchWord
         lda music_track_table+1, x
         sta TrackPtr+1
 
-        
-        lda #2
-        sta StrPosX
-        lda #22
-        sta StrPosY
-        lda #28
-        sta FieldWidth
+        st16 FancyTextPtr, TitleFancyText
         ldy #MusicTrack::TitleStringPtr
         lda (TrackPtr), y
-        sta StringPtr
-        iny
+        ldy #FancyTextDisplay::StringPtr
+        sta (FancyTextPtr), y
+        ldy #MusicTrack::TitleStringPtr+1
         lda (TrackPtr), y
-        sta StringPtr+1
-        jsr draw_text_field
+        ldy #FancyTextDisplay::StringPtr+1
+        sta (FancyTextPtr), y
+        ldy #FancyTextDisplay::State
+        lda #TEXT_STATE_RESET
+        sta (FancyTextPtr), y
+        ldy #FancyTextDisplay::DelayCounter
+        lda #0
+        sta (FancyTextPtr), y
 
-        lda #2
-        sta StrPosX
-        lda #26
-        sta StrPosY
-        lda #28
-        sta FieldWidth
+        st16 FancyTextPtr, ArtistFancyText
         ldy #MusicTrack::ArtistStringPtr
         lda (TrackPtr), y
-        sta StringPtr
-        iny
+        ldy #FancyTextDisplay::StringPtr
+        sta (FancyTextPtr), y
+        ldy #MusicTrack::ArtistStringPtr+1
         lda (TrackPtr), y
-        sta StringPtr+1
-        jsr draw_text_field        
+        ldy #FancyTextDisplay::StringPtr+1
+        sta (FancyTextPtr), y
+        ldy #FancyTextDisplay::State
+        lda #TEXT_STATE_RESET
+        sta (FancyTextPtr), y
+        ldy #FancyTextDisplay::DelayCounter
+        lda #0
+        sta (FancyTextPtr), y
 
         rts
 .endproc
@@ -531,6 +568,7 @@ Number := ScratchByte
         adc #1
         sta Number
         jsr draw_8bit_number
+        sty StrPosX
 
         st16 StringPtr, track_separator_str
         jsr draw_string
@@ -558,3 +596,156 @@ finalize_vram_entry:
         inc VRAM_TABLE_ENTRIES
         rts
 .endproc
+
+.proc update_fancy_text
+FancyTextPtr := ScratchPtr
+        ldy #FancyTextDisplay::DelayCounter
+        lda (FancyTextPtr), y
+        beq perform_update
+        sec
+        sbc #1
+        sta (FancyTextPtr), y
+        rts
+
+perform_update:
+        ldy #FancyTextDisplay::State
+        lda (FancyTextPtr), y
+check_reset_state:
+        cmp #TEXT_STATE_RESET
+        bne check_draw_state
+        jsr reset_fancy_text
+        rts
+check_draw_state:
+        cmp #TEXT_STATE_DRAWING
+        bne finished
+        jsr draw_fancy_text
+finished:
+        rts
+.endproc
+
+.proc reset_fancy_text
+FancyTextPtr := ScratchPtr
+DestAddr := ScratchWord
+        ; first clear the entire text field, to erase any old contents
+        ldy #FancyTextDisplay::DestinationAddr
+        lda (FancyTextPtr), y
+        sta DestAddr
+        iny
+        lda (FancyTextPtr), y
+        sta DestAddr+1
+
+        write_vram_header_ptr DestAddr, #28, VRAM_INC_1
+        ldx VRAM_TABLE_INDEX
+        ldy #0
+loop:
+        lda #BLANK_TILE
+        sta VRAM_TABLE_START, x
+        inx
+        iny
+        cpy #28
+        bne loop
+finalize_vram_entry:
+        stx VRAM_TABLE_INDEX
+        inc VRAM_TABLE_ENTRIES
+
+        ; now set our state to drawing, so we can begin displaying the
+        ; current string
+        ldy #FancyTextDisplay::State
+        lda #TEXT_STATE_DRAWING
+        sta (FancyTextPtr), y
+
+        ; And reset our state related to drawing
+        lda #0
+        ldy #FancyTextDisplay::CharacterPos
+        sta (FancyTextPtr), y
+
+        ; No need to set a delay here, we'll begin drawing immediately on the next frame
+        ; ... maybe. Todo, polish, and all that.
+
+        rts
+.endproc
+
+.proc draw_fancy_text
+FancyTextPtr := ScratchPtr
+DestAddr := ScratchWord
+CharacterPos := ScratchByte
+        ; First compute our destination address, which is always
+        ; the current character postiion
+        ldy #FancyTextDisplay::CharacterPos
+        lda (FancyTextPtr), y
+        sta CharacterPos
+
+        clc
+        ldy #FancyTextDisplay::DestinationAddr
+        lda (FancyTextPtr), y
+        adc CharacterPos
+        sta DestAddr
+        iny
+        lda (FancyTextPtr), y
+        adc #0 ; should be unnecessary, but let's be safe
+        sta DestAddr+1
+
+        ; Now read the current character, as we need to take
+        ; a different path if we reach the end of the string
+        ldy #FancyTextDisplay::StringPtr
+        lda (FancyTextPtr), y
+        sta StringPtr
+        iny
+        lda (FancyTextPtr), y
+        sta StringPtr+1
+
+        ldy CharacterPos
+        lda (StringPtr), y
+        beq end_of_string_reached
+
+        ; We're not at the end of the string yet, so we will:
+        ; - draw this character at the appropriate tile
+        ; - draw the cursor one tile ahead of the character
+        write_vram_header_ptr DestAddr, #2, VRAM_INC_1
+        ldx VRAM_TABLE_INDEX
+        ; Re-read the current character, which was clobbered when we wrote the vram header
+        ldy CharacterPos
+        lda (StringPtr), y
+        sta VRAM_TABLE_START, x
+        inx
+        lda #1 ; cursor tile
+        sta VRAM_TABLE_START, x
+        inx
+        stx VRAM_TABLE_INDEX
+        inc VRAM_TABLE_ENTRIES
+
+        ; Now increment the character position...
+        ldy #FancyTextDisplay::CharacterPos
+        lda (FancyTextPtr), y
+        clc
+        adc #1
+        sta (FancyTextPtr), y
+        ; And set a delay to slow down this animation
+        ldy #FancyTextDisplay::DelayCounter
+        lda #1
+        sta (FancyTextPtr), y
+
+        ; And we should be all done
+        rts
+
+
+end_of_string_reached:
+        ; We've reached the end of the string! All we need to do is
+        ; erase the cursor, which conveniently is located at DestAddr
+        write_vram_header_ptr DestAddr, #1, VRAM_INC_1
+        ldx VRAM_TABLE_INDEX
+        lda #BLANK_TILE
+        sta VRAM_TABLE_START, x
+        inx
+        stx VRAM_TABLE_INDEX
+        inc VRAM_TABLE_ENTRIES
+
+        ; Now that we're done drawing, we move ourselves into the finished state
+        ; so we stop receiving updates
+        ldy #FancyTextDisplay::State
+        lda #TEXT_STATE_FINISHED
+        sta (FancyTextPtr), y
+
+        rts
+.endproc
+
