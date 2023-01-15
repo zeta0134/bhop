@@ -20,6 +20,7 @@ ScratchByte: .res 1
 StringPtr: .res 2
 StrPosX: .res 1
 StrPosY: .res 1
+FieldWidth: .res 1
 
         .segment "CODE"
 
@@ -31,6 +32,7 @@ bnuuy_palette:
         .incbin "bnuuy_obj.pal"
 
 bnuuy_sprite_layout:
+        ; Bnuuy sprites (48)
         .byte $30, $01, $00, $48
         .byte $38, $0b, $00, $48
         .byte $50, $13, $03, $31
@@ -51,7 +53,6 @@ bnuuy_sprite_layout:
         .byte $2B, $10, $01, $2A
         .byte $23, $08, $01, $3A
         .byte $2B, $11, $01, $3A
-
         .byte $23, $09, $01, $42
         .byte $2B, $12, $01, $42
         .byte $33, $0a, $01, $2A
@@ -80,6 +81,27 @@ bnuuy_sprite_layout:
         .byte $40, $28, $02, $40
         .byte $48, $2c, $02, $40
         .byte $53, $19, $02, $40
+
+        ; Text header sprites (?)
+TITLE_X = 38
+TITLE_Y = 161
+        .byte TITLE_Y, $40, $03, TITLE_X + 0
+        .byte TITLE_Y, $41, $03, TITLE_X + 8
+        .byte TITLE_Y, $42, $03, TITLE_X + 16
+        .byte TITLE_Y, $43, $03, TITLE_X + 24
+
+ARTIST_X = 30
+ARTIST_Y = 193
+        .byte ARTIST_Y, $44, $03, ARTIST_X + 0
+        .byte ARTIST_Y, $45, $03, ARTIST_X + 8
+        .byte ARTIST_Y, $46, $03, ARTIST_X + 16
+        .byte ARTIST_Y, $47, $03, ARTIST_X + 24
+        .byte ARTIST_Y, $48, $03, ARTIST_X + 32
+
+
+
+
+
 
 bnuuy_sprite_layout_end:
 bnuuy_oam_length = (bnuuy_sprite_layout_end - bnuuy_sprite_layout)
@@ -154,7 +176,6 @@ check_next_track:
 advance_to_next_track:
         sta CurrentTrack
         jsr initialize_current_track
-        jsr clear_track_info
         jsr update_track_info
 finished:
         rts
@@ -168,8 +189,7 @@ check_previous_track:
         beq finished
 advance_to_previous_track:
         dec CurrentTrack        
-        jsr initialize_current_track
-        jsr clear_track_info
+        jsr initialize_current_track        
         jsr update_track_info
         rts
 .endproc
@@ -222,19 +242,6 @@ loop:
         rts
 .endproc
 
-.proc strlen
-StringLen := ScratchByte
-        ldy #0
-loop:
-        lda (StringPtr), y
-        beq end_found
-        iny
-        jmp loop
-end_found:
-        sty StringLen
-        rts        
-.endproc
-
 .proc dest_coords
 DestAddr := ScratchWord
         lda StrPosY
@@ -256,15 +263,11 @@ DestAddr := ScratchWord
         rts
 .endproc
 
-.proc draw_string
+.proc draw_text_field
 DestAddr := ScratchWord
-StringLen := ScratchByte
-        jsr strlen
-        lda StringLen
-        beq done
-        jsr dest_coords
+        jsr dest_coords ; sets DestAddr based on StrPosX and StrPosY
 
-        write_vram_header_ptr DestAddr, StringLen, VRAM_INC_1
+        write_vram_header_ptr DestAddr, FieldWidth, VRAM_INC_1
 
         ldx VRAM_TABLE_INDEX
         ldy #0
@@ -276,42 +279,29 @@ loop:
         iny
         jmp loop
 end_of_string:
+        cpy FieldWidth
+        beq finalize_vram_entry
+        ; At this point we have written Y characters, but we need to
+        ; fill out the entire field, to erase any previous contents. Here
+        ; we loop again, this time writing blank tiles to fill out the
+        ; FieldWidth
+padding_loop:
+        lda BLANK_TILE
+        sta VRAM_TABLE_START, x
+        inx
+        iny
+        cpy FieldWidth
+        bne padding_loop
+finalize_vram_entry:
 
         stx VRAM_TABLE_INDEX
         inc VRAM_TABLE_ENTRIES
-
-done:
         rts
 .endproc
 
 blank_string:
                 ;0123456789012345678901234567
         .asciiz "                            "
-
-.proc clear_track_info
-        lda #2
-        sta StrPosX
-        lda #17
-        sta StrPosY
-        st16 StringPtr, blank_string
-        jsr draw_string
-
-        lda #2
-        sta StrPosX
-        lda #22
-        sta StrPosY
-        st16 StringPtr, blank_string
-        jsr draw_string
-
-        lda #2
-        sta StrPosX
-        lda #26
-        sta StrPosY
-        st16 StringPtr, blank_string
-        jsr draw_string
-
-        rts
-.endproc
 
 .proc update_track_info
 TargetStringPtr := ScratchWord
@@ -328,25 +318,30 @@ TargetStringPtr := ScratchWord
         sta StrPosX
         lda #22
         sta StrPosY
+        lda #28
+        sta FieldWidth
         ldy #MusicTrack::TitleStringPtr
         lda (TrackPtr), y
         sta StringPtr
         iny
         lda (TrackPtr), y
         sta StringPtr+1
-        jsr draw_string
+        jsr draw_text_field
 
         lda #2
         sta StrPosX
         lda #26
         sta StrPosY
+        lda #28
+        sta FieldWidth
         ldy #MusicTrack::ArtistStringPtr
         lda (TrackPtr), y
         sta StringPtr
         iny
         lda (TrackPtr), y
         sta StringPtr+1
-        jsr draw_string        
+        jsr draw_text_field        
 
         rts
 .endproc
+
