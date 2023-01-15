@@ -22,12 +22,23 @@ StrPosX: .res 1
 StrPosY: .res 1
 FieldWidth: .res 1
 
+CurrentPaletteIndex: .res 1
+PaletteFadeCounter: .res 1
+
         .segment "CODE"
 
 bnuuy_nametable:
         .incbin "bnuuy.nam"
 
 bnuuy_palette:
+        .incbin "bnuuy_bg_fade4.pal"
+        .incbin "bnuuy_obj_fade4.pal"
+        .incbin "bnuuy_bg_fade3.pal"
+        .incbin "bnuuy_obj_fade3.pal"
+        .incbin "bnuuy_bg_fade2.pal"
+        .incbin "bnuuy_obj_fade2.pal"
+        .incbin "bnuuy_bg_fade1.pal"
+        .incbin "bnuuy_obj_fade1.pal"
         .incbin "bnuuy_bg.pal"
         .incbin "bnuuy_obj.pal"
 
@@ -116,12 +127,18 @@ hello_world_str:
         sta CurrentTrack
         jsr initialize_current_track
 
-        jsr demo_copy_palette
+        jsr init_palette
         jsr demo_copy_nametable
         jsr demo_bnuuy_sprites
 
         jsr update_track_info
         jsr update_track_counter
+
+        lda #0
+        sta CurrentPaletteIndex
+        lda #0
+        sta PaletteFadeCounter
+        jsr handle_palette_fade
 
         rts
 .endproc
@@ -130,6 +147,7 @@ hello_world_str:
         jsr bhop_play
         jsr poll_input
         jsr handle_track_switching
+        jsr handle_palette_fade
         rts
 .endproc
 
@@ -197,7 +215,7 @@ advance_to_previous_track:
         rts
 .endproc
 
-.proc demo_copy_palette
+.proc init_palette
         lda #0
         sta PPUCTRL ; VRAM mode +0
         set_ppuaddr #$3F00
@@ -208,6 +226,52 @@ loop:
         inx
         cpx #32
         bne loop
+
+        rts
+.endproc
+
+PALETTE_FADE_SPEED = 3
+MAX_PALETTE_INDEX = 128
+
+.proc handle_palette_fade
+        lda PaletteFadeCounter
+        beq check_palette_index
+        dec PaletteFadeCounter
+        rts
+
+check_palette_index:
+        lda CurrentPaletteIndex
+        clc
+        adc #32
+        cmp #(MAX_PALETTE_INDEX+1)
+        bcc update_palette
+        lda #255
+        sta PaletteFadeCounter
+        rts
+
+update_palette:
+        sta CurrentPaletteIndex
+
+        write_vram_header_imm $3F00, #32, VRAM_INC_1
+
+        ldx VRAM_TABLE_INDEX
+        ldy CurrentPaletteIndex
+loop:
+        lda bnuuy_palette, y
+        sta VRAM_TABLE_START, x
+        inx
+        iny
+        tya
+        and #%00011111
+        bne loop
+
+finalize_vram_entry:
+
+        stx VRAM_TABLE_INDEX
+        inc VRAM_TABLE_ENTRIES
+
+        lda #PALETTE_FADE_SPEED
+        sta PaletteFadeCounter
 
         rts
 .endproc
