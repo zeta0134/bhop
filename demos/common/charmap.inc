@@ -1,4 +1,4 @@
-BLANK_TILE = 0
+BLANK_TILE = $AF
 LETTERS_BASE = $B0
 NUMBERS_BASE = $E4
 SYMBOLS_BASE = $EE
@@ -89,4 +89,7 @@ SYMBOLS_BASE = $EE
 .charmap 64, (SYMBOLS_BASE + 15) ; @
 .charmap 62, (SYMBOLS_BASE + 16) ; >
 .charmap 60, (SYMBOLS_BASE + 17) ; <
+
+.charmap 45, $A9 ; -
+.charmap 47, $AA ; /
 

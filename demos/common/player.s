@@ -5,6 +5,7 @@
         .include "player.inc"
         .include "ppu.inc"
         .include "word_util.inc"
+        .include "vram_buffer.inc"
 
         .include "../../bhop/bhop.inc"
 
@@ -14,6 +15,11 @@ TrackPtr: .res 2
 
 ScratchPtr: .res 2
 ScratchWord: .res 2
+ScratchByte: .res 1
+
+StringPtr: .res 2
+StrPosX: .res 1
+StrPosY: .res 1
 
         .segment "CODE"
 
@@ -21,61 +27,65 @@ bnuuy_nametable:
         .incbin "bnuuy.nam"
 
 bnuuy_palette:
-        .incbin "bnuuy_pal.pal"
+        .incbin "bnuuy_bg.pal"
+        .incbin "bnuuy_obj.pal"
 
 bnuuy_sprite_layout:
-        .byte $40, $01, $00, $48
-        .byte $48, $0b, $00, $48
-        .byte $60, $13, $03, $31
-        .byte $68, $16, $03, $31
-        .byte $60, $14, $03, $39
-        .byte $68, $17, $03, $39
-        .byte $60, $15, $03, $41
-        .byte $68, $18, $03, $41
-        .byte $23, $03, $01, $22
-        .byte $2B, $0c, $01, $22
-        .byte $23, $04, $01, $2A
-        .byte $2B, $0d, $01, $2A
-        .byte $23, $05, $01, $32
-        .byte $2B, $0e, $01, $32
-        .byte $23, $06, $01, $3A
-        .byte $2B, $0f, $01, $3A
-        .byte $33, $07, $01, $2B
-        .byte $3B, $10, $01, $2A
-        .byte $33, $08, $01, $3A
-        .byte $3B, $11, $01, $3A
-        .byte $33, $09, $01, $42
-        .byte $3B, $12, $01, $42
-        .byte $43, $0a, $01, $2A
-        .byte $4B, $1b, $01, $2D
-        .byte $4B, $1c, $01, $35
-        .byte $4B, $1f, $01, $3D
-        .byte $4B, $20, $01, $45
-        .byte $53, $22, $01, $2D
-        .byte $53, $23, $01, $39
-        .byte $53, $24, $01, $43
-        .byte $5B, $25, $01, $30
-        .byte $5B, $26, $01, $38
-        .byte $5C, $27, $01, $40
-        .byte $63, $1a, $01, $3D
-        .byte $6B, $29, $01, $2D
-        .byte $6B, $2a, $01, $35
-        .byte $6B, $2b, $01, $3D
-        .byte $73, $2f, $01, $32
-        .byte $73, $30, $01, $3A
-        .byte $52, $02, $00, $38
-        .byte $5B, $1d, $00, $35
-        .byte $5B, $1e, $00, $3D
-        .byte $63, $21, $00, $3D
-        .byte $4E, $2d, $02, $57
-        .byte $4E, $2e, $02, $5F
-        .byte $50, $28, $02, $40
-        .byte $58, $2c, $02, $40
-        .byte $63, $19, $02, $40
+        .byte $30, $01, $00, $48
+        .byte $38, $0b, $00, $48
+        .byte $50, $13, $03, $31
+        .byte $58, $16, $03, $31
+        .byte $50, $14, $03, $39
+        .byte $58, $17, $03, $39
+        .byte $50, $15, $03, $41
+        .byte $58, $18, $03, $41
+        .byte $13, $03, $01, $22
+        .byte $1B, $0c, $01, $22
+        .byte $13, $04, $01, $2A
+        .byte $1B, $0d, $01, $2A
+        .byte $13, $05, $01, $32
+        .byte $1B, $0e, $01, $32
+        .byte $13, $06, $01, $3A
+        .byte $1B, $0f, $01, $3A
+        .byte $23, $07, $01, $2B
+        .byte $2B, $10, $01, $2A
+        .byte $23, $08, $01, $3A
+        .byte $2B, $11, $01, $3A
+
+        .byte $23, $09, $01, $42
+        .byte $2B, $12, $01, $42
+        .byte $33, $0a, $01, $2A
+        .byte $3B, $1b, $01, $2D
+        .byte $3B, $1c, $01, $35
+        .byte $3B, $1f, $01, $3D
+        .byte $3B, $20, $01, $45
+        .byte $43, $22, $01, $2D
+        .byte $43, $23, $01, $39
+        .byte $43, $24, $01, $43
+        .byte $4B, $25, $01, $30
+        .byte $4B, $26, $01, $38
+        .byte $4C, $27, $01, $40
+        .byte $53, $1a, $01, $3D
+        .byte $5B, $29, $01, $2D
+        .byte $5B, $2a, $01, $35
+        .byte $5B, $2b, $01, $3D
+        .byte $63, $2f, $01, $32
+        .byte $63, $30, $01, $3A
+        .byte $42, $02, $00, $38
+        .byte $4B, $1d, $00, $35
+        .byte $4B, $1e, $00, $3D
+        .byte $53, $21, $00, $3D
+        .byte $3E, $2d, $02, $57
+        .byte $3E, $2e, $02, $5F
+        .byte $40, $28, $02, $40
+        .byte $48, $2c, $02, $40
+        .byte $53, $19, $02, $40
 
 bnuuy_sprite_layout_end:
 bnuuy_oam_length = (bnuuy_sprite_layout_end - bnuuy_sprite_layout)
 
+hello_world_str:
+        .asciiz "Hello World!"
 
 ; External Functions, declared in player.inc
 
@@ -87,6 +97,9 @@ bnuuy_oam_length = (bnuuy_sprite_layout_end - bnuuy_sprite_layout)
         jsr demo_copy_palette
         jsr demo_copy_nametable
         jsr demo_bnuuy_sprites
+
+        jsr update_track_info
+
         rts
 .endproc
 
@@ -141,6 +154,8 @@ check_next_track:
 advance_to_next_track:
         sta CurrentTrack
         jsr initialize_current_track
+        jsr clear_track_info
+        jsr update_track_info
 finished:
         rts
 
@@ -154,6 +169,8 @@ check_previous_track:
 advance_to_previous_track:
         dec CurrentTrack        
         jsr initialize_current_track
+        jsr clear_track_info
+        jsr update_track_info
         rts
 .endproc
 
@@ -202,5 +219,134 @@ loop:
         inx
         cpx #bnuuy_oam_length
         bne loop
+        rts
+.endproc
+
+.proc strlen
+StringLen := ScratchByte
+        ldy #0
+loop:
+        lda (StringPtr), y
+        beq end_found
+        iny
+        jmp loop
+end_found:
+        sty StringLen
+        rts        
+.endproc
+
+.proc dest_coords
+DestAddr := ScratchWord
+        lda StrPosY
+        sta DestAddr+0
+        lda #0
+        sta DestAddr+1
+        .repeat 5
+        asl DestAddr+0
+        rol DestAddr+1
+        .endrepeat
+        clc
+        lda StrPosX
+        adc DestAddr+0
+        sta DestAddr+0
+        lda #$20
+        adc DestAddr+1
+        sta DestAddr+1
+
+        rts
+.endproc
+
+.proc draw_string
+DestAddr := ScratchWord
+StringLen := ScratchByte
+        jsr strlen
+        lda StringLen
+        beq done
+        jsr dest_coords
+
+        write_vram_header_ptr DestAddr, StringLen, VRAM_INC_1
+
+        ldx VRAM_TABLE_INDEX
+        ldy #0
+loop:
+        lda (StringPtr), y
+        beq end_of_string
+        sta VRAM_TABLE_START, x
+        inx
+        iny
+        jmp loop
+end_of_string:
+
+        stx VRAM_TABLE_INDEX
+        inc VRAM_TABLE_ENTRIES
+
+done:
+        rts
+.endproc
+
+blank_string:
+                ;0123456789012345678901234567
+        .asciiz "                            "
+
+.proc clear_track_info
+        lda #2
+        sta StrPosX
+        lda #17
+        sta StrPosY
+        st16 StringPtr, blank_string
+        jsr draw_string
+
+        lda #2
+        sta StrPosX
+        lda #22
+        sta StrPosY
+        st16 StringPtr, blank_string
+        jsr draw_string
+
+        lda #2
+        sta StrPosX
+        lda #26
+        sta StrPosY
+        st16 StringPtr, blank_string
+        jsr draw_string
+
+        rts
+.endproc
+
+.proc update_track_info
+TargetStringPtr := ScratchWord
+        lda CurrentTrack
+        asl
+        tax
+        lda music_track_table+0, x
+        sta TrackPtr+0
+        lda music_track_table+1, x
+        sta TrackPtr+1
+
+        
+        lda #2
+        sta StrPosX
+        lda #22
+        sta StrPosY
+        ldy #MusicTrack::TitleStringPtr
+        lda (TrackPtr), y
+        sta StringPtr
+        iny
+        lda (TrackPtr), y
+        sta StringPtr+1
+        jsr draw_string
+
+        lda #2
+        sta StrPosX
+        lda #26
+        sta StrPosY
+        ldy #MusicTrack::ArtistStringPtr
+        lda (TrackPtr), y
+        sta StringPtr
+        iny
+        lda (TrackPtr), y
+        sta StringPtr+1
+        jsr draw_string        
+
         rts
 .endproc

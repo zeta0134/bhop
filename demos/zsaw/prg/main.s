@@ -1,9 +1,11 @@
         .setcpu "6502"
 
+        .include "../../common/charmap.inc"
         .include "../../common/nes.inc"
         .include "../../common/player.inc"
         .include "../../common/ppu.inc"
         .include "../../common/word_util.inc"
+        .include "../../common/vram_buffer.inc"
 
         .include "../../../bhop/zsaw.inc"
 
@@ -93,6 +95,11 @@ gameloop:
         pha
 
         inc NmiCounter
+
+        jsr vram_zipper
+
+        lda #(VBLANK_NMI | OBJ_1000 | BG_0000)
+        sta PPUCTRL
 
         lda PPUSTATUS
         lda #0

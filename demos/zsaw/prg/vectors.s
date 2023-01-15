@@ -23,7 +23,7 @@ loop:
 .endscope
 .endmacro
 
-        .import start, nmi, irq
+        .import start
 reset:
         sei            ; Disable interrupts
         cld            ; make sure decimal mode is off (not that it does anything)
