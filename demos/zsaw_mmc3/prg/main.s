@@ -27,12 +27,22 @@ bhop_music_data = $A000
 
         .segment "MUSIC_0"
         .scope MODULE_0
-        .include "../music/zsaw_demo_tracks.asm"
+        .include "../music/heatdeath.asm"
         .endscope
 
         .segment "MUSIC_1"
         .scope MODULE_1
+        .include "../music/tactus.asm"
+        .endscope
+
+        .segment "MUSIC_2"
+        .scope MODULE_2
         .include "../music/tcg.asm"
+        .endscope
+
+        .segment "MUSIC_3"
+        .scope MODULE_3
+        .include "../music/mimiga.asm"
         .endscope
 
         .segment "CODE"
@@ -40,15 +50,17 @@ bhop_music_data = $A000
 ;                            Bank  Track#                         Title                        Artist
 ;                             ---     ---  ----------------------------  ----------------------------
 song_heat_death: music_track    0,      0,        "Heat Death - Smooth",                   "zeta0134"
-song_tactus:     music_track    0,      1,              "Tactus - Demo",                   "zeta0134"
-song_tcg:        music_track    1,      0,        "Pokemon TCG - Diary",           "Ichiro Shimakura"
+song_tactus:     music_track    1,      0,              "Tactus - Demo",                   "zeta0134"
+song_tcg:        music_track    2,      0,        "Pokemon TCG - Diary",           "Ichiro Shimakura"
+song_mimiga:     music_track    3,      0,   "Cave Story - Mimiga Town",              "Daisuke Amaya"
 
 music_track_table:
         .addr song_heat_death
         .addr song_tactus
         .addr song_tcg
+        .addr song_mimiga
 
-music_track_count: .byte 3
+music_track_count: .byte 4
 
 ; NROM doesn't support banking at all, so stub both of these out
 .proc player_bank_music
