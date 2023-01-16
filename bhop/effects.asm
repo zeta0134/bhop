@@ -151,6 +151,7 @@ done:
         rts
 .endproc
 
+.if ::BHOP_ZSAW_ENABLED
 ; prep: 
 ;   channel_index set for the desired channel
 ;   base_note contains the tracked note
@@ -204,6 +205,7 @@ increment_arp_counter:
 done:
         rts
 .endproc
+.endif
 
 ; sortof a dispatch function, since pitch effects are all processed at
 ; the same time but have subtly different behavior

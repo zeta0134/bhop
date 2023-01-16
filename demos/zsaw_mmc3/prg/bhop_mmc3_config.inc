@@ -33,7 +33,7 @@ BHOP_DPCM_BANKING = 0
 BHOP_DPCM_SWITCH_ROUTINE = bhop_apply_dpcm_bank
 .endif
 
-
+BHOP_ZSAW_ENABLED = 1
 
 ; For ZSAW purposes, we need to override that config file as well
 __ZSAW_CONFIG = 1

@@ -1,6 +1,6 @@
         .include "../../common/nes.inc"
 
-.import zsaw_irq, zsaw_nmi
+.import irq, nmi
 
         .segment "CODE"
 
@@ -52,6 +52,6 @@ reset:
         ; Labels nmi/reset/irq are part of prg3_e000.s
         ;
         .segment "VECTORS"
-        .addr zsaw_nmi
+        .addr nmi
         .addr reset
-        .addr zsaw_irq
+        .addr irq

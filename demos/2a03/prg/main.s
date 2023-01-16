@@ -21,25 +21,60 @@ NmiCounter: .byte $00
         .segment "CHR1"
         .incbin "../../common/bnuuy_obj.chr"
 
-        .export start, demo_nmi, bhop_music_data
+        .export start, nmi, irq, bhop_music_data
         
 bhop_music_data = $A000
 
         .segment "MUSIC_0"
         .scope MODULE_0
+        .include "../music/in_this_together.asm"
+        .endscope
+
+        .segment "MUSIC_1"
+        .scope MODULE_1
+        .include "../music/virus-busting.asm"
+        .endscope
+
+        .segment "MUSIC_2"
+        .scope MODULE_2
+        .include "../music/world-1-1.asm"
+        .endscope
+
+        .segment "MUSIC_3"
+        .scope MODULE_3
         .include "../music/yakra.asm"
+        .endscope
+
+        .segment "MUSIC_4"
+        .scope MODULE_4
+        .include "../music/nsmb.asm"
+        .endscope
+
+        .segment "MUSIC_5"
+        .scope MODULE_5
+        .include "../music/sanctuary.asm"
         .endscope
 
         .segment "CODE"
 
-;                            Bank  Track#                          Title                        Artist
-;                             ---     ---   ----------------------------  ----------------------------
-song_yakra: music_track         0,      0, "Chrono Trigger - Boss Battle",          "Yasunori Mitsuda"
+;                                Bank  Track#                          Title                        Artist
+;                                 ---     ---   ----------------------------  ----------------------------
+song_itt:       music_track         0,      0,  "Ikenfell - In This Together",           "aivi & surasshu"
+song_virus:     music_track         1,      0,        "MMBN. - Virus Busting",              "Yoshino Aoki"
+song_smb:       music_track         2,      0, "Super Mario Bros - World 1-1",                "Koji Kondo"
+song_yakra:     music_track         3,      0, "Chrono Trigger - Boss Battle",          "Yasunori Mitsuda"
+song_nsmb:      music_track         4,      0,   "New Super Mario Bros - 1-1",                "Koji Kondo"
+song_sanctuary: music_track         5,      0,        "Earthbound - Guardian",      "K. Suzuki, H. Tanaka"
 
 music_track_table:
+        .addr song_itt
+        .addr song_virus
+        .addr song_smb
         .addr song_yakra
+        .addr song_nsmb
+        .addr song_sanctuary
 
-music_track_count: .byte 1
+music_track_count: .byte 6
 
 ; NROM doesn't support banking at all, so stub both of these out
 .proc player_bank_music
@@ -81,9 +116,6 @@ loop:
 
         jsr initialize_mmc3
 
-        ; z-saw init
-        jsr zsaw_init
-
         ; player init
         jsr player_init
 
@@ -103,7 +135,11 @@ gameloop:
 
 .endproc
 
-.proc demo_nmi
+.proc irq
+        rti
+.endproc
+
+.proc nmi
         ; preserve registers
         pha
         txa
@@ -131,5 +167,5 @@ gameloop:
         pla
 
         ; all done
-        rts
+        rti
 .endproc

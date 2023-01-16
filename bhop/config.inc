@@ -30,4 +30,8 @@ BHOP_DPCM_BANKING = 1
 BHOP_DPCM_SWITCH_ROUTINE = bhop_apply_dpcm_bank
 .endif
 
+; Toggle the following flags to enable various expansion channel types
+
+BHOP_ZSAW_ENABLED = 0
+
 .endif ; __BHOP_CONFIG

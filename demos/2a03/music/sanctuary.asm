@@ -573,7 +573,7 @@ ft_s0p8c4:
 
 ; DPCM samples (located at DPCM segment)
 
-	.segment "DPCM_12"
+	.segment "DPCM_25"
 ft_sample_0: ; triangle-12D2
 	.byte $56, $55, $55, $B5, $AA, $AA, $AA, $56, $55, $55, $B5, $AA, $AA, $AA, $AA, $AA, $AA, $2A, $55, $55
 	.byte $55, $A9, $AA, $AA, $2A, $55, $55, $55, $A9, $AA, $AA, $2A, $55, $55, $55, $A5, $AA, $AA, $2A, $55

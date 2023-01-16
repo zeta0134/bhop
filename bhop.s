@@ -1,11 +1,11 @@
 .include "bhop/config.inc"
+.if ::BHOP_ZSAW_ENABLED
 .include "bhop/zsaw.asm"
+.endif
 
 .scope BHOP
 .include "bhop/bhop_internal.inc"
 .include "bhop/longbranch.inc"
-
-NUM_CHANNELS = 6 ;  note: this might change with expansion support
 
 .include "bhop/commands.asm"
 .include "bhop/effects.asm"    
@@ -27,7 +27,10 @@ row_counter: .byte $00
 row_cmp: .byte $00
 frame_counter: .byte $00
 frame_cmp: .byte $00
+
+.if ::BHOP_ZSAW_ENABLED
 zsaw_relative_note: .byte $00
+.endif
 
 song_ptr: .word $0000
 frame_ptr: .word $0000
@@ -82,8 +85,9 @@ effect_cut_delay: .res BHOP::NUM_CHANNELS
 effect_skip_target: .byte $00
 effect_dpcm_offset: .byte $00
 
-; memory specific to zsaw
+.if ::BHOP_ZSAW_ENABLED
 dpcm_active: .byte $00
+.endif
 
 
         .segment BHOP_PLAYER_SEGMENT
@@ -181,7 +185,9 @@ positive:
         sta channel_volume + PULSE_2_INDEX
         sta channel_volume + TRIANGLE_INDEX
         sta channel_volume + NOISE_INDEX
+        .if ::BHOP_ZSAW_ENABLED
         sta channel_volume + ZSAW_INDEX
+        .endif
 
         ; disable any active effects
         lda #0
@@ -190,7 +196,9 @@ positive:
         sta channel_pitch_effects_active + TRIANGLE_INDEX
         sta channel_pitch_effects_active + NOISE_INDEX
         sta channel_pitch_effects_active + DPCM_INDEX
+        .if ::BHOP_ZSAW_ENABLED
         sta channel_pitch_effects_active + ZSAW_INDEX
+        .endif
 
         ; reset every channel's status
         lda #(CHANNEL_MUTED)
@@ -199,7 +207,9 @@ positive:
         sta channel_status + TRIANGLE_INDEX
         sta channel_status + NOISE_INDEX
         sta channel_status + DPCM_INDEX
+        .if ::BHOP_ZSAW_ENABLED
         sta channel_status + ZSAW_INDEX
+        .endif
 
         ; clear out special effects
         lda #0
@@ -220,8 +230,10 @@ effect_init_loop:
         sta effect_skip_target
         sta effect_dpcm_offset
 
+        .if ::BHOP_ZSAW_ENABLED
         ; if zsaw happens to be playing, silence it
         jsr zsaw_silence
+        .endif
 
         ; finally, enable all channels except DMC
         lda #%00001111
@@ -308,13 +320,14 @@ loop:
         sta channel_pattern_ptr_high+NOISE_INDEX
         iny
 
-        ; Z-Saw
+        .if ::BHOP_ZSAW_ENABLED
         lda (bhop_ptr), y
         sta channel_pattern_ptr_low+ZSAW_INDEX
         iny
         lda (bhop_ptr), y
         sta channel_pattern_ptr_high+ZSAW_INDEX
         iny
+        .endif
 
         ; DPCM
         lda (bhop_ptr), y
@@ -330,7 +343,9 @@ loop:
         sta channel_row_delay_counter + PULSE_2_INDEX
         sta channel_row_delay_counter + TRIANGLE_INDEX
         sta channel_row_delay_counter + NOISE_INDEX
+        .if ::BHOP_ZSAW_ENABLED
         sta channel_row_delay_counter + ZSAW_INDEX
+        .endif
         sta channel_row_delay_counter + DPCM_INDEX
 
         rts
@@ -502,6 +517,7 @@ write_relative_frequency:
         lda channel_base_frequency_high, x
         sta channel_relative_frequency_high, x
 
+        .if ::BHOP_ZSAW_ENABLED
         ; for z-saw only, we initialize the relative frequency here as a note index,
         ; since it does not do pitch bends
         
@@ -509,6 +525,7 @@ write_relative_frequency:
         bne portamento_active
         lda channel_base_note, x
         sta zsaw_relative_note
+        .endif
 
 portamento_active:
         ; finally, set the channel status as triggered
@@ -676,10 +693,12 @@ done:
         jsr advance_channel_row
         jsr fix_noise_freq
 
+        .if ::BHOP_ZSAW_ENABLED
         ; Z-Saw
         lda #ZSAW_INDEX
         sta channel_index
         jsr advance_channel_row
+        .endif
 
         ; DPCM
         lda #DPCM_INDEX
@@ -710,10 +729,12 @@ done:
         sta channel_index
         jsr skip_channel_row
 
+        .if ::BHOP_ZSAW_ENABLED
         ; Z-Saw
         lda #ZSAW_INDEX
         sta channel_index
         jsr skip_channel_row
+        .endif
 
         ; DPCM
         lda #DPCM_INDEX
@@ -833,6 +854,7 @@ done_with_cut_delay:
         sta channel_index
         jsr tick_delayed_effects
 
+        .if ::BHOP_ZSAW_ENABLED
         ; Z-Saw
         lda #ZSAW_INDEX
         sta channel_index
@@ -842,6 +864,7 @@ done_with_cut_delay:
         jsr tick_duty_envelope_zsaw
         jsr update_arp_zsaw
         jsr tick_arp_envelope_zsaw
+        .endif
 
         rts
 .endproc
@@ -1088,6 +1111,7 @@ done:
         rts
 .endproc
 
+.if ::BHOP_ZSAW_ENABLED
 ; a variant without all the shifting and masking business
 .proc tick_duty_envelope_zsaw
         ldy channel_index
@@ -1139,6 +1163,7 @@ end_not_reached:
 done:
         rts
 .endproc
+.endif
 
 ; If this channel has an arp envelope active, process that
 ; envelope. Upon return, base_note and relative_frequency are set
@@ -1370,6 +1395,7 @@ done:
         rts
 .endproc
 
+.if ::BHOP_ZSAW_ENABLED
 ; and yet another variant for z-saw, which simply copies the base note into the
 ; relative frequency byte (which is then played back directly)
 .proc tick_arp_envelope_zsaw
@@ -1487,6 +1513,7 @@ done_applying_arp:
 done:
         rts
 .endproc
+.endif
 
 ; If this channel has a pitch envelope active, process that
 ; envelope. Upon return, relative_pitch is set
@@ -1855,7 +1882,9 @@ noise_muted:
 
 cleanup:
         jsr play_dpcm_samples
+        .if ::BHOP_ZSAW_ENABLED
         jsr play_zsaw
+        .endif
 
         ; clear the triggered flag from every instrument
         lda channel_status + PULSE_1_INDEX
@@ -1874,9 +1903,11 @@ cleanup:
         and #($FF - CHANNEL_TRIGGERED)
         sta channel_status + NOISE_INDEX
 
+        .if ::BHOP_ZSAW_ENABLED
         lda channel_status + ZSAW_INDEX
         and #($FF - CHANNEL_TRIGGERED)
         sta channel_status + ZSAW_INDEX
+        .endif
 
         lda channel_status + DPCM_INDEX
         and #($FF - CHANNEL_TRIGGERED)
@@ -1898,6 +1929,7 @@ cleanup:
         and #CHANNEL_TRIGGERED
         beq check_for_inactive
 
+        .if ::BHOP_ZSAW_ENABLED
         ; We're about to trigger a DPCM sample, so silence zsaw. DPCM
         ; will always have higher priority
         jsr zsaw_silence
@@ -1905,6 +1937,7 @@ cleanup:
         ; up another note and ruin our work
         lda #1
         sta dpcm_active
+        .endif
 
         ; using the current note, read the sample table
         prepare_ptr BHOP_MUSIC_BASE + FtModuleHeader::sample_list
@@ -1968,19 +2001,24 @@ done:
         rts
 
 dpcm_muted:
-        ; If the DPCM channel is currently in control of playback...
+        .if ::BHOP_ZSAW_ENABLED
+        ; Only take action if the DPCM channel is currently in control of playback...
         lda dpcm_active
         beq done
+        .endif
         ; simply disable the channel and exit (whatever is in the sample playback buffer will
         ; finish, up to 8 bits, there is no way to disable this)
         lda #%00001111
         sta $4015
 
+        .if ::BHOP_ZSAW_ENABLED
         lda #0
         sta dpcm_active
+        .endif
 
 check_for_inactive:
-        ; If the DPCM channel is in control of playback...
+        .if ::BHOP_ZSAW_ENABLED
+        ; Only take action if the DPCM channel is in control of playback...
         lda dpcm_active
         beq done
 
@@ -1993,10 +2031,12 @@ check_for_inactive:
         ; to initiate playback on the next tick
         lda #0
         sta dpcm_active
+        .endif
 
         rts
 .endproc
 
+.if ::BHOP_ZSAW_ENABLED
 ; These are used to more or less match N163 volumes in Fn-FamiTracker,
 ; which helps to keep the mix as close as possible between the tracker
 ; and the in-engine result. 
@@ -2039,16 +2079,6 @@ safe_to_continue:
         lda volume_table, x
         beq zsaw_muted
 
-        ; Old Approach: just sorta blindly shift this volume into place
-        ; pros: quick, mostly effective
-        ; con: result is somewhat consistently too loud
-
-        ; go from 4-bit to 6-bit
-        ;asl
-        ;asl
-        ;asl ; 7bit!
-        ;jsr zsaw_set_volume
-
         ; New approach: use the tracked volume to index into our N163 equivalence lookup table
         ; First we need to pick which table, so do that based on the timbre
         sta scratch_byte
@@ -2076,6 +2106,7 @@ skip:
         ; Do not pass go. Do not collect $200
         rts
 .endproc
+.endif
 
 .proc bhop_play
         jsr tick_frame_counter

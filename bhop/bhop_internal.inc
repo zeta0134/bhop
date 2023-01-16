@@ -23,13 +23,29 @@
         initial_bank .byte
 .endstruct
 
-PULSE_1_INDEX = 0
-PULSE_2_INDEX = 1
-TRIANGLE_INDEX = 2
-NOISE_INDEX = 3
-;DPCM_INDEX = 4
-ZSAW_INDEX = 4
-DPCM_INDEX = 5
+_channel_index .set 0
+
+PULSE_1_INDEX = _channel_index
+_channel_index .set (_channel_index+1)
+
+PULSE_2_INDEX = _channel_index
+_channel_index .set (_channel_index+1)
+
+TRIANGLE_INDEX = _channel_index
+_channel_index .set (_channel_index+1)
+
+NOISE_INDEX = _channel_index
+_channel_index .set (_channel_index+1)
+
+.if ::BHOP_ZSAW_ENABLED
+ZSAW_INDEX = _channel_index
+_channel_index .set (_channel_index+1)
+.endif
+
+DPCM_INDEX = _channel_index
+_channel_index .set (_channel_index+1)
+
+NUM_CHANNELS = _channel_index
 
 ; various status flags
 CHANNEL_MUTED           = %10000000
