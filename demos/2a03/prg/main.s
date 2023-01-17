@@ -55,6 +55,16 @@ bhop_music_data = $A000
         .include "../music/sanctuary.asm"
         .endscope
 
+        .segment "MUSIC_6"
+        .scope MODULE_6
+        .include "../music/gato.asm"
+        .endscope
+
+        .segment "MUSIC_7"
+        .scope MODULE_7
+        .include "../music/simian_segue.asm"
+        .endscope
+
         .segment "CODE"
 
 ;                                Bank  Track#                          Title                        Artist
@@ -65,6 +75,8 @@ song_smb:       music_track         2,      0, "Super Mario Bros - World 1-1",  
 song_yakra:     music_track         3,      0, "Chrono Trigger - Boss Battle",          "Yasunori Mitsuda"
 song_nsmb:      music_track         4,      0,   "New Super Mario Bros - 1-1",                "Koji Kondo"
 song_sanctuary: music_track         5,      0,        "Earthbound - Guardian",      "K. Suzuki, H. Tanaka"
+song_gato:      music_track         6,      0,      "Chrono Trigger - Battle",          "Yasunori Mitsuda"
+song_simian:    music_track         7,      0,           "DKC - Simian Segue",           "Eveline Fischer"
 
 music_track_table:
         .addr song_itt
@@ -73,8 +85,10 @@ music_track_table:
         .addr song_yakra
         .addr song_nsmb
         .addr song_sanctuary
+        .addr song_gato
+        .addr song_simian
 
-music_track_count: .byte 6
+music_track_count: .byte 8
 
 ; NROM doesn't support banking at all, so stub both of these out
 .proc player_bank_music
