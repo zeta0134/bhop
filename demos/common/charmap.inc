@@ -92,4 +92,5 @@ SYMBOLS_BASE = $EE
 
 .charmap 45, $A9 ; -
 .charmap 47, $AA ; /
+.charmap 38, $A8 ; &
 
