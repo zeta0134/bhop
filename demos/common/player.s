@@ -661,7 +661,7 @@ CharacterPos := ScratchByte
         sta (FancyTextPtr), y
         ; And set a delay to slow down this animation
         ldy #FancyTextDisplay::DelayCounter
-        lda #1
+        lda #0
         sta (FancyTextPtr), y
 
         ; And we should be all done
