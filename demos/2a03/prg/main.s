@@ -165,6 +165,11 @@ gameloop:
 
         jsr vram_zipper
 
+        lda #0
+        sta OAMADDR
+        lda #$02
+        sta OAM_DMA
+
         lda #(VBLANK_NMI | OBJ_1000 | BG_0000)
         sta PPUCTRL
 
