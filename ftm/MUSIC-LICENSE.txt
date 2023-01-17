@@ -1,4 +1,0 @@
-The project license does NOT apply to the contents of the ftm folder at this time. These
-test files are covers of non-original works, and need to be replaced with works in the 
-public domain. When that is done, this notice will be removed. Until then, please assume
-All Rights Reserved for anything in this folder.
