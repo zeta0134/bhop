@@ -37,6 +37,10 @@ command_table:
     .word cmd_eff_groove           ;CMD_EFF_GROOVE
     .word cmd_unimplemented        ;CMD_EFF_DELAYED_VOLUME
     .word cmd_unimplemented        ;CMD_EFF_TRANSPOSE
+    .word cmd_unimplemented        ;CMD_EFF_PHASE_RESET
+    .word cmd_unimplemented        ;CMD_EFF_DPCM_PHASE_RESET
+    .word cmd_unimplemented        ;CMD_EFF_HARMONIC
+    .word cmd_unimplemented        ;CMD_EFF_TARGET_VOL_SLIDE
     .word cmd_unimplemented        ;CMD_EFF_VRC7_PATCH
     .word cmd_unimplemented        ;CMD_EFF_VRC7_PORT
     .word cmd_unimplemented        ;CMD_EFF_VRC7_WRITE
