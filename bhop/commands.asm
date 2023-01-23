@@ -2,7 +2,7 @@
         .segment BHOP_PLAYER_SEGMENT
 
 command_table:
-    .word cmd_instrument           ;CMD_INSTRUMENT
+    .word cmd_instrument           ;CMD_INSTRUMENT          
     .word cmd_unimplemented_short  ;CMD_HOLD
     .word cmd_set_duration         ;CMD_SET_DURATION
     .word cmd_reset_duration       ;CMD_RESET_DURATION
@@ -38,7 +38,7 @@ command_table:
     .word cmd_unimplemented        ;CMD_EFF_DELAYED_VOLUME
     .word cmd_unimplemented        ;CMD_EFF_TRANSPOSE
     .word cmd_eff_phase_reset      ;CMD_EFF_PHASE_RESET
-    .word cmd_eff_phase_reset_dpcm ;CMD_EFF_DPCM_PHASE_RESET
+    .word cmd_eff_phase_reset      ;CMD_EFF_DPCM_PHASE_RESET
     .word cmd_unimplemented        ;CMD_EFF_HARMONIC
     .word cmd_unimplemented        ;CMD_EFF_TARGET_VOL_SLIDE
     .word cmd_unimplemented        ;CMD_EFF_VRC7_PATCH
@@ -394,6 +394,8 @@ continue:
         beq p1phasereset
         cpx #PULSE_2_INDEX
         beq p2phasereset
+        cpx #DPCM_INDEX
+        beq dpcmphasereset
         rts ; else, exit
 p1phasereset:
 ; write current period value to registers again
@@ -413,22 +415,12 @@ p2phasereset:
         ora #%11111000
         sta $4007
         rts
-.endproc
-
-; =xx for DPCM, practically a one-shot retrigger command
-.proc cmd_eff_phase_reset_dpcm
+dpcmphasereset:
 ; from Channels2A03.cpp:
 ; if (EffParam == 0) {
     ; triggerSample();
 ; }
-        fetch_pattern_byte
-        bne continue ; currently, =xx commands are only valid if the parameter is 0
-        rts
-continue:
-        cpx #DPCM_INDEX
-        bne done
         jsr trigger_sample
-done:
         rts
 .endproc
 
