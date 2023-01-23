@@ -25,7 +25,7 @@ bhop_music_data = $A000
 
         .segment "MUSIC_0"
         .scope MODULE_0
-        .include "../music/yakra.asm"
+        .include "../music/brain_age.asm"
         .endscope
 
 
@@ -33,10 +33,10 @@ bhop_music_data = $A000
 
 ;                                Bank  Track#                          Title                        Artist
 ;                                 ---     ---   ----------------------------  ----------------------------
-song_yakra:     music_track         0,      0, "Chrono Trigger - Boss Battle",          "Yasunori Mitsuda"
+song_brain_age:     music_track         0,      0, "Brain Age - Menu",           "M. Hamano, A. Nakatsuka"
 
 music_track_table:
-        .addr song_yakra
+        .addr song_brain_age
 
 music_track_count: .byte 1
 
