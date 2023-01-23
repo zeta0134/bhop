@@ -1,59 +1,62 @@
 
+
         .segment BHOP_PLAYER_SEGMENT
 
 command_table:
-    .word cmd_instrument           ;CMD_INSTRUMENT          
-    .word cmd_unimplemented_short  ;CMD_HOLD
-    .word cmd_set_duration         ;CMD_SET_DURATION
-    .word cmd_reset_duration       ;CMD_RESET_DURATION
-    .word cmd_eff_speed            ;CMD_EFF_SPEED
-    .word cmd_eff_tempo            ;CMD_EFF_TEMPO
-    .word cmd_eff_jump             ;CMD_EFF_JUMP
-    .word cmd_eff_skip             ;CMD_EFF_SKIP
-    .word cmd_eff_halt             ;CMD_EFF_HALT
-    .word cmd_unimplemented        ;CMD_EFF_VOLUME
-    .word cmd_eff_clear            ;CMD_EFF_CLEAR
-    .word cmd_eff_portaup          ;CMD_EFF_PORTAUP
-    .word cmd_eff_portadown        ;CMD_EFF_PORTADOWN
-    .word cmd_eff_portamento       ;CMD_EFF_PORTAMENTO
-    .word cmd_eff_arpeggio         ;CMD_EFF_ARPEGGIO
-    .word cmd_eff_vibrato          ;CMD_EFF_VIBRATO
-    .word cmd_eff_tremolo          ;CMD_EFF_TREMOLO
-    .word cmd_eff_pitch            ;CMD_EFF_PITCH
-    .word cmd_eff_reset_pitch      ;CMD_EFF_RESET_PITCH
-    .word cmd_eff_duty             ;CMD_EFF_DUTY
-    .word cmd_eff_delay            ;CMD_EFF_DELAY
-    .word cmd_unimplemented        ;CMD_EFF_SWEEP
-    .word cmd_eff_dac              ;CMD_EFF_DAC
-    .word cmd_eff_offset           ;CMD_EFF_OFFSET
-    .word cmd_eff_slide_up         ;CMD_EFF_SLIDE_UP
-    .word cmd_eff_slide_down       ;CMD_EFF_SLIDE_DOWN
-    .word cmd_eff_vol_slide        ;CMD_EFF_VOL_SLIDE
-    .word cmd_eff_note_cut         ;CMD_EFF_NOTE_CUT
-    .word cmd_eff_retrigger        ;CMD_EFF_RETRIGGER
-    .word cmd_unimplemented        ;CMD_EFF_DPCM_PITCH
-    .word cmd_unimplemented        ;CMD_EFF_NOTE_RELEASE
-    .word cmd_unimplemented        ;CMD_EFF_LINEAR_COUNTER
-    .word cmd_eff_groove           ;CMD_EFF_GROOVE
-    .word cmd_unimplemented        ;CMD_EFF_DELAYED_VOLUME
-    .word cmd_unimplemented        ;CMD_EFF_TRANSPOSE
-    .word cmd_eff_phase_reset      ;CMD_EFF_PHASE_RESET
-    .word cmd_eff_phase_reset      ;CMD_EFF_DPCM_PHASE_RESET
-    .word cmd_unimplemented        ;CMD_EFF_HARMONIC
-    .word cmd_unimplemented        ;CMD_EFF_TARGET_VOL_SLIDE
-    .word cmd_unimplemented        ;CMD_EFF_VRC7_PATCH
-    .word cmd_unimplemented        ;CMD_EFF_VRC7_PORT
-    .word cmd_unimplemented        ;CMD_EFF_VRC7_WRITE
-    .word cmd_unimplemented        ;CMD_EFF_FDS_MOD_DEPTH
-    .word cmd_unimplemented        ;CMD_EFF_FDS_MOD_RATE_HI
-    .word cmd_unimplemented        ;CMD_EFF_FDS_MOD_RATE_LO
-    .word cmd_unimplemented        ;CMD_EFF_FDS_VOLUME
-    .word cmd_unimplemented        ;CMD_EFF_FDS_MOD_BIAS
-    .word cmd_unimplemented        ;CMD_EFF_N163_WAVE_BUFFER
-    .word cmd_unimplemented        ;CMD_EFF_S5B_ENV_TYPE
-    .word cmd_unimplemented        ;CMD_EFF_S5B_ENV_RATE_HI
-    .word cmd_unimplemented        ;CMD_EFF_S5B_ENV_RATE_LO
-    .word cmd_unimplemented        ;CMD_EFF_S5B_NOISE
+;         bhop handler              bytecode    FT enum equivalent
+;         ------------------------  -----       ------------------
+    .word cmd_instrument           ;($80)       CMD_INSTRUMENT          
+    .word cmd_unimplemented_short  ;($81)       CMD_HOLD
+    .word cmd_set_duration         ;($82)       CMD_SET_DURATION
+    .word cmd_reset_duration       ;($83)       CMD_RESET_DURATION
+    .word cmd_eff_speed            ;($84)       CMD_EFF_SPEED
+    .word cmd_eff_tempo            ;($85)       CMD_EFF_TEMPO
+    .word cmd_eff_jump             ;($86)       CMD_EFF_JUMP
+    .word cmd_eff_skip             ;($87)       CMD_EFF_SKIP
+    .word cmd_eff_halt             ;($88)       CMD_EFF_HALT
+    .word cmd_unimplemented        ;($89)       CMD_EFF_VOLUME
+    .word cmd_eff_clear            ;($8A)       CMD_EFF_CLEAR
+    .word cmd_eff_portaup          ;($8B)       CMD_EFF_PORTAUP
+    .word cmd_eff_portadown        ;($8C)       CMD_EFF_PORTADOWN
+    .word cmd_eff_portamento       ;($8D)       CMD_EFF_PORTAMENTO
+    .word cmd_eff_arpeggio         ;($8E)       CMD_EFF_ARPEGGIO
+    .word cmd_eff_vibrato          ;($8F)       CMD_EFF_VIBRATO
+    .word cmd_eff_tremolo          ;($90)       CMD_EFF_TREMOLO
+    .word cmd_eff_pitch            ;($91)       CMD_EFF_PITCH
+    .word cmd_eff_reset_pitch      ;($92)       CMD_EFF_RESET_PITCH
+    .word cmd_eff_duty             ;($93)       CMD_EFF_DUTY
+    .word cmd_eff_delay            ;($94)       CMD_EFF_DELAY
+    .word cmd_unimplemented        ;($95)       CMD_EFF_SWEEP
+    .word cmd_eff_dac              ;($96)       CMD_EFF_DAC
+    .word cmd_eff_offset           ;($97)       CMD_EFF_OFFSET
+    .word cmd_eff_slide_up         ;($98)       CMD_EFF_SLIDE_UP
+    .word cmd_eff_slide_down       ;($99)       CMD_EFF_SLIDE_DOWN
+    .word cmd_eff_vol_slide        ;($9A)       CMD_EFF_VOL_SLIDE
+    .word cmd_eff_note_cut         ;($9B)       CMD_EFF_NOTE_CUT
+    .word cmd_eff_retrigger        ;($9C)       CMD_EFF_RETRIGGER
+    .word cmd_unimplemented        ;($9D)       CMD_EFF_DPCM_PITCH
+    .word cmd_unimplemented        ;($9E)       CMD_EFF_NOTE_RELEASE
+    .word cmd_unimplemented        ;($9F)       CMD_EFF_LINEAR_COUNTER
+    .word cmd_eff_groove           ;($A0)       CMD_EFF_GROOVE
+    .word cmd_unimplemented        ;($A1)       CMD_EFF_DELAYED_VOLUME
+    .word cmd_unimplemented        ;($A2)       CMD_EFF_TRANSPOSE
+    .word cmd_eff_phase_reset      ;($A3)       CMD_EFF_PHASE_RESET
+    .word cmd_eff_phase_reset      ;($A4)       CMD_EFF_DPCM_PHASE_RESET
+    .word cmd_unimplemented        ;($A5)       CMD_EFF_HARMONIC
+    .word cmd_unimplemented        ;($A6)       CMD_EFF_TARGET_VOL_SLIDE
+    .word cmd_unimplemented        ;($A7)       CMD_EFF_VRC7_PATCH
+    .word cmd_unimplemented        ;($A8)       CMD_EFF_VRC7_PORT
+    .word cmd_unimplemented        ;($A9)       CMD_EFF_VRC7_WRITE
+    .word cmd_unimplemented        ;($AA)       CMD_EFF_FDS_MOD_DEPTH
+    .word cmd_unimplemented        ;($AB)       CMD_EFF_FDS_MOD_RATE_HI
+    .word cmd_unimplemented        ;($AC)       CMD_EFF_FDS_MOD_RATE_LO
+    .word cmd_unimplemented        ;($AD)       CMD_EFF_FDS_VOLUME
+    .word cmd_unimplemented        ;($AE)       CMD_EFF_FDS_MOD_BIAS
+    .word cmd_unimplemented        ;($AF)       CMD_EFF_N163_WAVE_BUFFER
+    .word cmd_unimplemented        ;($B0)       CMD_EFF_S5B_ENV_TYPE
+    .word cmd_unimplemented        ;($B1)       CMD_EFF_S5B_ENV_RATE_HI
+    .word cmd_unimplemented        ;($B2)       CMD_EFF_S5B_ENV_RATE_LO
+    .word cmd_unimplemented        ;($B3)       CMD_EFF_S5B_NOISE
         ; fill out this table to 128 entries. Assume any new command
     ; added has one parameter. If it doesn't, oh well!
     .repeat 80
