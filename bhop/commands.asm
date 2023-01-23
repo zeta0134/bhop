@@ -372,11 +372,11 @@ loop:
     ; queueSample();
 ; }
         fetch_pattern_byte
+        sta effect_retrigger_period
         ; X00 == X01
         bne skip_increment
-        inc a
+        inc effect_retrigger_period
 skip_increment:
-        sta effect_retrigger_period
         lda effect_retrigger_counter
         bne done
         jsr queue_sample
@@ -419,7 +419,7 @@ p2phasereset:
 .proc cmd_eff_phase_reset_dpcm
 ; from Channels2A03.cpp:
 ; if (EffParam == 0) {
-    ; resetPhase();
+    ; triggerSample();
 ; }
         fetch_pattern_byte
         bne continue ; currently, =xx commands are only valid if the parameter is 0

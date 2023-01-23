@@ -2537,8 +2537,8 @@ check_for_inactive:
 ; }
         lda effect_retrigger_period
         beq reset_counter
-        inc a
         sta effect_retrigger_counter
+        inc effect_retrigger_counter
         rts
 reset_counter:
         lda #0
