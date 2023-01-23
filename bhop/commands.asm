@@ -30,15 +30,15 @@ command_table:
     .word cmd_eff_slide_down       ;CMD_EFF_SLIDE_DOWN
     .word cmd_eff_vol_slide        ;CMD_EFF_VOL_SLIDE
     .word cmd_eff_note_cut         ;CMD_EFF_NOTE_CUT
-    .word cmd_unimplemented        ;CMD_EFF_RETRIGGER
+    .word cmd_eff_retrigger        ;CMD_EFF_RETRIGGER
     .word cmd_unimplemented        ;CMD_EFF_DPCM_PITCH
     .word cmd_unimplemented        ;CMD_EFF_NOTE_RELEASE
     .word cmd_unimplemented        ;CMD_EFF_LINEAR_COUNTER
     .word cmd_eff_groove           ;CMD_EFF_GROOVE
     .word cmd_unimplemented        ;CMD_EFF_DELAYED_VOLUME
     .word cmd_unimplemented        ;CMD_EFF_TRANSPOSE
-    .word cmd_unimplemented        ;CMD_EFF_PHASE_RESET
-    .word cmd_unimplemented        ;CMD_EFF_DPCM_PHASE_RESET
+    .word cmd_eff_phase_reset      ;CMD_EFF_PHASE_RESET
+    .word cmd_eff_phase_reset_dpcm ;CMD_EFF_DPCM_PHASE_RESET
     .word cmd_unimplemented        ;CMD_EFF_HARMONIC
     .word cmd_unimplemented        ;CMD_EFF_TARGET_VOL_SLIDE
     .word cmd_unimplemented        ;CMD_EFF_VRC7_PATCH
@@ -364,15 +364,78 @@ loop:
         rts
 .endproc
 
-.proc cmd_eff_dac
-        ; this command is applied immediately, but we still need to ignore it
-        ; if the channel is suppressed
-        ; TODO: THIS
-
-
-        ; immediately set the DPCM level
+; Xxx
+.proc cmd_eff_retrigger
+; from Channels2A03.cpp:
+; mRetriggerPeriod = std::max((int)EffParam, 1);
+; if (mRetriggerCtr == 0) {	// Most recent row contains note without Xxx
+    ; queueSample();
+; }
         fetch_pattern_byte
-        sta $4011
+        ; X00 == X01
+        bne skip_increment
+        inc a
+skip_increment:
+        sta effect_retrigger_period
+        lda effect_retrigger_counter
+        bne done
+        jsr queue_sample
+done:
+        rts
+.endproc
+
+; =xx
+.proc cmd_eff_phase_reset
+        fetch_pattern_byte
+        bne continue ; currently, =xx commands are only valid if the parameter is 0
+        rts
+continue:
+        cpx #PULSE_1_INDEX
+        beq p1phasereset
+        cpx #PULSE_2_INDEX
+        beq p2phasereset
+        rts ; else, exit
+p1phasereset:
+; write current period value to registers again
+        lda channel_detuned_frequency_low + PULSE_1_INDEX
+        sta $4002
+        lda channel_detuned_frequency_high + PULSE_1_INDEX
+        sta shadow_pulse1_freq_hi
+        ora #%11111000
+        sta $4003
+        rts
+p2phasereset:
+; write current period value to registers again
+        lda channel_detuned_frequency_low + PULSE_2_INDEX
+        sta $4006
+        lda channel_detuned_frequency_high + PULSE_2_INDEX
+        sta shadow_pulse2_freq_hi
+        ora #%11111000
+        sta $4007
+        rts
+.endproc
+
+; =xx for DPCM, practically a one-shot retrigger command
+.proc cmd_eff_phase_reset_dpcm
+; from Channels2A03.cpp:
+; if (EffParam == 0) {
+    ; resetPhase();
+; }
+        fetch_pattern_byte
+        bne continue ; currently, =xx commands are only valid if the parameter is 0
+        rts
+continue:
+        cpx #DPCM_INDEX
+        bne done
+        jsr trigger_sample
+done:
+        rts
+.endproc
+
+.proc cmd_eff_dac
+        fetch_pattern_byte
+        and #$7F
+        sta effect_dac_level
         rts
 .endproc
 

@@ -101,6 +101,11 @@ effect_dpcm_offset: .byte $00
 groove_index: .byte $00
 groove_position: .byte $00
 
+; Xxx
+effect_retrigger_period: .byte $00
+effect_retrigger_counter: .byte $00
+effect_dac_level: .byte $00
+
 .if ::BHOP_ZSAW_ENABLED
 dpcm_active: .byte $00
 .endif
@@ -284,6 +289,9 @@ effect_init_loop:
 
         sta effect_skip_target
         sta effect_dpcm_offset
+
+        sta effect_retrigger_period
+        sta effect_retrigger_counter
 
         .if ::BHOP_ZSAW_ENABLED
         ; if zsaw happens to be playing, silence it
@@ -585,6 +593,12 @@ done_advancing_rows:
         sta pattern_ptr
         lda channel_pattern_ptr_high, x
         sta pattern_ptr+1
+        
+        cpx #DPCM_INDEX
+        bne continue
+        lda #0
+        sta effect_retrigger_period
+continue:
 
         ; implementation note: x now holds channel_index, and lots of this code
         ; assumes it will not be clobbered. Take care when refactoring.
@@ -2310,14 +2324,64 @@ done_with_mmc5:
 .endif
 
 .proc play_dpcm_samples
-        lda channel_status + DPCM_INDEX
-        and #CHANNEL_SUPPRESSED
-        bne done
+; if (m_cDAC != 255) {
+    ; WriteRegister(0x4011, m_cDAC);
+    ; m_cDAC = 255;
+; }
+        lda effect_dac_level
+        cmp #$FF
+        beq skip_dac
+        sta $4011
+        lda #$FF
+        sta effect_dac_level
+skip_dac:
 
+; if (mRetriggerPeriod != 0) {
+    ; mRetriggerCtr--;
+    ; if (mRetriggerCtr == 0) {
+        ; mRetriggerCtr = mRetriggerPeriod;
+        ; mEnabled = true;
+        ; mTriggerSample = true;
+    ; }
+; }
+        lda effect_retrigger_period
+        beq next
+        dec effect_retrigger_counter
+        bne next
+        lda effect_retrigger_period
+        sta effect_retrigger_counter
+        lda channel_status + DPCM_INDEX
+        ora #CHANNEL_TRIGGERED
+        and #($FF - CHANNEL_SUPPRESSED)
+        sta channel_status + DPCM_INDEX
+next:
+
+; if (m_bRelease) {
+    ; // Release command
+    ; WriteRegister(0x4015, 0x0F);
+    ; mEnabled = false;
+    ; m_bRelease = false;
+; }
         lda channel_status + DPCM_INDEX
         and #(CHANNEL_MUTED | CHANNEL_RELEASED)
         bne dpcm_muted
 
+; if (!mEnabled)
+    ; return;
+        lda channel_status + DPCM_INDEX
+        and #CHANNEL_SUPPRESSED
+        bne done
+
+; if (!m_bGate) {
+    ; // Cut sample
+    ; WriteRegister(0x4015, 0x0F);
+
+    ; if (!theApp.GetSettings()->General.bNoDPCMReset || theApp.IsPlaying()) {
+        ; WriteRegister(0x4011, 0);	// regain full volume for TN
+    ; }
+
+    ; mEnabled = false;		// don't write to this channel anymore
+; }
         lda channel_status + DPCM_INDEX
         and #CHANNEL_TRIGGERED
         beq check_for_inactive
@@ -2331,6 +2395,22 @@ done_with_mmc5:
         lda #1
         sta dpcm_active
         .endif
+; else if (mTriggerSample) {
+    ; // Start playing the sample
+    ; WriteRegister(0x4010, (m_iPeriod & 0x0F) | m_iLoop);
+    ; WriteRegister(0x4012, m_iOffset);							// load address, start at $C000
+    ; WriteRegister(0x4013, m_iSampleLength);						// length
+    ; WriteRegister(0x4015, 0x0F);
+    ; WriteRegister(0x4015, 0x1F);								// fire sample
+
+    ; // Loop offset
+    ; if (m_iLoopOffset > 0) {
+        ; WriteRegister(0x4012, m_iLoopOffset);
+        ; WriteRegister(0x4013, m_iLoopLength);
+    ; }
+
+    ; mTriggerSample = false;
+; }
 
         ; using the current note, read the sample table
         prepare_ptr BHOP_MUSIC_BASE + FtModuleHeader::sample_list
@@ -2426,6 +2506,43 @@ check_for_inactive:
         sta dpcm_active
         .endif
 
+        rts
+.endproc
+
+.proc trigger_sample
+; from Channels2A03.cpp:
+; mEnabled = true;
+; mTriggerSample = true;
+
+; // If mRetriggerPeriod != 0, this initializes retriggering. Otherwise reset mRetriggerCtr.
+; queueSample();
+        lda channel_status + DPCM_INDEX
+        and #($FF - CHANNEL_SUPPRESSED)
+        ora #CHANNEL_TRIGGERED
+        sta channel_status + DPCM_INDEX
+        jsr queue_sample
+        rts
+.endproc
+
+.proc queue_sample
+; from Channels2A03.cpp:
+; void CDPCMChan::queueSample() {
+	; if (mRetriggerPeriod == 0) {
+		; // Not retriggering, reset mRetriggerCtr.
+		; mRetriggerCtr = 0;
+	; } else {
+		; // mRetriggerCtr gets decremented this frame, and reaches 0 in mRetriggerPeriod frames.
+		; mRetriggerCtr = mRetriggerPeriod + 1;
+	; }
+; }
+        lda effect_retrigger_period
+        beq reset_counter
+        inc a
+        sta effect_retrigger_counter
+        rts
+reset_counter:
+        lda #0
+        sta effect_retrigger_counter
         rts
 .endproc
 
