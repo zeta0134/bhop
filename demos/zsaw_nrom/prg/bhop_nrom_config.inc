@@ -21,6 +21,7 @@ BHOP_MUSIC_BASE = bhop_music_data
 ; DPCM banking support. Disabled by default, as the relevant
 ; mapper code is project specific.
 BHOP_DPCM_BANKING = 0
+BHOP_MMC5_ENABLED = 0
 
 ; When DPCM bank switching is enabled, make sure the following
 ; routine is exported, preferably from one of your fixed

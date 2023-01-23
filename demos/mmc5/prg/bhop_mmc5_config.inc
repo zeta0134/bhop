@@ -34,3 +34,4 @@ BHOP_DPCM_SWITCH_ROUTINE = bhop_apply_dpcm_bank
 .endif
 
 BHOP_ZSAW_ENABLED = 0
+BHOP_MMC5_ENABLED = 1
