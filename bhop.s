@@ -593,12 +593,6 @@ done_advancing_rows:
         sta pattern_ptr
         lda channel_pattern_ptr_high, x
         sta pattern_ptr+1
-        
-        cpx #DPCM_INDEX
-        bne continue
-        lda #0
-        sta effect_retrigger_period
-continue:
 
         ; implementation note: x now holds channel_index, and lots of this code
         ; assumes it will not be clobbered. Take care when refactoring.
@@ -926,6 +920,9 @@ done:
         ; DPCM
         lda #DPCM_INDEX
         sta channel_index
+        ; reset retrigger period upon new row
+        lda #0
+        sta effect_retrigger_period
         jsr advance_channel_row
 
 .if ::BHOP_PATTERN_BANKING
@@ -2347,6 +2344,7 @@ skip_dac:
         lda effect_retrigger_period
         beq next
         dec effect_retrigger_counter
+        lda effect_retrigger_counter
         bne next
         lda effect_retrigger_period
         sta effect_retrigger_counter
