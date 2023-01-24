@@ -65,10 +65,28 @@ loop:
         sta PPUMASK ; disable rendering
         sta PPUCTRL ; and NMI
 
-        lda #3
+        ; Set up MMC5 PRG banking, with 8k banks
+        ; RAM: unused
+        ; ROM 0x8000 - bhop driver
+        ; ROM 0xA000 - music data for current module
+        ; ROM 0xC000 - DPCM sample data
+        ; ROM 0xE000 - fixed player code and vectors
+        ; Since fixed is already in place and the two data banks are handled
+        ; by the player, we only need to set the mode and the bhop bank here:
+        lda #MMC5_PRG_MODE_FOUR_8K_BANKS
         sta MMC5_PRG_MODE
         lda #(6 | MMC5_SELECT_ROM_BANK)
         sta MMC5_MODE_3_PRG_ROM_8000
+
+        ; Set up CHR banks. The bhop player uses a single set of fixed 8k tiles due
+        ; to NROM compat, and has no need for fancy bank modes or features. Just to
+        ; safely support 8x16 sprite mode in the future, we'll set those register here,
+        ; even though in 8x8 sprite mode they will be ignored. 
+        lda #MMC5_CHR_MODE_ONE_8K_BANK
+        sta MMC5_CHR_MODE
+        lda #0
+        sta MMC5_MODE_0_CHR_ROM_0000
+        sta MMC3_MODE_0_BG_ROM_0000 ; only used in 8x16 sprite mode
 
         ; note: we're not doing CHR things yet, so the player UI will probably be broken
 
