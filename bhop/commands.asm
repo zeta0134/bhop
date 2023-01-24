@@ -430,7 +430,8 @@ dpcmphasereset:
 .proc cmd_eff_dac
         fetch_pattern_byte
         and #$7F
-        sta effect_dac_level
+        sta effect_dac_buffer
+        sta $4011 ; immediately write to $4011
         rts
 .endproc
 

@@ -73,6 +73,9 @@ channel_instrument_duty: .res BHOP::NUM_CHANNELS
 channel_selected_instrument: .res BHOP::NUM_CHANNELS
 channel_pitch_effects_active: .res BHOP::NUM_CHANNELS
 
+; DPCM status
+dpcm_status: .byte $00
+
 ; sequence state tables
 sequences_enabled: .res BHOP::NUM_CHANNELS
 sequences_active: .res BHOP::NUM_CHANNELS
@@ -96,7 +99,9 @@ duty_sequence_index: .res BHOP::NUM_CHANNELS
 effect_note_delay: .res BHOP::NUM_CHANNELS
 effect_cut_delay: .res BHOP::NUM_CHANNELS
 effect_skip_target: .byte $00
-effect_dpcm_offset: .byte $00
+
+; Wxx
+effect_dpcm_pitch: .byte $00
 
 groove_index: .byte $00
 groove_position: .byte $00
@@ -104,7 +109,12 @@ groove_position: .byte $00
 ; Xxx
 effect_retrigger_period: .byte $00
 effect_retrigger_counter: .byte $00
-effect_dac_level: .byte $00
+
+; Yxx
+effect_dpcm_offset: .byte $00
+
+; Zxx
+effect_dac_buffer: .byte $00
 
 .if ::BHOP_ZSAW_ENABLED
 dpcm_active: .byte $00
@@ -270,6 +280,12 @@ song_uses_groove:
         sta channel_status + MMC5_PULSE_1_INDEX
         sta channel_status + MMC5_PULSE_2_INDEX
         .endif
+        
+        ; reset DPCM status
+        lda #$FF
+        sta effect_dac_buffer
+        lda #0
+        sta dpcm_status
 
         ; clear out special effects
         lda #0
@@ -2118,7 +2134,7 @@ triangle_muted:
 tick_noise:
         lda #CHANNEL_SUPPRESSED
         bit channel_status + NOISE_INDEX
-        bne cleanup
+        bne tick_dpcm
         bmi noise_muted
 
         ; apply the combined channel and instrument volume
@@ -2157,14 +2173,15 @@ tick_noise:
         ; counter that is not zero
         lda #%11111000
         sta $400F  
-        jmp cleanup
+        jmp tick_dpcm
 noise_muted:
         ; if the channel is muted, little else matters, but ensure
         ; we set the volume to 0
         lda #%00110000
         sta $400C
 
-cleanup:
+tick_dpcm:
+        jsr trigger_sample ; apparently this gets called on every row
         jsr play_dpcm_samples
         .if ::BHOP_ZSAW_ENABLED
         jsr play_zsaw
@@ -2173,6 +2190,7 @@ cleanup:
         jsr play_mmc5
         .endif
 
+cleanup:
         ; clear the triggered flag from every instrument
         lda channel_status + PULSE_1_INDEX
         and #($FF - CHANNEL_TRIGGERED)
@@ -2321,17 +2339,9 @@ done_with_mmc5:
 .endif
 
 .proc play_dpcm_samples
-; if (m_cDAC != 255) {
-    ; WriteRegister(0x4011, m_cDAC);
-    ; m_cDAC = 255;
-; }
-        lda effect_dac_level
-        cmp #$FF
-        beq skip_dac
-        sta $4011
-        lda #$FF
-        sta effect_dac_level
-skip_dac:
+        lda channel_status + DPCM_INDEX
+        and #CHANNEL_SUPPRESSED
+        jne done
 
 ; if (mRetriggerPeriod != 0) {
     ; mRetriggerCtr--;
@@ -2348,41 +2358,56 @@ skip_dac:
         bne next
         lda effect_retrigger_period
         sta effect_retrigger_counter
-        lda channel_status + DPCM_INDEX
-        ora #CHANNEL_TRIGGERED
-        and #($FF - CHANNEL_SUPPRESSED)
-        sta channel_status + DPCM_INDEX
+        lda dpcm_status
+        ora #(DPCM_ENABLED | DPCM_TRIGGER_SAMPLE)
+        sta dpcm_status
 next:
 
-; if (m_bRelease) {
+; if (!mEnabled)
+    ; return;
+        lda dpcm_status
+        and #DPCM_ENABLED
+        jeq done
+
+; this block does these two statements
+; if (m_bRelease) { // note release
     ; // Release command
     ; WriteRegister(0x4015, 0x0F);
     ; mEnabled = false;
     ; m_bRelease = false;
 ; }
-        lda channel_status + DPCM_INDEX
-        and #(CHANNEL_MUTED | CHANNEL_RELEASED)
-        bne dpcm_muted
-
-; if (!mEnabled)
-    ; return;
-        lda channel_status + DPCM_INDEX
-        and #CHANNEL_SUPPRESSED
-        bne done
-
-; if (!m_bGate) {
+; if (!m_bGate) { // note cut
     ; // Cut sample
     ; WriteRegister(0x4015, 0x0F);
+    ; WriteRegister(0x4011, 0);	// regain full volume for TN
+    ; mEnabled = false;     // don't write to this channel anymore
+; }
+        lda channel_status + DPCM_INDEX
+        and #(CHANNEL_MUTED | CHANNEL_RELEASED)
+        jne dpcm_muted
 
-    ; if (!theApp.GetSettings()->General.bNoDPCMReset || theApp.IsPlaying()) {
-        ; WriteRegister(0x4011, 0);	// regain full volume for TN
+; if (mTriggerSample && m_bGate) {
+    ; // Start playing the sample
+    ; WriteRegister(0x4010, (m_iPeriod & 0x0F) | m_iLoop);
+    ; WriteRegister(0x4012, m_iOffset);							    // load address, start at $C000
+    ; WriteRegister(0x4013, m_iSampleLength);						// length
+    ; WriteRegister(0x4015, 0x0F);
+    ; WriteRegister(0x4015, 0x1F);								    // fire sample
+
+    ; // Loop offset
+    ; if (m_iLoopOffset > 0) {
+        ; WriteRegister(0x4012, m_iLoopOffset);
+        ; WriteRegister(0x4013, m_iLoopLength);
     ; }
 
-    ; mEnabled = false;		// don't write to this channel anymore
+    ; mTriggerSample = false;
 ; }
         lda channel_status + DPCM_INDEX
         and #CHANNEL_TRIGGERED
-        beq check_for_inactive
+        jeq check_for_inactive
+        lda dpcm_status
+        and #DPCM_TRIGGER_SAMPLE
+        jeq check_for_inactive
 
         .if ::BHOP_ZSAW_ENABLED
         ; We're about to trigger a DPCM sample, so silence zsaw. DPCM
@@ -2393,22 +2418,6 @@ next:
         lda #1
         sta dpcm_active
         .endif
-; else if (mTriggerSample) {
-    ; // Start playing the sample
-    ; WriteRegister(0x4010, (m_iPeriod & 0x0F) | m_iLoop);
-    ; WriteRegister(0x4012, m_iOffset);							// load address, start at $C000
-    ; WriteRegister(0x4013, m_iSampleLength);						// length
-    ; WriteRegister(0x4015, 0x0F);
-    ; WriteRegister(0x4015, 0x1F);								// fire sample
-
-    ; // Loop offset
-    ; if (m_iLoopOffset > 0) {
-        ; WriteRegister(0x4012, m_iLoopOffset);
-        ; WriteRegister(0x4013, m_iLoopLength);
-    ; }
-
-    ; mTriggerSample = false;
-; }
 
         ; using the current note, read the sample table
         prepare_ptr BHOP_MUSIC_BASE + FtModuleHeader::sample_list
@@ -2432,10 +2441,17 @@ next:
         and #%01111111 ; do NOT enable IRQs
         sta $4010      ; write rate and loop enable
         lda (bhop_ptr), y
-        iny
-        bpl no_delta_set
+        sta scratch_byte
+        lda effect_dac_buffer ; check for Zxx
+        bpl skip_dac ; != 255? then it was already written
+        lda scratch_byte
+        bpl skip_dac
         sta $4011
-no_delta_set:
+        lda #$FF
+        sta effect_dac_buffer
+skip_dac:
+        iny
+
         lda (bhop_ptr), y
         ; this is the index into the samples table, here it is pre-multiplied
         ; so we can use it directly
@@ -2445,7 +2461,7 @@ no_delta_set:
         ; - location byte
         ; - size byte
         ; - bank to switch in
-        
+
         lda (bhop_ptr), y
         ; cheaper to just do this unconditionally
         clc
@@ -2468,6 +2484,11 @@ no_delta_set:
         sta $4015
         lda #$1F
         sta $4015
+        
+        lda dpcm_status
+        and #($FF - DPCM_TRIGGER_SAMPLE)
+        sta dpcm_status
+
 done:
         rts
 
@@ -2482,10 +2503,24 @@ dpcm_muted:
         lda #%00001111
         sta $4015
 
+        lda channel_status + DPCM_INDEX
+        and #CHANNEL_MUTED
+        bne dpcm_cut
+        lda channel_status + DPCM_INDEX
+        and #($FF - CHANNEL_RELEASED) ; release release note if note released
+        sta channel_status + DPCM_INDEX
+        jmp dpcm_release
+dpcm_cut:
+        lda #0 ; regain full volume for TN
+        sta $4011
+dpcm_release:
         .if ::BHOP_ZSAW_ENABLED
         lda #0
         sta dpcm_active
         .endif
+        lda dpcm_status
+        and #($FF - (DPCM_ENABLED))
+        sta dpcm_status
 
 check_for_inactive:
         .if ::BHOP_ZSAW_ENABLED
@@ -2504,6 +2539,10 @@ check_for_inactive:
         sta dpcm_active
         .endif
 
+        lda dpcm_status
+        and #($FF - (DPCM_TRIGGER_SAMPLE))
+        sta dpcm_status
+
         rts
 .endproc
 
@@ -2514,10 +2553,9 @@ check_for_inactive:
 
 ; // If mRetriggerPeriod != 0, this initializes retriggering. Otherwise reset mRetriggerCtr.
 ; queueSample();
-        lda channel_status + DPCM_INDEX
-        and #($FF - CHANNEL_SUPPRESSED)
-        ora #CHANNEL_TRIGGERED
-        sta channel_status + DPCM_INDEX
+        lda dpcm_status
+        ora #(DPCM_TRIGGER_SAMPLE | DPCM_ENABLED)
+        sta dpcm_status
         jsr queue_sample
         rts
 .endproc
@@ -2525,13 +2563,13 @@ check_for_inactive:
 .proc queue_sample
 ; from Channels2A03.cpp:
 ; void CDPCMChan::queueSample() {
-	; if (mRetriggerPeriod == 0) {
-		; // Not retriggering, reset mRetriggerCtr.
-		; mRetriggerCtr = 0;
-	; } else {
-		; // mRetriggerCtr gets decremented this frame, and reaches 0 in mRetriggerPeriod frames.
-		; mRetriggerCtr = mRetriggerPeriod + 1;
-	; }
+    ; if (mRetriggerPeriod == 0) {
+        ; // Not retriggering, reset mRetriggerCtr.
+        ; mRetriggerCtr = 0;
+    ; } else {
+        ; // mRetriggerCtr gets decremented this frame, and reaches 0 in mRetriggerPeriod frames.
+        ; mRetriggerCtr = mRetriggerPeriod + 1;
+    ; }
 ; }
         lda effect_retrigger_period
         beq reset_counter
