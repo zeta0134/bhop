@@ -71,7 +71,6 @@ SEQUENCE_DUTY    = %00010000
 
 ; DPCM state flags
 DPCM_ENABLED        = %00000001
-DPCM_TRIGGER_SAMPLE = %00000010
 
 ; for active effects
 PITCH_EFFECT_UP           = %00000001

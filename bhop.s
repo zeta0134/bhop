@@ -757,6 +757,10 @@ preserve_fresh_cut:
         ; also, un-mute  and un-release the channel
         and #($FF - (CHANNEL_MUTED | CHANNEL_RELEASED))
         sta channel_status, x
+        cpx #DPCM_INDEX
+        bne skip_sample_trigger
+        jsr trigger_sample
+skip_sample_trigger:
         ; reset the instrument envelopes to the beginning
         jsr reset_instrument ; clobbers a, y
         ; reset the instrument volume to 0xF (if this instrument has a volume
@@ -2181,7 +2185,6 @@ noise_muted:
         sta $400C
 
 tick_dpcm:
-        jsr trigger_sample ; apparently this gets called on every row
         jsr play_dpcm_samples
         .if ::BHOP_ZSAW_ENABLED
         jsr play_zsaw
@@ -2359,15 +2362,12 @@ done_with_mmc5:
         lda effect_retrigger_period
         sta effect_retrigger_counter
         lda dpcm_status
-        ora #(DPCM_ENABLED | DPCM_TRIGGER_SAMPLE)
+        ora #DPCM_ENABLED
         sta dpcm_status
+        lda channel_status + DPCM_INDEX
+        ora #CHANNEL_TRIGGERED
+        sta channel_status + DPCM_INDEX
 next:
-
-; if (!mEnabled)
-    ; return;
-        lda dpcm_status
-        and #DPCM_ENABLED
-        jeq done
 
 ; this block does these two statements
 ; if (m_bRelease) { // note release
@@ -2385,6 +2385,12 @@ next:
         lda channel_status + DPCM_INDEX
         and #(CHANNEL_MUTED | CHANNEL_RELEASED)
         jne dpcm_muted
+
+; if (!mEnabled)
+    ; return;
+        lda dpcm_status
+        and #DPCM_ENABLED
+        jeq done
 
 ; if (mTriggerSample && m_bGate) {
     ; // Start playing the sample
@@ -2404,9 +2410,6 @@ next:
 ; }
         lda channel_status + DPCM_INDEX
         and #CHANNEL_TRIGGERED
-        jeq check_for_inactive
-        lda dpcm_status
-        and #DPCM_TRIGGER_SAMPLE
         jeq check_for_inactive
 
         .if ::BHOP_ZSAW_ENABLED
@@ -2484,10 +2487,6 @@ skip_dac:
         sta $4015
         lda #$1F
         sta $4015
-        
-        lda dpcm_status
-        and #($FF - DPCM_TRIGGER_SAMPLE)
-        sta dpcm_status
 
 done:
         rts
@@ -2539,13 +2538,12 @@ check_for_inactive:
         sta dpcm_active
         .endif
 
-        lda dpcm_status
-        and #($FF - (DPCM_TRIGGER_SAMPLE))
-        sta dpcm_status
-
         rts
 .endproc
 
+; resets the retrigger logic upon a new DPCM sample note
+; setup: 
+;   channel_status + DPCM_INDEX |= CHANNEL_TRIGGERED
 .proc trigger_sample
 ; from Channels2A03.cpp:
 ; mEnabled = true;
@@ -2554,7 +2552,7 @@ check_for_inactive:
 ; // If mRetriggerPeriod != 0, this initializes retriggering. Otherwise reset mRetriggerCtr.
 ; queueSample();
         lda dpcm_status
-        ora #(DPCM_TRIGGER_SAMPLE | DPCM_ENABLED)
+        ora #DPCM_ENABLED
         sta dpcm_status
         jsr queue_sample
         rts
