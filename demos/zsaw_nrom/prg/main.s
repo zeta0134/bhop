@@ -76,7 +76,6 @@ loop:
         lda #(VBLANK_NMI | OBJ_1000 | BG_0000)
         sta PPUCTRL
 
-        ; todo: setup for measuring performance?
         jsr wait_for_nmi ; safety sync
 
 gameloop:

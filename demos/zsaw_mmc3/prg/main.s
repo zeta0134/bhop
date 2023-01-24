@@ -62,7 +62,6 @@ music_track_table:
 
 music_track_count: .byte 4
 
-; NROM doesn't support banking at all, so stub both of these out
 .proc player_bank_music
         pha ; preserve bank number on the stack
         lda #(MMC3_BANKING_MODE + $7)
@@ -114,7 +113,6 @@ loop:
         lda #(VBLANK_NMI | OBJ_1000 | BG_0000)
         sta PPUCTRL
 
-        ; todo: setup for measuring performance?
         jsr wait_for_nmi ; safety sync
 
 gameloop:
