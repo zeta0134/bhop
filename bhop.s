@@ -2542,8 +2542,6 @@ check_for_inactive:
 .endproc
 
 ; resets the retrigger logic upon a new DPCM sample note
-; setup: 
-;   channel_status + DPCM_INDEX |= CHANNEL_TRIGGERED
 .proc trigger_sample
 ; from Channels2A03.cpp:
 ; mEnabled = true;
@@ -2554,6 +2552,9 @@ check_for_inactive:
         lda dpcm_status
         ora #DPCM_ENABLED
         sta dpcm_status
+        lda channel_status + DPCM_INDEX
+        ora #CHANNEL_TRIGGERED
+        sta channel_status + DPCM_INDEX
         jsr queue_sample
         rts
 .endproc
