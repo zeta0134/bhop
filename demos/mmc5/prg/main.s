@@ -86,9 +86,12 @@ loop:
         sta MMC5_CHR_MODE
         lda #0
         sta MMC5_MODE_0_CHR_ROM_0000
-        sta MMC3_MODE_0_BG_ROM_0000 ; only used in 8x16 sprite mode
+        sta MMC5_MODE_0_BG_ROM_0000 ; only used in 8x16 sprite mode
 
-        ; note: we're not doing CHR things yet, so the player UI will probably be broken
+        ; Set up nametable mirroring. We will match NROM and specify vertical mirroring
+        ; using CIRAM, ignoring any of MMC5's fancy features.
+        lda #(MMC5_NT_2000_CIRAM_0 | MMC5_NT_2400_CIRAM_1 | MMC5_NT_2800_CIRAM_0 | MMC5_NT_2C00_CIRAM_1)
+        sta MMC5_NAMETABLE_MAPPING
 
         ; disable unusual IRQ sources
         lda #%01000000
