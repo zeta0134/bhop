@@ -101,9 +101,6 @@ loop:
 
         jsr initialize_mmc3
 
-        ; z-saw init
-        jsr zsaw_init
-
         ; player init
         jsr player_init
 

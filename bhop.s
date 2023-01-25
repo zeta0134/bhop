@@ -249,6 +249,8 @@ effect_init_loop:
         .if ::BHOP_ZSAW_ENABLED
         ; if zsaw happens to be playing, silence it
         jsr zsaw_silence
+        ; Now fully re-initialize z-saw just in case
+        jsr zsaw_init
         .endif
 
         ; finally, enable all channels except DMC

@@ -64,9 +64,6 @@ loop:
         lda #0
         sta $4010 ; DMC DMA
 
-        ; z-saw init
-        jsr zsaw_init
-
         ; player init
         jsr player_init
 
