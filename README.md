@@ -1,8 +1,8 @@
 # bhop
 
-A Work-In-Progress attempt to build a new music driver for NES / FamiCom, with eventual feature parity for FamiTracker projects. This will be a brand new driver, built from scratch with the goal of eventually becoming a drop-in replacement for the original. Right now it is complete enough to play many modules, but is still lacking several effects, hi-pitch envelopes, and all expansion audio channels.
+A Work-In-Progress attempt to build a new music driver for NES / FamiCom, with eventual feature parity for FamiTracker projects. This will be a brand new driver, built from scratch with the goal of eventually becoming a drop-in replacement for the original. Right now it is complete enough to play many modules, but is still lacking several effects, hi-pitch envelopes, and most expansion audio types.
 
-There is a live demo here: https://rusticnes.reploid.cafe/wasm/?cartridge=bhop.nes
+There is a live demo here: https://rusticnes.reploid.cafe/wasm/?cartridge=bhop-2a03.nes
 (Use the arrow keys to change tracks. Also check out the [Jam] tab to peek at what the audio channels are doing.)
 
 # Project Status
@@ -13,6 +13,8 @@ There is a live demo here: https://rusticnes.reploid.cafe/wasm/?cartridge=bhop.n
 - Effects: `0xy`, `1xx`, `2xx`, `3xx`, `4xy`, `7xy`, `Axy`, `Bxx`, `Cxx`, `Dxx`, `Fxx`, `Gxx`, `Pxx`, `Qxy`, `Rxy`, `Sxx`, `Yxx`, `Zxx`
 - Register pitch mode
 - DPCM Sample playback, with rudimentary bank switching support
+- MMC5 Expansion audio
+- Experimental Z-Saw support
 
 ## Notable Missing features
 - All other effects
@@ -168,16 +170,72 @@ MMC3_BANKING_MODE = %01000000
 .export bhop_apply_dpcm_bank
 ```
 
+## Experimental Z-Saw Support
+
+Z-Saw is a game-viable library which uses DMC IRQs to produce a sawtooth-like waveform. Be sure to read over its [Documentation](https://github.com/zeta0134/z-saw/blob/master/README.md) to decide if the requirements it imposes are appropriate for your project. You can read over `/demos/zsaw_nrom` to get an idea of the minimum setup required to use it with bhop.
+
+The main callout is that Z-Saw will need to take over your NMI and IRQ handling. Wherever your vectors are defined, you should first:
+
+```
+.include "bhop/zsaw.inc"
+```
+
+And then:
+```
+        .segment "VECTORS"
+        .addr zsaw_nmi
+        .addr reset
+        .addr zsaw_irq
+```
+
+Be sure to review the segments and NMI handler label in `bhop/zsaw.inc` and update those as appropriate to your project.
+ 
+From there, `bhop` will take care of initializing the library and setting things up for you.
+
+The easiest way to compose against z-saw right now is to use Dn-FamiTracker, with the N163 expansion and just 1 channel enabled. You can use the provided `zsaw_template.dmn` to get started. While in z-saw mode, bhop will ignore pitch effects (Z-Saw cannot perform them) and will treat the Wave Index as the Z-Saw timbre, with the following mapping:
+
+- Wave Index 0: Sawtooth, resting at PCM level 0
+- Wave Index 1: Sawtooth, resting at PCM level 127
+- Wave Index 2: Square, resting at PCM level 0
+- Wave Index 3: Square, resting at PCM level 127
+- Wave Index 4: Triangle (no practical volume control, also quite loud)
+
+Most other effects will work as expected, including arps, volume changes, etc. There is nothing special about the instruments in the template project, so feel free to clone them and set up different envelopes just like you would in any other project. You can also use `Vxx` to set the wave index if you like. The waveforms are a close approximation of how the notes should sound, but they aren't perfect, especially the triangle. Be sure to test in-engine from time to time.
+
+You **can** still use the DPCM channel to play samples! DPCM has priority, so Z-Saw will be muted while any sample is playing. Dn-FamiTracker is unaware of this behavior, so be mindful when tracking. This tends to work best with rather short percussion samples.
+
+bhop uses a small lookup table to match the N163 volumes you hear in Dn-FamiTracker when using its default "hardware mixing" settings. It's not perfect (due to hardware difference between consoles, it can't be) but it's close enough to dial in the mix fairly reliably for all timbres except triangle.
+
 ## Notes
 
 FamiTracker, and thus bhop, assume that DPCM samples are indexed relative to 0xC000. FamiTracker forks *other* than Dn-FamiTracker tend to assume an NSF configuration is in use, and may use an inconvenient bank size; I've seen 12k banks in use, which NSF permits but most standard game mappers do not. If you're using a lot of samples, do double-check the `.asm` output, especially the `ft_samples` table. You will probably need to massage the export data somewhat manually.
 
 Typically you'll call `jsr bhop_play` once per frame for a 60 Hz tick rate on NTSC, or a 50 Hz tick rate on PAL. If you want to use a different engine speed, you'll need to handle the timing yourself and call `bhop_play` at the appropriate rate. Engine speeds faster than 120 Hz are highly impractical for gameplay, and engine speeds much higher than 240 Hz start to become impractical on real NES hardware, though many NSF players can handle this just fine.
 
-There is no need to use just one `music.asm` file. The only requirement is that the start of this data be located at a fixed location in memory. You can easily include several locations on different PRG banks, or even copy the data into RAM if you've got the headroom. This can help to work around music size limitations, especially if you start to run out of instruments on a large project. Make sure to call `bhop_init` every time you switch modules or tracks, especially when banking in new data. If `bhop_play` is ever called with the wrong music data loaded, it can get stuck playing invalid bytecode. This will certainly sound unpleasant, and may crash the program.
+There is no need to use just one `music.asm` file. The only requirement is that the start of this data be located at a fixed location in memory. You can easily include several modules in different PRG banks, or even copy the data into RAM if you've got the headroom. This can help to work around music size limitations, especially if you start to run out of instruments on a large project. Make sure to call `bhop_init` every time you switch modules or tracks, especially when banking in new data. If `bhop_play` is ever called with the wrong music data loaded, it can get stuck playing invalid bytecode. This will certainly sound unpleasant, and may crash the program.
 
 There is no stop function; if you need to stop playback, include a silent song in your export data.
 
 Enjoy at your own peril!
 
 (These notes are likely to become out of date quickly, and if nothing else, I'd like to simplify these steps once the project is more stable.)
+
+## Credits
+
+Developers:
+
+[Zeta0134](https://github.com/zeta0134) - bhop, z-saw
+
+[Persune](https://github.com/Gumball2415) - Dn-FamiTracker, bhop, logo artwork
+
+Special Thanks:
+
+[yoeynsf](https://github.com/yoeynsf) - bhop mascot artowrk
+
+[hEYDON](https://www.youtube.com/@heydon9601) - sprite/nametable layout assistance
+
+[Damian "PinoBatch" Yerrick](https://github.com/pinobatch) - practical z-saw theorycrafting
+
+[Sour](https://github.com/SourMesen) - developer of [Mesen](https://mesen.ca/), whose debugging features make these projects possible
+
+[NESDev](https://www.nesdev.org/) - a wealth of high quality documentation for NES and FamiCom hardware behaviors
