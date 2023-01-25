@@ -2450,9 +2450,9 @@ next:
         lda scratch_byte
         bpl skip_dac
         sta $4011
+skip_dac:
         lda #$FF
         sta effect_dac_buffer
-skip_dac:
         iny
 
         lda (bhop_ptr), y
