@@ -940,9 +940,11 @@ done:
         ; DPCM
         lda #DPCM_INDEX
         sta channel_index
-        ; reset retrigger period upon new row
+        ; reset retrigger period and Wxx upon new row
         lda #0
         sta effect_retrigger_period
+        lda #$FF
+        sta effect_dpcm_pitch
         jsr advance_channel_row
 
 .if ::BHOP_PATTERN_BANKING
@@ -2441,19 +2443,28 @@ next:
         ; - nnnnnnnn - iNdex into sample table
         lda (bhop_ptr), y
         iny
+        sta scratch_byte
+        lda effect_dpcm_pitch ; check for Wxx
+        bmi skip_pitch ; != -1? then Wxx takes precedence
+        lda scratch_byte
+        and #$F0
+        ora effect_dpcm_pitch
+        sta scratch_byte
+skip_pitch:
+        lda scratch_byte
         and #%01111111 ; do NOT enable IRQs
         sta $4010      ; write rate and loop enable
         lda (bhop_ptr), y
+        iny
         sta scratch_byte
         lda effect_dac_buffer ; check for Zxx
-        bpl skip_dac ; != 255? then it was already written
+        bmi skip_dac ; != -1? then it was already written
         lda scratch_byte
         bpl skip_dac
         sta $4011
 skip_dac:
         lda #$FF
         sta effect_dac_buffer
-        iny
 
         lda (bhop_ptr), y
         ; this is the index into the samples table, here it is pre-multiplied

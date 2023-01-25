@@ -36,7 +36,7 @@ command_table:
     .word cmd_eff_vol_slide        ;($9A)       CMD_EFF_VOL_SLIDE           Axy
     .word cmd_eff_note_cut         ;($9B)       CMD_EFF_NOTE_CUT            Sxx
     .word cmd_eff_retrigger        ;($9C)       CMD_EFF_RETRIGGER           Xxx DPCM
-    .word cmd_unimplemented        ;($9D)       CMD_EFF_DPCM_PITCH          Wxx DPCM
+    .word cmd_eff_dpcm_pitch       ;($9D)       CMD_EFF_DPCM_PITCH          Wxx DPCM
     .word cmd_unimplemented        ;($9E)       CMD_EFF_NOTE_RELEASE        Lxx
     .word cmd_unimplemented        ;($9F)       CMD_EFF_LINEAR_COUNTER      Sxx triangle, xx >= 0x80
     .word cmd_eff_groove           ;($A0)       CMD_EFF_GROOVE              Oxx
@@ -390,6 +390,13 @@ skip_increment:
         bne done
         jsr queue_sample
 done:
+        rts
+.endproc
+
+.proc cmd_eff_dpcm_pitch
+        fetch_pattern_byte
+        and #$0F
+        sta effect_dpcm_pitch
         rts
 .endproc
 
