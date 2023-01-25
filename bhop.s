@@ -37,6 +37,10 @@ frame_ptr: .word $0000
 
 shadow_pulse1_freq_hi: .byte $00
 shadow_pulse2_freq_hi: .byte $00
+.if ::BHOP_MMC5_ENABLED
+shadow_mmc5_pulse1_freq_hi: .byte $00
+shadow_mmc5_pulse2_freq_hi: .byte $00
+.endif
 
 ; channel state tables
 channel_pattern_ptr_low: .res BHOP::NUM_CHANNELS
@@ -188,6 +192,10 @@ positive:
         .if ::BHOP_ZSAW_ENABLED
         sta channel_volume + ZSAW_INDEX
         .endif
+        .if ::BHOP_MMC5_ENABLED
+        sta channel_volume + MMC5_PULSE_1_INDEX
+        sta channel_volume + MMC5_PULSE_2_INDEX
+        .endif
 
         ; disable any active effects
         lda #0
@@ -199,6 +207,10 @@ positive:
         .if ::BHOP_ZSAW_ENABLED
         sta channel_pitch_effects_active + ZSAW_INDEX
         .endif
+        .if ::BHOP_MMC5_ENABLED
+        sta channel_pitch_effects_active + MMC5_PULSE_1_INDEX
+        sta channel_pitch_effects_active + MMC5_PULSE_2_INDEX
+        .endif
 
         ; reset every channel's status
         lda #(CHANNEL_MUTED)
@@ -209,6 +221,10 @@ positive:
         sta channel_status + DPCM_INDEX
         .if ::BHOP_ZSAW_ENABLED
         sta channel_status + ZSAW_INDEX
+        .endif
+        .if ::BHOP_MMC5_ENABLED
+        sta channel_status + MMC5_PULSE_1_INDEX
+        sta channel_status + MMC5_PULSE_2_INDEX
         .endif
 
         ; clear out special effects
@@ -329,6 +345,22 @@ loop:
         iny
         .endif
 
+        .if ::BHOP_MMC5_ENABLED
+        lda (bhop_ptr), y
+        sta channel_pattern_ptr_low+MMC5_PULSE_1_INDEX
+        iny
+        lda (bhop_ptr), y
+        sta channel_pattern_ptr_high+MMC5_PULSE_1_INDEX
+        iny
+
+        lda (bhop_ptr), y
+        sta channel_pattern_ptr_low+MMC5_PULSE_2_INDEX
+        iny
+        lda (bhop_ptr), y
+        sta channel_pattern_ptr_high+MMC5_PULSE_2_INDEX
+        iny
+        .endif
+
         ; DPCM
         lda (bhop_ptr), y
         sta channel_pattern_ptr_low+DPCM_INDEX
@@ -345,6 +377,10 @@ loop:
         sta channel_row_delay_counter + NOISE_INDEX
         .if ::BHOP_ZSAW_ENABLED
         sta channel_row_delay_counter + ZSAW_INDEX
+        .endif
+        .if ::BHOP_MMC5_ENABLED
+        sta channel_row_delay_counter + MMC5_PULSE_1_INDEX
+        sta channel_row_delay_counter + MMC5_PULSE_2_INDEX
         .endif
         sta channel_row_delay_counter + DPCM_INDEX
 
@@ -700,6 +736,17 @@ done:
         jsr advance_channel_row
         .endif
 
+        .if ::BHOP_MMC5_ENABLED
+        ; MMC5
+        lda #MMC5_PULSE_1_INDEX
+        sta channel_index
+        jsr advance_channel_row
+
+        lda #MMC5_PULSE_2_INDEX
+        sta channel_index
+        jsr advance_channel_row
+        .endif
+
         ; DPCM
         lda #DPCM_INDEX
         sta channel_index
@@ -732,6 +779,17 @@ done:
         .if ::BHOP_ZSAW_ENABLED
         ; Z-Saw
         lda #ZSAW_INDEX
+        sta channel_index
+        jsr skip_channel_row
+        .endif
+
+        .if ::BHOP_MMC5_ENABLED
+        ; MMC5
+        lda #MMC5_PULSE_1_INDEX
+        sta channel_index
+        jsr skip_channel_row
+
+        lda #MMC5_PULSE_2_INDEX
         sta channel_index
         jsr skip_channel_row
         .endif
@@ -864,6 +922,36 @@ done_with_cut_delay:
         jsr tick_duty_envelope_zsaw
         jsr update_arp_zsaw
         jsr tick_arp_envelope_zsaw
+        .endif
+
+        .if ::BHOP_MMC5_ENABLED
+        lda #MMC5_PULSE_1_INDEX
+        sta channel_index
+        jsr tick_delayed_effects
+        jsr tick_volume_envelope
+        jsr tick_duty_envelope
+        jsr update_arp
+        jsr update_pitch_effects
+        jsr update_volume_effects
+        jsr tick_arp_envelope
+        jsr tick_pitch_envelope
+        initialize_detuned_frequency
+        jsr update_vibrato
+        jsr update_tuning
+
+        lda #MMC5_PULSE_2_INDEX
+        sta channel_index
+        jsr tick_delayed_effects
+        jsr tick_volume_envelope
+        jsr tick_duty_envelope
+        jsr update_arp
+        jsr update_pitch_effects
+        jsr update_volume_effects
+        jsr tick_arp_envelope
+        jsr tick_pitch_envelope
+        initialize_detuned_frequency
+        jsr update_vibrato
+        jsr update_tuning
         .endif
 
         rts
@@ -1885,6 +1973,9 @@ cleanup:
         .if ::BHOP_ZSAW_ENABLED
         jsr play_zsaw
         .endif
+        .if ::BHOP_MMC5_ENABLED
+        jsr play_mmc5
+        .endif
 
         ; clear the triggered flag from every instrument
         lda channel_status + PULSE_1_INDEX
@@ -1909,12 +2000,129 @@ cleanup:
         sta channel_status + ZSAW_INDEX
         .endif
 
+        .if ::BHOP_MMC5_ENABLED
+        lda channel_status + MMC5_PULSE_1_INDEX
+        and #($FF - CHANNEL_TRIGGERED)
+        sta channel_status + MMC5_PULSE_1_INDEX
+
+        lda channel_status + MMC5_PULSE_2_INDEX
+        and #($FF - CHANNEL_TRIGGERED)
+        sta channel_status + MMC5_PULSE_2_INDEX
+        .endif
+
         lda channel_status + DPCM_INDEX
         and #($FF - CHANNEL_TRIGGERED)
         sta channel_status + DPCM_INDEX
 
         rts
 .endproc
+
+.if ::BHOP_MMC5_ENABLED
+.proc play_mmc5
+; basically identical to 2A03 updates, except with MMC5 registers instead of APU ones
+        ; firstly, enable MMC5 audio
+        lda #%00000011
+        sta $5015
+
+tick_pulse1:
+        lda #CHANNEL_SUPPRESSED
+        bit channel_status + MMC5_PULSE_1_INDEX
+        bne tick_pulse2
+        bmi pulse1_muted
+
+        ; apply the combined channel and instrument volume
+        lda channel_tremolo_volume + MMC5_PULSE_1_INDEX
+        asl
+        asl
+        asl
+        asl
+        ora channel_instrument_volume + MMC5_PULSE_1_INDEX
+        tax
+        lda volume_table, x
+
+        ; add in the duty
+        ora channel_instrument_duty + MMC5_PULSE_1_INDEX
+        ora #%00110000 ; disable length counter and envelope
+        sta $5000
+
+        lda channel_detuned_frequency_low + MMC5_PULSE_1_INDEX
+        sta $5002
+
+        ; If we triggered this frame, write unconditionally
+        lda channel_status + MMC5_PULSE_1_INDEX
+        and #CHANNEL_TRIGGERED
+        bne write_pulse1
+
+        ; otherwise, to avoid resetting the sequence counter, only
+        ; write if the high byte has changed since the last time
+        lda channel_detuned_frequency_high + MMC5_PULSE_1_INDEX
+        cmp shadow_mmc5_pulse1_freq_hi
+        beq tick_pulse2
+
+write_pulse1:
+        lda channel_detuned_frequency_high + MMC5_PULSE_1_INDEX
+        sta shadow_mmc5_pulse1_freq_hi
+        ora #%11111000
+        sta $5003
+        jmp tick_pulse2
+pulse1_muted:
+        ; if the channel is muted, little else matters, but ensure
+        ; we set the volume to 0
+        lda #%00110000
+        sta $5000
+
+tick_pulse2:
+        lda #CHANNEL_SUPPRESSED
+        bit channel_status + MMC5_PULSE_2_INDEX
+        bne done_with_mmc5
+        bmi pulse2_muted
+
+
+        ; apply the combined channel and instrument volume
+        lda channel_tremolo_volume + MMC5_PULSE_2_INDEX
+        asl
+        asl
+        asl
+        asl
+        ora channel_instrument_volume + MMC5_PULSE_2_INDEX
+        tax
+        lda volume_table, x
+
+        ; add in the duty
+        ora channel_instrument_duty + MMC5_PULSE_2_INDEX
+        ora #%00110000 ; set a duty, disable length counter and envelope
+        sta $5004
+
+        lda channel_detuned_frequency_low + MMC5_PULSE_2_INDEX
+        sta $5006
+
+        ; If we triggered this frame, write unconditionally
+        lda channel_status + MMC5_PULSE_2_INDEX
+        and #CHANNEL_TRIGGERED
+        bne write_pulse2
+
+        ; otherwise, to avoid resetting the sequence counter, only
+        ; write if the high byte has changed since the last time
+        lda channel_detuned_frequency_high + MMC5_PULSE_2_INDEX
+        cmp shadow_mmc5_pulse2_freq_hi
+        beq done_with_mmc5
+
+write_pulse2:
+        lda channel_detuned_frequency_high + MMC5_PULSE_2_INDEX
+        sta shadow_mmc5_pulse2_freq_hi
+        ora #%11111000
+        sta $5007
+        jmp done_with_mmc5
+pulse2_muted:
+        ; if the channel is muted, little else matters, but ensure
+        ; we set the volume to 0
+        lda #%00110000
+        sta $5004
+
+done_with_mmc5:
+        rts
+.endproc
+.endif
 
 .proc play_dpcm_samples
         lda channel_status + DPCM_INDEX

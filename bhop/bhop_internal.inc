@@ -42,6 +42,14 @@ ZSAW_INDEX = _channel_index
 _channel_index .set (_channel_index+1)
 .endif
 
+.if ::BHOP_MMC5_ENABLED
+MMC5_PULSE_1_INDEX = _channel_index
+_channel_index .set (_channel_index+1)
+
+MMC5_PULSE_2_INDEX = _channel_index
+_channel_index .set (_channel_index+1)
+.endif
+
 DPCM_INDEX = _channel_index
 _channel_index .set (_channel_index+1)
 

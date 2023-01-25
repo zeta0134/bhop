@@ -1,32 +1,19 @@
-__BHOP_CONFIG = 1 ; should break the build by failing to define directives
+__BHOP_CONFIG = 1
 
-; Demo-specific config for NROM + ZSAW
+; Demo-specific config for MMC3 + ZSAW
 
 ; WARNING: This copy of bhop/config.inc is used to override the project
 ; defaults. Do not rely on any of its contents, as it may be somewhat out of sync
 ; with the main config located at bhop/config.inc in the project root.
 
-; Where should BHOP live?
 .define BHOP_PLAYER_SEGMENT "BHOP"
 .define BHOP_RAM_SEGMENT "RAM"
 .define BHOP_ZP_SEGMENT "ZEROPAGE"
 
 .import bhop_music_data
 
-; To play a module, export "music.asm" from FamiTracker, and
-; place it in memory here. Ensure this memory is paged in
-; during bhop_init and bhop_play.
 BHOP_MUSIC_BASE = bhop_music_data
-
-; DPCM banking support. Disabled by default, as the relevant
-; mapper code is project specific.
 BHOP_DPCM_BANKING = 0
-
-; When DPCM bank switching is enabled, make sure the following
-; routine is exported, preferably from one of your fixed
-; code banks. Bhop will place the desired bank number in the
-; A register before calling. It does not expect any registers
-; or flags to be preserved.
 
 .if ::BHOP_DPCM_BANKING
 .import bhop_apply_dpcm_bank
@@ -34,23 +21,15 @@ BHOP_DPCM_SWITCH_ROUTINE = bhop_apply_dpcm_bank
 .endif
 
 BHOP_ZSAW_ENABLED = 1
+BHOP_MMC5_ENABLED = 0
 
 ; For ZSAW purposes, we need to override that config file as well
 __ZSAW_CONFIG = 1
 
-; Z-Saw requires 11 bytes in zeropage
 .define ZSAW_ZP_SEGMENT "ZEROPAGE"
-; interrupt vectors and lookup tables
 .define ZSAW_FIXED_SEGMENT "CODE"
 .define ZSAW_SAMPLES_SEGMENT "CODE"
-; Shadow OAM high page, for OAM DMA
 ZSAW_SHADOW_OAM = $02
-; Your custom NMI handler, will be called automatically when vblank begins
-; Note: 
-;   - Do not perform OAM DMA, Z-Saw will handle that for you
-;   - Interrupts will be enabled upon entry
-;   - DO remember to preserve registers
-;   - Return with rts, not rti
 .define ZSAW_NMI_GAME_HANDLER demo_nmi
 
 .globalzp zsaw_oam_pending, zsaw_nmi_pending
@@ -59,7 +38,7 @@ ZSAW_SHADOW_OAM = $02
 
 .global zsquare_irq
 
-; Available timbres; see README for details and limitations
+; Because we override the entire config file, we must include all constants
 ZSAW_TIMBRE_SAW = 0
 ZSAW_TIMBRE_SAW_00 = 0
 ZSAW_TIMBRE_SAW_7F = 1
@@ -68,7 +47,6 @@ ZSAW_TIMBRE_SQUARE_00 = 2
 ZSAW_TIMBRE_SQUARE_7F = 3
 ZSAW_TIMBRE_TRIANGLE = 4
 
-; Music defines, for manually playing notes
 ZSAW_B1  = 0
 ZSAW_C2  = 1
 ZSAW_CS2 = 2
