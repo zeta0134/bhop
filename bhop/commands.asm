@@ -3,60 +3,62 @@
         .segment BHOP_PLAYER_SEGMENT
 
 command_table:
-;         bhop handler              bytecode    FT enum equivalent
-;         ------------------------  -----       ------------------
-    .word cmd_instrument           ;($80)       CMD_INSTRUMENT          
-    .word cmd_unimplemented_short  ;($81)       CMD_HOLD
-    .word cmd_set_duration         ;($82)       CMD_SET_DURATION
-    .word cmd_reset_duration       ;($83)       CMD_RESET_DURATION
-    .word cmd_eff_speed            ;($84)       CMD_EFF_SPEED
-    .word cmd_eff_tempo            ;($85)       CMD_EFF_TEMPO
-    .word cmd_eff_jump             ;($86)       CMD_EFF_JUMP
-    .word cmd_eff_skip             ;($87)       CMD_EFF_SKIP
-    .word cmd_eff_halt             ;($88)       CMD_EFF_HALT
-    .word cmd_unimplemented        ;($89)       CMD_EFF_VOLUME
-    .word cmd_eff_clear            ;($8A)       CMD_EFF_CLEAR
-    .word cmd_eff_portaup          ;($8B)       CMD_EFF_PORTAUP
-    .word cmd_eff_portadown        ;($8C)       CMD_EFF_PORTADOWN
-    .word cmd_eff_portamento       ;($8D)       CMD_EFF_PORTAMENTO
-    .word cmd_eff_arpeggio         ;($8E)       CMD_EFF_ARPEGGIO
-    .word cmd_eff_vibrato          ;($8F)       CMD_EFF_VIBRATO
-    .word cmd_eff_tremolo          ;($90)       CMD_EFF_TREMOLO
-    .word cmd_eff_pitch            ;($91)       CMD_EFF_PITCH
-    .word cmd_eff_reset_pitch      ;($92)       CMD_EFF_RESET_PITCH
-    .word cmd_eff_duty             ;($93)       CMD_EFF_DUTY
-    .word cmd_eff_delay            ;($94)       CMD_EFF_DELAY
-    .word cmd_unimplemented        ;($95)       CMD_EFF_SWEEP
-    .word cmd_eff_dac              ;($96)       CMD_EFF_DAC
-    .word cmd_eff_offset           ;($97)       CMD_EFF_OFFSET
-    .word cmd_eff_slide_up         ;($98)       CMD_EFF_SLIDE_UP
-    .word cmd_eff_slide_down       ;($99)       CMD_EFF_SLIDE_DOWN
-    .word cmd_eff_vol_slide        ;($9A)       CMD_EFF_VOL_SLIDE
-    .word cmd_eff_note_cut         ;($9B)       CMD_EFF_NOTE_CUT
-    .word cmd_eff_retrigger        ;($9C)       CMD_EFF_RETRIGGER
-    .word cmd_unimplemented        ;($9D)       CMD_EFF_DPCM_PITCH
-    .word cmd_unimplemented        ;($9E)       CMD_EFF_NOTE_RELEASE
-    .word cmd_unimplemented        ;($9F)       CMD_EFF_LINEAR_COUNTER
-    .word cmd_eff_groove           ;($A0)       CMD_EFF_GROOVE
-    .word cmd_unimplemented        ;($A1)       CMD_EFF_DELAYED_VOLUME
-    .word cmd_unimplemented        ;($A2)       CMD_EFF_TRANSPOSE
-    .word cmd_eff_phase_reset      ;($A3)       CMD_EFF_PHASE_RESET
-    .word cmd_eff_phase_reset      ;($A4)       CMD_EFF_DPCM_PHASE_RESET
-    .word cmd_unimplemented        ;($A5)       CMD_EFF_HARMONIC
-    .word cmd_unimplemented        ;($A6)       CMD_EFF_TARGET_VOL_SLIDE
-    .word cmd_unimplemented        ;($A7)       CMD_EFF_VRC7_PATCH
-    .word cmd_unimplemented        ;($A8)       CMD_EFF_VRC7_PORT
-    .word cmd_unimplemented        ;($A9)       CMD_EFF_VRC7_WRITE
-    .word cmd_unimplemented        ;($AA)       CMD_EFF_FDS_MOD_DEPTH
-    .word cmd_unimplemented        ;($AB)       CMD_EFF_FDS_MOD_RATE_HI
-    .word cmd_unimplemented        ;($AC)       CMD_EFF_FDS_MOD_RATE_LO
-    .word cmd_unimplemented        ;($AD)       CMD_EFF_FDS_VOLUME
-    .word cmd_unimplemented        ;($AE)       CMD_EFF_FDS_MOD_BIAS
-    .word cmd_unimplemented        ;($AF)       CMD_EFF_N163_WAVE_BUFFER
-    .word cmd_unimplemented        ;($B0)       CMD_EFF_S5B_ENV_TYPE
-    .word cmd_unimplemented        ;($B1)       CMD_EFF_S5B_ENV_RATE_HI
-    .word cmd_unimplemented        ;($B2)       CMD_EFF_S5B_ENV_RATE_LO
-    .word cmd_unimplemented        ;($B3)       CMD_EFF_S5B_NOISE
+; information comes from enum effect_t, const char EFF_CHAR[] in FamiTrackerTypes.h
+; and enum command_t, CPatternCompiler::CompileData() in PatternCompiler.cpp
+;         bhop handler              bytecode    FT enum equivalent          Description
+;         ------------------------  -----       ------------------------    ----
+    .word cmd_instrument           ;($80)       CMD_INSTRUMENT              instrument change command
+    .word cmd_unimplemented_short  ;($81)       CMD_HOLD                    && instrument
+    .word cmd_set_duration         ;($82)       CMD_SET_DURATION            enable compressed durations, determines length of space between notes
+    .word cmd_reset_duration       ;($83)       CMD_RESET_DURATION          disable compressed durations, determines length of space between notes
+    .word cmd_eff_speed            ;($84)       CMD_EFF_SPEED               Fxx
+    .word cmd_eff_tempo            ;($85)       CMD_EFF_TEMPO               Fxx >= speed split point
+    .word cmd_eff_jump             ;($86)       CMD_EFF_JUMP                Bxx
+    .word cmd_eff_skip             ;($87)       CMD_EFF_SKIP                Dxx
+    .word cmd_eff_halt             ;($88)       CMD_EFF_HALT                Cxx
+    .word cmd_unimplemented        ;($89)       CMD_EFF_VOLUME              Exx, 2A03/MMC5 length counter
+    .word cmd_eff_clear            ;($8A)       CMD_EFF_CLEAR               x00, clears effect
+    .word cmd_eff_portaup          ;($8B)       CMD_EFF_PORTAUP             1xx
+    .word cmd_eff_portadown        ;($8C)       CMD_EFF_PORTADOWN           2xx
+    .word cmd_eff_portamento       ;($8D)       CMD_EFF_PORTAMENTO          3xx
+    .word cmd_eff_arpeggio         ;($8E)       CMD_EFF_ARPEGGIO            0xy
+    .word cmd_eff_vibrato          ;($8F)       CMD_EFF_VIBRATO             4xy
+    .word cmd_eff_tremolo          ;($90)       CMD_EFF_TREMOLO             7xy
+    .word cmd_eff_pitch            ;($91)       CMD_EFF_PITCH               Pxx
+    .word cmd_eff_reset_pitch      ;($92)       CMD_EFF_RESET_PITCH         P80
+    .word cmd_eff_duty             ;($93)       CMD_EFF_DUTY                Vxx
+    .word cmd_eff_delay            ;($94)       CMD_EFF_DELAY               Gxx
+    .word cmd_unimplemented        ;($95)       CMD_EFF_SWEEP               sweep for 2A03 pulse, Hxy == (0x88 | (EffParam & 0x77)), Ixy == (0x80 | (EffParam & 0x77))
+    .word cmd_eff_dac              ;($96)       CMD_EFF_DAC                 Zxx DPCM
+    .word cmd_eff_offset           ;($97)       CMD_EFF_OFFSET              Yxx DPCM
+    .word cmd_eff_slide_up         ;($98)       CMD_EFF_SLIDE_UP            Qxy
+    .word cmd_eff_slide_down       ;($99)       CMD_EFF_SLIDE_DOWN          Rxy
+    .word cmd_eff_vol_slide        ;($9A)       CMD_EFF_VOL_SLIDE           Axy
+    .word cmd_eff_note_cut         ;($9B)       CMD_EFF_NOTE_CUT            Sxx
+    .word cmd_eff_retrigger        ;($9C)       CMD_EFF_RETRIGGER           Xxx DPCM
+    .word cmd_unimplemented        ;($9D)       CMD_EFF_DPCM_PITCH          Wxx DPCM
+    .word cmd_unimplemented        ;($9E)       CMD_EFF_NOTE_RELEASE        Lxx
+    .word cmd_unimplemented        ;($9F)       CMD_EFF_LINEAR_COUNTER      Sxx triangle, xx >= 0x80
+    .word cmd_eff_groove           ;($A0)       CMD_EFF_GROOVE              Oxx
+    .word cmd_unimplemented        ;($A1)       CMD_EFF_DELAYED_VOLUME      Mxy
+    .word cmd_unimplemented        ;($A2)       CMD_EFF_TRANSPOSE           Txy
+    .word cmd_eff_phase_reset      ;($A3)       CMD_EFF_PHASE_RESET         =xx
+    .word cmd_eff_phase_reset      ;($A4)       CMD_EFF_DPCM_PHASE_RESET    =xx DPCM
+    .word cmd_unimplemented        ;($A5)       CMD_EFF_HARMONIC            Kxx
+    .word cmd_unimplemented        ;($A6)       CMD_EFF_TARGET_VOL_SLIDE    Nxy
+    .word cmd_unimplemented        ;($A7)       CMD_EFF_VRC7_PATCH          Vxx VRC7
+    .word cmd_unimplemented        ;($A8)       CMD_EFF_VRC7_PORT           Hxx VRC7
+    .word cmd_unimplemented        ;($A9)       CMD_EFF_VRC7_WRITE          Ixx VRC7
+    .word cmd_unimplemented        ;($AA)       CMD_EFF_FDS_MOD_DEPTH       Hxx FDS
+    .word cmd_unimplemented        ;($AB)       CMD_EFF_FDS_MOD_RATE_HI     I0x FDS, Ixy sets auto modulation period
+    .word cmd_unimplemented        ;($AC)       CMD_EFF_FDS_MOD_RATE_LO     Jxx FDS
+    .word cmd_unimplemented        ;($AD)       CMD_EFF_FDS_VOLUME          Exx FDS
+    .word cmd_unimplemented        ;($AE)       CMD_EFF_FDS_MOD_BIAS        Hxx FDS
+    .word cmd_unimplemented        ;($AF)       CMD_EFF_N163_WAVE_BUFFER    Zxx N163
+    .word cmd_unimplemented        ;($B0)       CMD_EFF_S5B_ENV_TYPE        H0y S5B, Hxy sets auto envelope period
+    .word cmd_unimplemented        ;($B1)       CMD_EFF_S5B_ENV_RATE_HI     Ixx S5B
+    .word cmd_unimplemented        ;($B2)       CMD_EFF_S5B_ENV_RATE_LO     Jxx S5B
+    .word cmd_unimplemented        ;($B3)       CMD_EFF_S5B_NOISE           Wxx S5B
         ; fill out this table to 128 entries. Assume any new command
     ; added has one parameter. If it doesn't, oh well!
     .repeat 80
@@ -115,6 +117,16 @@ no_parameter_byte:
         rts
 .endproc
 
+.proc cmd_instrument
+        fetch_pattern_byte
+        ; of *course* this is pre-shifted, so un-do that:
+        lsr
+        ; store the instrument and load it up
+        sta channel_selected_instrument, x
+        jsr load_instrument
+        rts
+.endproc
+
 .proc cmd_set_duration
         fetch_pattern_byte
         sta channel_global_duration, x
@@ -128,6 +140,19 @@ no_parameter_byte:
         lda channel_status, x
         and #($FF - CHANNEL_GLOBAL_DURATION)
         sta channel_status, x
+        rts
+.endproc
+
+.proc cmd_eff_speed
+        fetch_pattern_byte
+        tax
+        jsr set_speed
+        rts
+.endproc
+
+.proc cmd_eff_tempo
+        fetch_pattern_byte
+        sta tempo
         rts
 .endproc
 
@@ -169,19 +194,15 @@ no_parameter_byte:
         rts
 .endproc
 
-.proc cmd_instrument
+.proc cmd_eff_skip
         fetch_pattern_byte
-        ; of *course* this is pre-shifted, so un-do that:
-        lsr
-        ; store the instrument and load it up
-        sta channel_selected_instrument, x
+        sta effect_skip_target
 
 .if ::BHOP_PATTERN_BANKING
         ; Instruments live in the module bank, so we need to swap that in before processing them
         lda module_bank
         switch_music_bank
 .endif
-        jsr load_instrument
 .if ::BHOP_PATTERN_BANKING
         ; And now we need to switch back to the pattern bank before continuing
         ldx channel_index
@@ -192,87 +213,31 @@ no_parameter_byte:
         rts
 .endproc
 
-; Gxx
-.proc cmd_eff_delay
-        fetch_pattern_byte
-        ; here we want to store delay +1... but we can't do that to 
-        ; 0xFF or we'll wrap and break the "delay active" logic later. Excessively
-        ; large delay values don't make much sense anyway, so lop off the high bit
-        ; here to avoid this edge case
-        and #$7F
-        clc
-        adc #1
-        ldy channel_index
-        sta effect_note_delay, y
-        rts
-.endproc
-
-.proc cmd_eff_vibrato
-        fetch_pattern_byte
-        sta channel_vibrato_settings, x
-        bne done
-        ; for `400` specifically, reset the vibrato phase
+.proc cmd_eff_halt
+        fetch_pattern_byte ; and throw it away
+        ; set the tempo to 0 (stops rows from advancing at all)
         lda #0
-        sta channel_vibrato_accumulator, x
-done:
-        rts
-.endproc
-
-.proc cmd_eff_pitch
-        fetch_pattern_byte
-        sta scratch_byte
-        sec
-        lda #$80 ; center this on 0, where 0 is in tune
-        sbc scratch_byte
-        sta channel_tuning, x
-        rts
-.endproc
-
-.proc cmd_eff_reset_pitch
-        lda #0
-        sta channel_tuning, x
-        rts
-.endproc
-
-.proc cmd_eff_note_cut
-        fetch_pattern_byte
-        clc
-        adc #1
-        sta effect_cut_delay, x
-        lda channel_status, x
-        ora #CHANNEL_FRESH_DELAYED_CUT
-        sta channel_status, x
-        rts
-.endproc
-
-.proc cmd_eff_speed
-        fetch_pattern_byte
-        tax
-        jsr set_speed
-        rts
-.endproc
-
-.proc cmd_eff_tempo
-        fetch_pattern_byte
         sta tempo
+        ; immediately mute all channels
+        ldx #NUM_CHANNELS
+loop:
+        dex
+        lda channel_status, x
+        ora #CHANNEL_MUTED
+        sta channel_status, x
+        cpx #0
+        bne loop
         rts
 .endproc
 
-.proc cmd_eff_skip
-        fetch_pattern_byte
-        sta effect_skip_target
-        rts
-.endproc
-
-.proc cmd_eff_arpeggio
-        fetch_pattern_byte
-        sta channel_arpeggio_settings, x
+.proc cmd_eff_clear
         lda #0
-        sta channel_arpeggio_counter, x
-        lda #PITCH_EFFECT_ARP
         sta channel_pitch_effects_active, x
         rts
 .endproc
+        lda channel_status, x
+        ora #CHANNEL_FRESH_DELAYED_CUT
+        sta channel_status, x
 
 .proc cmd_eff_portaup
         fetch_pattern_byte
@@ -298,6 +263,85 @@ done:
         rts
 .endproc
 
+.proc cmd_eff_arpeggio
+        fetch_pattern_byte
+        sta channel_arpeggio_settings, x
+        lda #0
+        sta channel_arpeggio_counter, x
+        lda #PITCH_EFFECT_ARP
+        sta channel_pitch_effects_active, x
+        rts
+.endproc
+
+.proc cmd_eff_vibrato
+        fetch_pattern_byte
+        sta channel_vibrato_settings, x
+        bne done
+        ; for `400` specifically, reset the vibrato phase
+        lda #0
+        sta channel_vibrato_accumulator, x
+done:
+        rts
+.endproc
+
+.proc cmd_eff_tremolo
+        fetch_pattern_byte
+        sta channel_tremolo_settings, x
+        bne done
+        ; for `700` specifically, reset the tremolo phase
+        lda #0
+        sta channel_tremolo_accumulator, x
+done:
+        rts
+.endproc
+
+.proc cmd_eff_pitch
+        fetch_pattern_byte
+        sta scratch_byte
+        sec
+        lda #$80 ; center this on 0, where 0 is in tune
+        sbc scratch_byte
+        sta channel_tuning, x
+        rts
+.endproc
+
+.proc cmd_eff_reset_pitch
+        lda #0
+        sta channel_tuning, x
+        rts
+.endproc
+
+.proc cmd_eff_delay
+        fetch_pattern_byte
+        ; here we want to store delay +1... but we can't do that to 
+        ; 0xFF or we'll wrap and break the "delay active" logic later. Excessively
+        ; large delay values don't make much sense anyway, so lop off the high bit
+        ; here to avoid this edge case
+        and #$7F
+        clc
+        adc #1
+        ldy channel_index
+        sta effect_note_delay, y
+        rts
+.endproc
+
+.proc cmd_eff_duty
+        fetch_pattern_byte
+        ror
+        ror
+        ror
+        ; safety
+        and #%11000000
+        sta channel_duty, x
+        rts
+.endproc
+
+.proc cmd_eff_offset
+        fetch_pattern_byte
+        sta effect_dpcm_offset
+        rts
+.endproc
+
 .proc cmd_eff_slide_up
         fetch_pattern_byte
         sta channel_pitch_effect_settings, x
@@ -314,34 +358,6 @@ done:
         rts
 .endproc
 
-.proc cmd_eff_clear
-        lda #0
-        sta channel_pitch_effects_active, x
-        rts
-.endproc
-
-.proc cmd_eff_duty
-        fetch_pattern_byte
-        ror
-        ror
-        ror
-        ; safety
-        and #%11000000
-        sta channel_duty, x
-        rts
-.endproc
-
-.proc cmd_eff_tremolo
-        fetch_pattern_byte
-        sta channel_tremolo_settings, x
-        bne done
-        ; for `700` specifically, reset the tremolo phase
-        lda #0
-        sta channel_tremolo_accumulator, x
-done:
-        rts
-.endproc
-
 .proc cmd_eff_vol_slide
         fetch_pattern_byte
         sta channel_volume_slide_settings, x
@@ -350,24 +366,14 @@ done:
         rts
 .endproc
 
-.proc cmd_eff_halt
-        fetch_pattern_byte ; and throw it away
-        ; set the tempo to 0 (stops rows from advancing at all)
-        lda #0
-        sta tempo
-        ; immediately mute all channels
-        ldx #NUM_CHANNELS
-loop:
-        dex
-        lda channel_status, x
-        ora #CHANNEL_MUTED
-        sta channel_status, x
-        cpx #0
-        bne loop
+.proc cmd_eff_note_cut
+        fetch_pattern_byte
+        clc
+        adc #1
+        sta effect_cut_delay, x
         rts
 .endproc
 
-; Xxx
 .proc cmd_eff_retrigger
 ; from Channels2A03.cpp:
 ; mRetriggerPeriod = std::max((int)EffParam, 1);
@@ -387,7 +393,6 @@ done:
         rts
 .endproc
 
-; =xx
 .proc cmd_eff_phase_reset
         fetch_pattern_byte
         bne continue ; currently, =xx commands are only valid if the parameter is 0
@@ -435,9 +440,6 @@ dpcmphasereset:
         rts
 .endproc
 
-.proc cmd_eff_offset
-        fetch_pattern_byte
-        sta effect_dpcm_offset
         rts
 .endproc
 
@@ -445,5 +447,3 @@ dpcmphasereset:
         fetch_pattern_byte
         sta groove_index
         sta groove_position
-        rts
-.endproc
