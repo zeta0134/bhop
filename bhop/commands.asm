@@ -313,7 +313,7 @@ done:
 
 .proc cmd_eff_delay
         fetch_pattern_byte
-        ; here we want to store delay +1... but we can't do that to 
+        ; here we want to store delay +1... but we can't do that to
         ; 0xFF or we'll wrap and break the "delay active" logic later. Excessively
         ; large delay values don't make much sense anyway, so lop off the high bit
         ; here to avoid this edge case

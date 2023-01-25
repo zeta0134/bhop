@@ -8,11 +8,11 @@
 .include "bhop/longbranch.inc"
 
 .include "bhop/commands.asm"
-.include "bhop/effects.asm"    
+.include "bhop/effects.asm"
 
         .segment BHOP_ZP_SEGMENT
 ; scratch ptr, used for all sorts of indirect reads
-bhop_ptr: .word $0000 
+bhop_ptr: .word $0000
 ; pattern pointers, read repeatedly when updating
 ; rows in a loop, we'll want access to these to be quick
 pattern_ptr: .word $0000
@@ -151,7 +151,7 @@ dpcm_active: .byte $00
         lda value
         and #$80 ;extract the high bit
         beq positive
-        lda #$FF ; the high bit was high, so set high byte to 0xFF, then add that plus carry 
+        lda #$FF ; the high bit was high, so set high byte to 0xFF, then add that plus carry
         ; note: unless a signed overflow occurred, carry will usually be *set* in this case
 positive:
         ; the high bit was low; a contains #$00, so add that plus carry
@@ -588,7 +588,7 @@ done_advancing_rows:
         rts
 .endproc
 
-; prep: 
+; prep:
 ; - channel_index is set to desired channel
 .proc advance_channel_row
         ldx channel_index
@@ -612,7 +612,7 @@ done_advancing_rows:
 
         ; implementation note: x now holds channel_index, and lots of this code
         ; assumes it will not be clobbered. Take care when refactoring.
-        
+
         ; continue reading bytecode, processing one command at a time,
         ; until a note is encountered. Any note command breaks out of the loop and
         ; signals the end of processing for this row.
@@ -715,7 +715,7 @@ note_trigger:
 
         ; if portamento is active AND we are not currently muted,
         ; then skip writing the relative frequency
-        
+
         lda channel_status, x
         and #CHANNEL_MUTED
         bne write_relative_frequency
@@ -733,7 +733,7 @@ write_relative_frequency:
         .if ::BHOP_ZSAW_ENABLED
         ; for z-saw only, we initialize the relative frequency here as a note index,
         ; since it does not do pitch bends
-        
+
         cpx #ZSAW_INDEX
         bne portamento_active
         lda channel_base_note, x
@@ -825,7 +825,7 @@ done:
 
         ; implementation note: x now holds channel_index, and lots of this code
         ; assumes it will not be clobbered. Take care when refactoring.
-        
+
         ; continue reading bytecode, processing one command at a time,
         ; until a note is encountered. Any note command breaks out of the loop and
         ; signals the end of processing for this row.
@@ -1128,7 +1128,7 @@ done_with_cut_delay:
         ; Z-Saw
         lda #ZSAW_INDEX
         sta channel_index
-        jsr tick_delayed_effects        
+        jsr tick_delayed_effects
         jsr update_volume_effects
         jsr tick_volume_envelope
         jsr tick_duty_envelope_zsaw
@@ -1186,7 +1186,7 @@ no_wrap:
 ; Initializes channel state for playback of a particular instrument.
 ; Loads sequence pointers (if enabled) and clears pointers to begin
 ; sequence playback from the beginning
-; setup: 
+; setup:
 ;   channel_index points to desired channel
 ;   channel_selected_instrument[channel_index] contains desired instrument index
 .proc load_instrument
@@ -1276,7 +1276,7 @@ done_loading_sequences:
 
 ; Re-initializes sequence pointers back to the beginning of their
 ; respective envelopes
-; setup: 
+; setup:
 ;   channel_index points to the active channel
 .proc reset_instrument
         ldy channel_index
@@ -1299,7 +1299,7 @@ done_loading_sequences:
 ; If this channel has a volume envelope active, process that
 ; envelope. Upon return, instrument_volume will have the current
 ; element in the sequence.
-; setup: 
+; setup:
 ;   channel_index points to channel structure
 .proc tick_volume_envelope
         ldy channel_index
@@ -1353,7 +1353,7 @@ done:
 
 ; If this channel has a duty envelope active, process that
 ; envelope. Upon return, instrument_duty is set
-; setup: 
+; setup:
 ;   channel_index points to channel structure
 .proc tick_duty_envelope
         ldy channel_index
@@ -1393,7 +1393,7 @@ done:
         sta scratch_byte
         cpx scratch_byte
         bne end_not_reached
-        
+
         ; this sequence is finished! Disable the sequence flag and exit
         ldy channel_index
         lda sequences_active, y
@@ -1446,7 +1446,7 @@ done:
         sta scratch_byte
         cpx scratch_byte
         bne end_not_reached
-        
+
         ; this sequence is finished! Disable the sequence flag and exit
         ldy channel_index
         lda sequences_active, y
@@ -1467,7 +1467,7 @@ done:
 
 ; If this channel has an arp envelope active, process that
 ; envelope. Upon return, base_note and relative_frequency are set
-; setup: 
+; setup:
 ;   channel_index, channel_index points to channel structure
 .proc tick_arp_envelope
         ldx channel_index
@@ -1491,7 +1491,7 @@ done:
         lda (bhop_ptr), y
         cmp scratch_byte
         bne end_not_reached
-        
+
         ; this sequence is finished! Disable the sequence flag
         lda sequences_active, x
         and #($FF - SEQUENCE_ARP)
@@ -1594,7 +1594,7 @@ done:
 
 ; We need a special variant of this just for noise, which uses a different
 ; means of frequency to base_note mapping
-; setup: 
+; setup:
 ;   channel_index points to channel structure
 .proc tick_noise_arp_envelope
         ldx channel_index
@@ -1618,7 +1618,7 @@ done:
         lda (bhop_ptr), y
         cmp scratch_byte
         bne end_not_reached
-        
+
         ; this sequence is finished! Disable the sequence flag
         lda sequences_active, x
         and #($FF - SEQUENCE_ARP)
@@ -1726,7 +1726,7 @@ done:
         lda (bhop_ptr), y
         cmp scratch_byte
         bne end_not_reached
-        
+
         ; this sequence is finished! Disable the sequence flag
         lda sequences_active, x
         and #($FF - SEQUENCE_ARP)
@@ -1823,7 +1823,7 @@ done:
 
 ; If this channel has a pitch envelope active, process that
 ; envelope. Upon return, relative_pitch is set
-; setup: 
+; setup:
 ;   channel_index points to channel structure
 .proc tick_pitch_envelope
         ldy channel_index
@@ -1837,7 +1837,7 @@ done:
         lda pitch_sequence_ptr_high, y
         sta bhop_ptr + 1
 
-        ; read the current sequence byte, and set instrument_volume to this        
+        ; read the current sequence byte, and set instrument_volume to this
         lda pitch_sequence_index, y
         tax ; stash for later
         ; for reading the sequence, +4
@@ -1882,7 +1882,7 @@ done_applying_pitch:
         sta scratch_byte
         cpx scratch_byte
         bne end_not_reached
-        
+
         ; this sequence is finished! Disable the sequence flag and exit
         ldy channel_index
         lda sequences_active, y
@@ -1991,7 +1991,7 @@ done_with_sequence:
 
 ; If this channel has any envelopes, and those envelopes
 ; have a release point, jump to it immediately
-; setup: 
+; setup:
 ;   channel_index points to channel structure
 ;   x contains channel_index
 .proc apply_release
@@ -2178,7 +2178,7 @@ tick_noise:
         ; finally, ensure the note is actually playing with a length
         ; counter that is not zero
         lda #%11111000
-        sta $400F  
+        sta $400F
         jmp tick_dpcm
 noise_muted:
         ; if the channel is muted, little else matters, but ensure
@@ -2595,12 +2595,12 @@ reset_counter:
 .if ::BHOP_ZSAW_ENABLED
 ; These are used to more or less match N163 volumes in Fn-FamiTracker,
 ; which helps to keep the mix as close as possible between the tracker
-; and the in-engine result. 
+; and the in-engine result.
 zsaw_n163_equivalence_table:
 zsaw_00_volume_table:
-.byte   0,   3,   5,   8 
-.byte  11,  13,  16,  19 
-.byte  22,  25,  28,  31 
+.byte   0,   3,   5,   8
+.byte  11,  13,  16,  19
+.byte  22,  25,  28,  31
 .byte  34,  38,  41,  44
 zsaw_7F_volume_table:
 .byte 127, 122, 116, 111
@@ -2718,12 +2718,12 @@ volume_table:
         .byte $0, $1, $1, $1, $1, $1, $2, $2, $2, $3, $3, $3, $4, $4, $4, $5
         .byte $0, $1, $1, $1, $1, $2, $2, $2, $3, $3, $4, $4, $4, $5, $5, $6
         .byte $0, $1, $1, $1, $1, $2, $2, $3, $3, $4, $4, $5, $5, $6, $6, $7
-        .byte $0, $1, $1, $1, $2, $2, $3, $3, $4, $4, $5, $5, $6, $6, $7, $8 
-        .byte $0, $1, $1, $1, $2, $3, $3, $4, $4, $5, $6, $6, $7, $7, $8, $9 
-        .byte $0, $1, $1, $2, $2, $3, $4, $4, $5, $6, $6, $7, $8, $8, $9, $A 
-        .byte $0, $1, $1, $2, $2, $3, $4, $5, $5, $6, $7, $8, $8, $9, $A, $B 
-        .byte $0, $1, $1, $2, $3, $4, $4, $5, $6, $7, $8, $8, $9, $A, $B, $C 
-        .byte $0, $1, $1, $2, $3, $4, $5, $6, $6, $7, $8, $9, $A, $B, $C, $D 
+        .byte $0, $1, $1, $1, $2, $2, $3, $3, $4, $4, $5, $5, $6, $6, $7, $8
+        .byte $0, $1, $1, $1, $2, $3, $3, $4, $4, $5, $6, $6, $7, $7, $8, $9
+        .byte $0, $1, $1, $2, $2, $3, $4, $4, $5, $6, $6, $7, $8, $8, $9, $A
+        .byte $0, $1, $1, $2, $2, $3, $4, $5, $5, $6, $7, $8, $8, $9, $A, $B
+        .byte $0, $1, $1, $2, $3, $4, $4, $5, $6, $7, $8, $8, $9, $A, $B, $C
+        .byte $0, $1, $1, $2, $3, $4, $5, $6, $6, $7, $8, $9, $A, $B, $C, $D
         .byte $0, $1, $1, $2, $3, $4, $5, $6, $7, $8, $9, $A, $B, $C, $D, $E
         .byte $0, $1, $2, $3, $4, $5, $6, $7, $8, $9, $A, $B, $C, $D, $E, $F
 

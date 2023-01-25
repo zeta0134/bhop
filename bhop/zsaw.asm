@@ -63,7 +63,7 @@ all_55_byte: .byte $55
 ; desired timbre in A
 ; note: will not take effect until next play_note command
 .proc zsaw_set_timbre
-        sta zsaw_timbre_index        
+        sta zsaw_timbre_index
         rts
 .endproc
 
@@ -83,7 +83,7 @@ all_55_byte: .byte $55
         cpx #3
         beq inverted
         rts
-inverted: 
+inverted:
         lda #$7F
         sec
         sbc zsaw_volume
@@ -100,7 +100,7 @@ timbre_behavior_lut:
         .addr timbre_triangle ; note: we mask to 8 timbres, so the extra entries are mostly for safety
         .addr timbre_triangle
         .addr timbre_triangle
-        
+
 
 timbre_sample_lut:
         .byte <((all_00_byte - $C000) >> 6) ; sawtooth, floor
@@ -135,14 +135,14 @@ bad_note_index:
         rts
 play_note:
         sta zsaw_current_note
-        stx zsaw_current_timbre 
+        stx zsaw_current_timbre
         asl ; note index to word index for the table lookup
         tax
 
         sei ; briefly disable interrupts, for pointer safety
-        lda zsaw_note_lists+0, x 
+        lda zsaw_note_lists+0, x
         sta zsaw_ptr+0
-        lda zsaw_note_lists+1, x 
+        lda zsaw_note_lists+1, x
         sta zsaw_ptr+1
         lda #0
         sta zsaw_pos
@@ -184,7 +184,7 @@ standard_timbre:
 
         ; tell the NMI handler that interrupts are active
         lda #$FF
-        sta irq_enabled 
+        sta irq_enabled
 done:
         cli ; enable interrupts
         rts
@@ -291,7 +291,7 @@ no_nmi_needed:
         lda #$80                  ; (2)
         eor zsaw_parity_counter ; (3)
         sta zsaw_parity_counter ; (3)
-        bmi odd_phase           
+        bmi odd_phase
 even_phase:
         lda zsaw_volume ; (3)
         jmp done_picking_phase ; (3)
@@ -308,7 +308,7 @@ done_picking_phase:
         lda #$80                  ; (2)
         eor zsaw_parity_counter ; (3)
         sta zsaw_parity_counter ; (3)
-        bmi odd_phase           
+        bmi odd_phase
 even_phase:
         lda zsaw_volume ; (3)
         jmp done_picking_phase ; (3)
@@ -332,7 +332,7 @@ done_picking_phase:
         lda #$80                  ; (2)
         eor zsaw_parity_counter ; (3)
         sta zsaw_parity_counter ; (3)
-        bmi odd_phase           
+        bmi odd_phase
 even_phase:
         lda #<((all_FF_byte - $C000) >> 6)
         jmp done_picking_phase ; (3)

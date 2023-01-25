@@ -20,7 +20,7 @@ scratch_target_frequency: .res 2
 ; table reversed / inverted, as appropriate, to generate the other 3 sections
 ; and complete the full waveform.
 
-; prep: 
+; prep:
 ;   x contains channel_index
 ; return:
 ;   a - vibrato strength, signed
@@ -61,7 +61,7 @@ invert_read:
         rts
 .endproc
 
-; prep: 
+; prep:
 ;   channel_index set for the desired channel
 ;   detuned_frequency contains base pitch
 ; effects:
@@ -77,7 +77,7 @@ invert_read:
         clc
         adc channel_vibrato_accumulator, x
         sta channel_vibrato_accumulator, x
-        
+
         ; now apply that to detuned_frequency
         jsr read_vibrato_lut ; does not clobber x
         sta scratch_byte
@@ -94,7 +94,7 @@ done:
         rts
 .endproc
 
-; prep: 
+; prep:
 ;   channel_index set for the desired channel
 ;   base_note contains the tracked note
 ; effects:
@@ -152,7 +152,7 @@ done:
 .endproc
 
 .if ::BHOP_ZSAW_ENABLED
-; prep: 
+; prep:
 ;   channel_index set for the desired channel
 ;   base_note contains the tracked note
 ; effects:
@@ -209,7 +209,7 @@ done:
 
 ; sortof a dispatch function, since pitch effects are all processed at
 ; the same time but have subtly different behavior
-; prep: 
+; prep:
 ;   channel_index set for the desired channel
 ;   base_note contains the triggered OR current target note (depending on effect)
 ;   relative_frequency contains the active frequency
@@ -221,7 +221,7 @@ done:
         lda channel_pitch_effects_active, x
         and #($FF - PITCH_EFFECT_ARP)
         beq done ; no effects active at all
-        
+
         ; here we abuse the flag layout for the effects; only one of these
         ; will ever be enabled at a time, and they are in this order:
         ;PITCH_EFFECT_UP           = %00000001
@@ -302,7 +302,7 @@ check_high:
         cmp scratch_target_frequency+1
         beq check_low
         bcc pitch_up ; channel frequency (A) is lower than target (M)
-        jmp pitch_down   
+        jmp pitch_down
 check_low:
         lda channel_relative_frequency_low, x
         cmp scratch_target_frequency
@@ -402,7 +402,7 @@ apply_effect:
 disable_effect:
         lda #0
         sta channel_pitch_effects_active, x
-done:   
+done:
         rts
 .endproc
 
@@ -449,7 +449,7 @@ apply_effect:
 disable_effect:
         lda #0
         sta channel_pitch_effects_active, x
-done:   
+done:
         rts
 .endproc
 
@@ -493,7 +493,7 @@ no_tremolo:
 ; Read the "tremolo" LUT, which is actually a riff on the vibrato LUT. Here we only
 ; care about the first half of the table, so we need the mirroring logic, but not the
 ; negation logic.
-; prep: 
+; prep:
 ;   x contains channel_index
 ; return:
 ;   a - tremolo strength, unsigned
@@ -523,7 +523,7 @@ store_index:
         lda channel_tremolo_settings, x
         and #$F0
         ora scratch_byte
-        tay        
+        tay
 normal_read:
         lda vibrato_lut, y
         ; tremolo is at half-strength
