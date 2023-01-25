@@ -18,7 +18,36 @@ def pulse_period(cpu_frequency, note_frequency):
   long instead of 16, this results in a transposition of one
   octave.
   """
-  return int(cpu_frequency / (16 * note_frequency) - 1)
+  desired_period = cpu_frequency / (16 * note_frequency) - 1
+  integer_period = round(desired_period)
+  clamped_period = min(max(integer_period, 0), 2047)
+  return clamped_period
+
+def vrc6_pulse_period(cpu_frequency, note_frequency):
+  """ Approximate pulse period that produces the desired frequency
+
+  VRC6 is calculated identically to 2A03 pulse, except it uses
+  a 12-bit period timer. It can reliably reach the lower octave.
+
+  Taken from https://www.nesdev.org/wiki/VRC6_audio#Pulse_Channels
+  """
+  desired_period = cpu_frequency / (16 * note_frequency) - 1
+  integer_period = round(desired_period)
+  clamped_period = min(max(integer_period, 0), 4095)
+  return clamped_period
+
+def vrc6_sawtooth_period(cpu_frequency, note_frequency):
+  """ Approximate pulse period that produces the desired frequency
+
+  VRC6 is calculated identically to 2A03 pulse, except it uses
+  a 12-bit period timer. It can reliably reach the lower octave.
+
+  Taken from https://www.nesdev.org/wiki/VRC6_audio#Pulse_Channels
+  """
+  desired_period = cpu_frequency / (14 * note_frequency) - 1
+  integer_period = round(desired_period)
+  clamped_period = min(max(integer_period, 0), 4095)
+  return clamped_period
 
 def ca65_low_byte_literal(value):
   return "$%02x" % (value & 0xFF)
@@ -39,10 +68,19 @@ def pretty_print_table(table_name, ca65_byte_literals):
     print("  .byte %s" % row_text)
 
 # Put it all together and write it to stdout
-def generate_lookup_table(base_frequency_hz, ca65_byte_converter):
+def generate_pulse_lookup_table(base_frequency_hz, ca65_byte_converter):
   return [ca65_byte_converter(pulse_period(base_frequency_hz, midi_frequency(midi_index + 24 - 1))) for midi_index in range(0, 128)]
+def generate_vrc6_pulse_lookup_table(base_frequency_hz, ca65_byte_converter):
+  return [ca65_byte_converter(vrc6_pulse_period(base_frequency_hz, midi_frequency(midi_index + 24 - 1))) for midi_index in range(0, 128)]
+def generate_vrc6_sawtooth_lookup_table(base_frequency_hz, ca65_byte_converter):
+  return [ca65_byte_converter(vrc6_sawtooth_period(base_frequency_hz, midi_frequency(midi_index + 24 - 1))) for midi_index in range(0, 128)]
 
-pretty_print_table("ntsc_period_low", generate_lookup_table(NTSC_CPU_FREQUENCY_HZ, ca65_low_byte_literal))
-pretty_print_table("ntsc_period_high", generate_lookup_table(NTSC_CPU_FREQUENCY_HZ, ca65_high_byte_literal))
-pretty_print_table("pal_period_low", generate_lookup_table(PAL_CPU_FREQUENCY_HZ, ca65_low_byte_literal))
-pretty_print_table("pal_period_high", generate_lookup_table(PAL_CPU_FREQUENCY_HZ, ca65_high_byte_literal))
+pretty_print_table("ntsc_period_low", generate_pulse_lookup_table(NTSC_CPU_FREQUENCY_HZ, ca65_low_byte_literal))
+pretty_print_table("ntsc_period_high", generate_pulse_lookup_table(NTSC_CPU_FREQUENCY_HZ, ca65_high_byte_literal))
+pretty_print_table("pal_period_low", generate_pulse_lookup_table(PAL_CPU_FREQUENCY_HZ, ca65_low_byte_literal))
+pretty_print_table("pal_period_high", generate_pulse_lookup_table(PAL_CPU_FREQUENCY_HZ, ca65_high_byte_literal))
+
+pretty_print_table("vrc6_pulse_period_low", generate_vrc6_pulse_lookup_table(NTSC_CPU_FREQUENCY_HZ, ca65_low_byte_literal))
+pretty_print_table("vrc6_pulse_period_high", generate_vrc6_pulse_lookup_table(NTSC_CPU_FREQUENCY_HZ, ca65_high_byte_literal))
+pretty_print_table("vrc6_sawtooth_period_low", generate_vrc6_pulse_lookup_table(NTSC_CPU_FREQUENCY_HZ, ca65_low_byte_literal))
+pretty_print_table("vrc6_sawtooth_period_high", generate_vrc6_pulse_lookup_table(NTSC_CPU_FREQUENCY_HZ, ca65_high_byte_literal))
