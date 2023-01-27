@@ -8,6 +8,10 @@ __BHOP_CONFIG = 1
 .define BHOP_RAM_SEGMENT "RAM"
 .define BHOP_ZP_SEGMENT "ZEROPAGE"
 
+; Note: bhop currently requires just 6 bytes of zeropage. ALL of these bytes
+; are temporary, so feel free to allocate them in your scratch region and
+; clobber them freely between calls to bhop_play.
+
 .import bhop_music_data
 
 ; To play a module, export "music.asm" from FamiTracker, and
