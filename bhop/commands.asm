@@ -1,5 +1,3 @@
-        .segment BHOP_ZP_SEGMENT
-cmd_ptr: .word $0000
 
         .segment BHOP_PLAYER_SEGMENT
 
@@ -63,10 +61,10 @@ command_table:
         asl ; drop the high bit, and also expand the lower 7 bits into a table index
         tay
         lda command_table, y
-        sta cmd_ptr
+        sta bhop_ptr
         lda command_table+1, y
-        sta cmd_ptr+1
-        jmp (cmd_ptr)
+        sta bhop_ptr+1
+        jmp (bhop_ptr)
         ; dispatched command executes rts
 .endproc
 
