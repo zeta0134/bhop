@@ -11,54 +11,54 @@ command_table:
     .word cmd_unimplemented_short  ;($81)       CMD_HOLD                    && instrument
     .word cmd_set_duration         ;($82)       CMD_SET_DURATION            enable compressed durations, determines length of space between notes
     .word cmd_reset_duration       ;($83)       CMD_RESET_DURATION          disable compressed durations, determines length of space between notes
-    .word cmd_eff_speed            ;($84)       CMD_EFF_SPEED               Fxx
+    .word cmd_eff_speed            ;($84)       CMD_EFF_SPEED               Fxx, EffParam ? EffParam : 1
     .word cmd_eff_tempo            ;($85)       CMD_EFF_TEMPO               Fxx >= speed split point
-    .word cmd_eff_jump             ;($86)       CMD_EFF_JUMP                Bxx
-    .word cmd_eff_skip             ;($87)       CMD_EFF_SKIP                Dxx
+    .word cmd_eff_jump             ;($86)       CMD_EFF_JUMP                Bxx, EffParam + 1
+    .word cmd_eff_skip             ;($87)       CMD_EFF_SKIP                Dxx, EffParam + 1
     .word cmd_eff_halt             ;($88)       CMD_EFF_HALT                Cxx
-    .word cmd_unimplemented        ;($89)       CMD_EFF_VOLUME              Exx, 2A03/MMC5 length counter
+    .word cmd_unimplemented        ;($89)       CMD_EFF_VOLUME              Exx, 2A03/MMC5 length counter, if ((EffParam <= 0x1F) || (EffParam >= 0xE0 && EffParam <= 0xE3)) WriteData(EffParam & 0x9F);
     .word cmd_eff_clear            ;($8A)       CMD_EFF_CLEAR               x00, clears effect
     .word cmd_eff_portaup          ;($8B)       CMD_EFF_PORTAUP             1xx
     .word cmd_eff_portadown        ;($8C)       CMD_EFF_PORTADOWN           2xx
     .word cmd_eff_portamento       ;($8D)       CMD_EFF_PORTAMENTO          3xx
     .word cmd_eff_arpeggio         ;($8E)       CMD_EFF_ARPEGGIO            0xy
-    .word cmd_eff_vibrato          ;($8F)       CMD_EFF_VIBRATO             4xy
-    .word cmd_eff_tremolo          ;($90)       CMD_EFF_TREMOLO             7xy
+    .word cmd_eff_vibrato          ;($8F)       CMD_EFF_VIBRATO             4xy, (EffParam & 0xF) << 4 | (EffParam >> 4)
+    .word cmd_eff_tremolo          ;($90)       CMD_EFF_TREMOLO             7xy, (EffParam & 0xF) << 4 | (EffParam >> 4)
     .word cmd_eff_pitch            ;($91)       CMD_EFF_PITCH               Pxx
     .word cmd_eff_reset_pitch      ;($92)       CMD_EFF_RESET_PITCH         P80
-    .word cmd_eff_duty             ;($93)       CMD_EFF_DUTY                Vxx
+    .word cmd_eff_duty             ;($93)       CMD_EFF_DUTY                Vxx; for S5B only: (EffParam << 6) | ((EffParam & 0x04) << 3)
     .word cmd_eff_delay            ;($94)       CMD_EFF_DELAY               Gxx
     .word cmd_unimplemented        ;($95)       CMD_EFF_SWEEP               sweep for 2A03 pulse, Hxy == (0x88 | (EffParam & 0x77)), Ixy == (0x80 | (EffParam & 0x77))
-    .word cmd_eff_dac              ;($96)       CMD_EFF_DAC                 Zxx DPCM
+    .word cmd_eff_dac              ;($96)       CMD_EFF_DAC                 Zxx DPCM, EffParam & 0x7F
     .word cmd_eff_offset           ;($97)       CMD_EFF_OFFSET              Yxx DPCM
     .word cmd_eff_slide_up         ;($98)       CMD_EFF_SLIDE_UP            Qxy
     .word cmd_eff_slide_down       ;($99)       CMD_EFF_SLIDE_DOWN          Rxy
     .word cmd_eff_vol_slide        ;($9A)       CMD_EFF_VOL_SLIDE           Axy
     .word cmd_eff_note_cut         ;($9B)       CMD_EFF_NOTE_CUT            Sxx
-    .word cmd_eff_retrigger        ;($9C)       CMD_EFF_RETRIGGER           Xxx DPCM
-    .word cmd_eff_dpcm_pitch       ;($9D)       CMD_EFF_DPCM_PITCH          Wxx DPCM
+    .word cmd_eff_retrigger        ;($9C)       CMD_EFF_RETRIGGER           Xxx DPCM, EffParam + 1
+    .word cmd_eff_dpcm_pitch       ;($9D)       CMD_EFF_DPCM_PITCH          Wxx DPCM, EffParam + 1
     .word cmd_unimplemented        ;($9E)       CMD_EFF_NOTE_RELEASE        Lxx
-    .word cmd_unimplemented        ;($9F)       CMD_EFF_LINEAR_COUNTER      Sxx triangle, xx >= 0x80
+    .word cmd_unimplemented        ;($9F)       CMD_EFF_LINEAR_COUNTER      Sxx triangle, xx >= 0x80, EffParam - 0x80
     .word cmd_eff_groove           ;($A0)       CMD_EFF_GROOVE              Oxx
-    .word cmd_unimplemented        ;($A1)       CMD_EFF_DELAYED_VOLUME      Mxy
+    .word cmd_unimplemented        ;($A1)       CMD_EFF_DELAYED_VOLUME      Mxy if ((EffParam >> 4) && (EffParam & 0x0F))
     .word cmd_unimplemented        ;($A2)       CMD_EFF_TRANSPOSE           Txy
     .word cmd_eff_phase_reset      ;($A3)       CMD_EFF_PHASE_RESET         =xx
     .word cmd_eff_phase_reset      ;($A4)       CMD_EFF_DPCM_PHASE_RESET    =xx DPCM
     .word cmd_unimplemented        ;($A5)       CMD_EFF_HARMONIC            Kxx
     .word cmd_unimplemented        ;($A6)       CMD_EFF_TARGET_VOL_SLIDE    Nxy
-    .word cmd_unimplemented        ;($A7)       CMD_EFF_VRC7_PATCH          Vxx VRC7
-    .word cmd_unimplemented        ;($A8)       CMD_EFF_VRC7_PORT           Hxx VRC7
+    .word cmd_unimplemented        ;($A7)       CMD_EFF_VRC7_PATCH          Vxx VRC7, EffParam << 4
+    .word cmd_unimplemented        ;($A8)       CMD_EFF_VRC7_PORT           Hxx VRC7, EffParam & 0x07
     .word cmd_unimplemented        ;($A9)       CMD_EFF_VRC7_WRITE          Ixx VRC7
     .word cmd_unimplemented        ;($AA)       CMD_EFF_FDS_MOD_DEPTH       Hxx FDS
     .word cmd_unimplemented        ;($AB)       CMD_EFF_FDS_MOD_RATE_HI     I0x FDS, Ixy sets auto modulation period
     .word cmd_unimplemented        ;($AC)       CMD_EFF_FDS_MOD_RATE_LO     Jxx FDS
-    .word cmd_unimplemented        ;($AD)       CMD_EFF_FDS_VOLUME          Exx FDS
+    .word cmd_unimplemented        ;($AD)       CMD_EFF_FDS_VOLUME          Exx FDS, EffParam == 0xE0 ? 0x80 : (EffParam ^ 0x40)
     .word cmd_unimplemented        ;($AE)       CMD_EFF_FDS_MOD_BIAS        Hxx FDS
-    .word cmd_unimplemented        ;($AF)       CMD_EFF_N163_WAVE_BUFFER    Zxx N163
+    .word cmd_unimplemented        ;($AF)       CMD_EFF_N163_WAVE_BUFFER    Zxx N163, if (EffParam <= 0x7F) EffParam == 0x7F ? 0x80 : EffParam
     .word cmd_unimplemented        ;($B0)       CMD_EFF_S5B_ENV_TYPE        H0y S5B, Hxy sets auto envelope period
     .word cmd_unimplemented        ;($B1)       CMD_EFF_S5B_ENV_RATE_HI     Ixx S5B
     .word cmd_unimplemented        ;($B2)       CMD_EFF_S5B_ENV_RATE_LO     Jxx S5B
-    .word cmd_unimplemented        ;($B3)       CMD_EFF_S5B_NOISE           Wxx S5B
+    .word cmd_unimplemented        ;($B3)       CMD_EFF_S5B_NOISE           Wxx S5B, EffParam & 0x1F
         ; fill out this table to 128 entries. Assume any new command
     ; added has one parameter. If it doesn't, oh well!
     .repeat 80
