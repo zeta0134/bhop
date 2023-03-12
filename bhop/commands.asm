@@ -168,7 +168,20 @@ no_parameter_byte:
         lsr
         ; store the instrument and load it up
         sta channel_selected_instrument, x
+
+.if ::BHOP_PATTERN_BANKING
+        ; Instruments live in the module bank, so we need to swap that in before processing them
+        lda module_bank
+        switch_music_bank
+.endif
         jsr load_instrument
+.if ::BHOP_PATTERN_BANKING
+        ; And now we need to switch back to the pattern bank before continuing
+        ldx channel_index
+        lda channel_pattern_bank, x
+        switch_music_bank
+        ldx channel_index
+.endif  
         rts
 .endproc
 

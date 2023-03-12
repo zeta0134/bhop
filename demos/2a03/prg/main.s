@@ -98,7 +98,7 @@ music_track_table:
         ;.addr song_groove2
         ;.addr song_groove3
         ;.addr song_groove4
-        ;.addr song_red
+        .addr song_red
         .addr song_itt
         .addr song_virus
         .addr song_smb
@@ -109,7 +109,7 @@ music_track_table:
         .addr song_simian
 
 ;music_track_count: .byte 13
-music_track_count: .byte 8
+music_track_count: .byte 9
 
 .proc player_bank_music
         pha ; preserve bank number on the stack

@@ -28,12 +28,15 @@ row_cmp: .byte $00
 frame_counter: .byte $00
 frame_cmp: .byte $00
 
+module_flags: .byte $00
+
 .if ::BHOP_ZSAW_ENABLED
 zsaw_relative_note: .byte $00
 .endif
 
 .if ::BHOP_PATTERN_BANKING
 module_bank: .byte $00
+current_music_bank: .byte $00
 .endif
 song_ptr: .word $0000
 frame_ptr: .word $0000
@@ -48,6 +51,9 @@ shadow_mmc5_pulse2_freq_hi: .byte $00
 ; channel state tables
 channel_pattern_ptr_low: .res BHOP::NUM_CHANNELS
 channel_pattern_ptr_high: .res BHOP::NUM_CHANNELS
+.if ::BHOP_PATTERN_BANKING
+channel_pattern_bank: .res BHOP::NUM_CHANNELS
+.endif
 channel_status: .res BHOP::NUM_CHANNELS
 channel_global_duration: .res BHOP::NUM_CHANNELS
 channel_row_delay_counter: .res BHOP::NUM_CHANNELS
@@ -154,6 +160,7 @@ positive:
 
 .if ::BHOP_PATTERN_BANKING
         lda module_bank
+        sta current_music_bank
         jsr BHOP_PATTERN_SWITCH_ROUTINE
 .endif
 
@@ -199,6 +206,9 @@ song_uses_groove:
         ldy #SongInfo::pattern_length
         lda (bhop_ptr), y
         sta row_cmp
+
+        lda BHOP_MUSIC_BASE + FtModuleHeader::flags
+        sta module_flags
 
         ; If this song has grooves enabled, then apply the first groove right away
         jsr update_groove
@@ -422,6 +432,59 @@ done:
         sta channel_pattern_ptr_high+DPCM_INDEX
         iny
 
+.if ::BHOP_PATTERN_BANKING
+        lda module_flags
+        and #MODULE_FLAGS_PATTERN_BANKING
+        beq banking_not_enabled
+
+        lda (bhop_ptr), y
+        sta channel_pattern_bank+PULSE_1_INDEX
+        iny
+        lda (bhop_ptr), y
+        sta channel_pattern_bank+PULSE_2_INDEX
+        iny
+        lda (bhop_ptr), y
+        sta channel_pattern_bank+TRIANGLE_INDEX
+        iny
+        lda (bhop_ptr), y
+        sta channel_pattern_bank+NOISE_INDEX
+        iny
+        .if ::BHOP_ZSAW_ENABLED
+        lda (bhop_ptr), y
+        sta channel_pattern_bank+ZSAW_INDEX
+        iny
+        .endif
+        .if ::BHOP_MMC5_ENABLED
+        lda (bhop_ptr), y
+        sta channel_pattern_bank+MMC5_PULSE_1_INDEX
+        iny
+        lda (bhop_ptr), y
+        sta channel_pattern_bank+MMC5_PULSE_2_INDEX
+        iny
+        .endif
+        lda (bhop_ptr), y
+        sta channel_pattern_bank+DPCM_INDEX
+        iny
+        jmp done_with_banks
+banking_not_enabled:
+        ; this song doesn't use pattern banking, so it doesn't have valid bank
+        ; data here. Default all patterns to the module bank instead.
+        lda module_bank
+        sta channel_pattern_bank + PULSE_1_INDEX
+        sta channel_pattern_bank + PULSE_2_INDEX
+        sta channel_pattern_bank + TRIANGLE_INDEX
+        sta channel_pattern_bank + NOISE_INDEX
+        .if ::BHOP_ZSAW_ENABLED
+        sta channel_pattern_bank + ZSAW_INDEX
+        .endif
+        .if ::BHOP_MMC5_ENABLED
+        sta channel_pattern_bank + MMC5_PULSE_1_INDEX
+        sta channel_pattern_bank + MMC5_PULSE_2_INDEX
+        .endif
+        sta channel_pattern_bank + DPCM_INDEX
+done_with_banks:
+.endif
+
         ; reset all the row counters to 0
         lda #0
         sta channel_row_delay_counter + PULSE_1_INDEX
@@ -508,6 +571,14 @@ done_advancing_rows:
         cmp #0
         jne skip
 
+.if ::BHOP_PATTERN_BANKING
+        ; swap in the bank this pattern data lives in
+        lda channel_pattern_bank, x
+        switch_music_bank
+        ; that clobbered all registers, so reload X before continuing
+        ldx channel_index
+.endif
+
         ; prep the pattern pointer for reading
         lda channel_pattern_ptr_low, x
         sta pattern_ptr
@@ -557,7 +628,20 @@ quick_instrument_change:
         tya ; un-preserve
         and #$0F ; a now contains instrument index
         sta channel_selected_instrument, x
+
+.if ::BHOP_PATTERN_BANKING
+        ; Instruments live in the module bank, so we need to swap that in before processing them
+        lda module_bank
+        switch_music_bank
+.endif
         jsr load_instrument
+.if ::BHOP_PATTERN_BANKING
+        ; And now we need to switch back to the pattern bank before continuing
+        ldx channel_index
+        lda channel_pattern_bank, x
+        switch_music_bank
+        ldx channel_index ; un-clobber
+.endif
         ; ready to process the next bytecode
         jmp bytecode_loop
 
@@ -804,6 +888,12 @@ done:
         lda #DPCM_INDEX
         sta channel_index
         jsr advance_channel_row
+
+.if ::BHOP_PATTERN_BANKING
+        ; Now that we're done with patterns, restore the module bank before continuing
+        lda module_bank
+        switch_music_bank
+.endif
 
         ; Every time we update the pattern rows, also advance the groove sequence if enabled
         jsr update_groove
@@ -2375,6 +2465,7 @@ skip:
 .proc bhop_play
 .if ::BHOP_PATTERN_BANKING
         lda module_bank
+        sta current_music_bank
         jsr BHOP_PATTERN_SWITCH_ROUTINE
 .endif
 

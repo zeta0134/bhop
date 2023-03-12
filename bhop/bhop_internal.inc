@@ -85,6 +85,8 @@ ARP_MODE_SCHEME =   $03
 PITCH_MODE_RELATIVE = $00
 PITCH_MODE_ABSOLUTE = $01
 
+MODULE_FLAGS_PATTERN_BANKING = %00000001
+
 .struct InstrumentHeader
         type .byte
         sequences_enabled .byte
@@ -109,6 +111,18 @@ PITCH_MODE_ABSOLUTE = $01
         bne done
         inc pattern_ptr+1
 done:
+.endscope
+.endmacro
+
+; note: target bank in A
+; MUST assume all registers are clobbered
+.macro switch_music_bank
+.scope
+        cmp current_music_bank
+        beq all_done
+        sta current_music_bank
+        jsr BHOP_PATTERN_SWITCH_ROUTINE
+all_done:
 .endscope
 .endmacro
 
@@ -375,3 +389,4 @@ positive:
         sbc #0
         sta addr+1
 .endmacro
+
