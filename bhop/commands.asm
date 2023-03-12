@@ -34,7 +34,7 @@ command_table:
     .word cmd_unimplemented        ;CMD_EFF_DPCM_PITCH
     .word cmd_unimplemented        ;CMD_EFF_NOTE_RELEASE
     .word cmd_unimplemented        ;CMD_EFF_LINEAR_COUNTER
-    .word cmd_unimplemented        ;CMD_EFF_GROOVE
+    .word cmd_eff_groove           ;CMD_EFF_GROOVE
     .word cmd_unimplemented        ;CMD_EFF_DELAYED_VOLUME
     .word cmd_unimplemented        ;CMD_EFF_TRANSPOSE
     .word cmd_unimplemented        ;CMD_EFF_VRC7_PATCH
@@ -359,5 +359,12 @@ loop:
 .proc cmd_eff_offset
         fetch_pattern_byte
         sta effect_dpcm_offset
+        rts
+.endproc
+
+.proc cmd_eff_groove
+        fetch_pattern_byte
+        sta groove_index
+        sta groove_position
         rts
 .endproc
