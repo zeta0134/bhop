@@ -970,6 +970,11 @@ done:
         ; so apply a note delay. In this case, tick the bytecode reader
         ; one time:
         jsr advance_channel_row
+.if ::BHOP_PATTERN_BANKING
+        ; That might have clobbered the module bank, so restore it before continuing
+        lda module_bank
+        switch_music_bank
+.endif
         ; if this is the noise channel, fix its frequency
         lda channel_index
         cmp #3
