@@ -213,6 +213,7 @@ FancyTextPtr := ScratchPtr
         ldy #MusicTrack::BankNumber
         lda (TrackPtr), y
         jsr bhop_set_module_bank
+        jsr player_bank_music
 
         ldy #MusicTrack::TrackNumber
         lda (TrackPtr), y

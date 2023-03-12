@@ -20,6 +20,13 @@ BHOP_DPCM_BANKING = 0
 BHOP_DPCM_SWITCH_ROUTINE = bhop_apply_dpcm_bank
 .endif
 
+BHOP_PATTERN_BANKING = 0
+
+.if ::BHOP_PATTERN_BANKING
+.import bhop_apply_music_bank
+BHOP_PATTERN_SWITCH_ROUTINE = bhop_apply_music_bank
+.endif
+
 BHOP_ZSAW_ENABLED = 1
 BHOP_MMC5_ENABLED = 0
 
