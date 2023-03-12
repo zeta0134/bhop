@@ -15,10 +15,16 @@ __BHOP_CONFIG = 1
 
 BHOP_MUSIC_BASE = bhop_music_data
 BHOP_DPCM_BANKING = 1
+BHOP_PATTERN_BANKING = 1
 
 .if ::BHOP_DPCM_BANKING
 .import bhop_apply_dpcm_bank
 BHOP_DPCM_SWITCH_ROUTINE = bhop_apply_dpcm_bank
+.endif
+
+.if ::BHOP_PATTERN_BANKING
+.import bhop_apply_music_bank
+BHOP_PATTERN_SWITCH_ROUTINE = bhop_apply_music_bank
 .endif
 
 BHOP_ZSAW_ENABLED = 0

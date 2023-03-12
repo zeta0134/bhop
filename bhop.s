@@ -32,6 +32,9 @@ frame_cmp: .byte $00
 zsaw_relative_note: .byte $00
 .endif
 
+.if ::BHOP_PATTERN_BANKING
+module_bank: .byte $00
+.endif
 song_ptr: .word $0000
 frame_ptr: .word $0000
 
@@ -99,7 +102,7 @@ dpcm_active: .byte $00
 
         .segment BHOP_PLAYER_SEGMENT
         ; global
-        .export bhop_init, bhop_play, bhop_mute_channel, bhop_unmute_channel
+        .export bhop_init, bhop_play, bhop_mute_channel, bhop_unmute_channel, bhop_set_module_bank
 
 .include "bhop/midi_lut.inc"
 
@@ -137,14 +140,22 @@ positive:
 .endscope
 .endmacro
 
-; TODO: I believe the convention is to pick a song here?
-; right now lots of stuff is hard coded, that could instead
-; be read from the chosen song header
+.proc bhop_set_module_bank
+.if ::BHOP_PATTERN_BANKING
+        sta module_bank
+.endif
+        rts
+.endproc
 
 ; param: song index (a)
 .proc bhop_init
         ; preserve parameters
         pha ; song index
+
+.if ::BHOP_PATTERN_BANKING
+        lda module_bank
+        jsr BHOP_PATTERN_SWITCH_ROUTINE
+.endif
 
         ; global initialization things
         lda #00
@@ -2362,10 +2373,15 @@ skip:
 .endif
 
 .proc bhop_play
+.if ::BHOP_PATTERN_BANKING
+        lda module_bank
+        jsr BHOP_PATTERN_SWITCH_ROUTINE
+.endif
+
         jsr tick_frame_counter
         jsr tick_envelopes_and_effects
         jsr tick_registers
-        ; D:
+        ; :D
         rts
 .endproc
 

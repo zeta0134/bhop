@@ -193,6 +193,12 @@ FancyTextPtr := ScratchPtr
 .endproc
 .export bhop_apply_dpcm_bank
 
+.proc bhop_apply_music_bank
+        jsr player_bank_music
+        rts
+.endproc
+.export bhop_apply_music_bank
+
 ; Internal Functions
 
 .proc initialize_current_track
@@ -206,7 +212,7 @@ FancyTextPtr := ScratchPtr
 
         ldy #MusicTrack::BankNumber
         lda (TrackPtr), y
-        jsr player_bank_music
+        jsr bhop_set_module_bank
 
         ldy #MusicTrack::TrackNumber
         lda (TrackPtr), y
