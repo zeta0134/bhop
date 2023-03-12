@@ -308,22 +308,22 @@ ft_s0_frames:
 	.word ft_s0f5
 ft_s0f0:
 	.word ft_s0p0c0, ft_s0p0c1, ft_s0p0c2, ft_s0p1c3, ft_s0p0c4
-	.byte $03, $03, $03, $03, $03
+	.byte <.bank(ft_s0p0c0), <.bank(ft_s0p0c1), <.bank(ft_s0p0c2), <.bank(ft_s0p1c3), <.bank(ft_s0p0c4)
 ft_s0f1:
 	.word ft_s0p2c0, ft_s0p1c1, ft_s0p2c2, ft_s0p1c3, ft_s0p1c4
-	.byte $03, $03, $03, $03, $03
+	.byte <.bank(ft_s0p2c0), <.bank(ft_s0p1c1), <.bank(ft_s0p2c2), <.bank(ft_s0p1c3), <.bank(ft_s0p1c4)
 ft_s0f2:
 	.word ft_s0p3c0, ft_s0p2c1, ft_s0p2c2, ft_s0p2c3, ft_s0p2c4
-	.byte $03, $03, $03, $03, $03
+	.byte <.bank(ft_s0p3c0), <.bank(ft_s0p2c1), <.bank(ft_s0p2c2), <.bank(ft_s0p2c3), <.bank(ft_s0p2c4)
 ft_s0f3:
 	.word ft_s0p4c0, ft_s0p3c1, ft_s0p3c2, ft_s0p1c3, ft_s0p3c4
-	.byte $03, $03, $03, $03, $03
+	.byte <.bank(ft_s0p4c0), <.bank(ft_s0p3c1), <.bank(ft_s0p3c2), <.bank(ft_s0p1c3), <.bank(ft_s0p3c4)
 ft_s0f4:
 	.word ft_s0p5c0, ft_s0p4c1, ft_s0p5c2, ft_s0p3c3, ft_s0p4c4
-	.byte $03, $03, $03, $03, $03
+	.byte <.bank(ft_s0p5c0), <.bank(ft_s0p4c1), <.bank(ft_s0p5c2), <.bank(ft_s0p3c3), <.bank(ft_s0p4c4)
 ft_s0f5:
 	.word ft_s0p0c0, ft_s0p5c1, ft_s0p0c2, ft_s0p1c3, ft_s0p0c4
-	.byte $03, $03, $03, $03, $03
+	.byte <.bank(ft_s0p0c0), <.bank(ft_s0p5c1), <.bank(ft_s0p0c2), <.bank(ft_s0p1c3), <.bank(ft_s0p0c4)
 ; Bank 1
 ft_s0p0c0:
 	.byte $82, $01, $E3, $FA, $25, $FA, $28, $FA, $2F, $F8, $25, $F8, $28, $F8, $25, $FA, $2F, $FA, $28, $FA

@@ -89,6 +89,9 @@ effect_cut_delay: .res BHOP::NUM_CHANNELS
 effect_skip_target: .byte $00
 effect_dpcm_offset: .byte $00
 
+groove_index: .byte $00
+groove_position: .byte $00
+
 .if ::BHOP_ZSAW_ENABLED
 dpcm_active: .byte $00
 .endif
@@ -149,6 +152,7 @@ positive:
         sta tempo_counter+1
         sta row_counter
         sta frame_counter
+        sta groove_index
 
         ; switch to the requested song
         prepare_ptr BHOP_MUSIC_BASE + FtModuleHeader::song_list
@@ -166,8 +170,15 @@ positive:
         prepare_ptr song_ptr
         ldy #SongInfo::speed
         lda (bhop_ptr), y
+        beq song_uses_groove
+song_uses_speed:
         tax
         jsr set_speed
+song_uses_groove:
+        ldy #SongInfo::groove_position
+        lda (bhop_ptr), y
+        sta groove_index
+        sta groove_position
         ldy #SongInfo::tempo
         lda (bhop_ptr), y
         sta tempo
@@ -177,6 +188,13 @@ positive:
         ldy #SongInfo::pattern_length
         lda (bhop_ptr), y
         sta row_cmp
+
+        ; If this song has grooves enabled, then apply the first groove right away
+        jsr update_groove
+        ; Now, to work around an off-by-one startup condition with when advance_pattern_rows
+        ; gets called for the first time, reset the groove position
+        lda groove_index
+        sta groove_position
 
         ; initialize at the first frame, and prime our pattern pointers
         ldx #0
@@ -268,6 +286,28 @@ loop:
         add16 tempo_cmp, #150
         dex
         bne loop
+        rts
+.endproc
+
+.proc update_groove
+        lda groove_index
+        beq done
+
+        prepare_ptr BHOP_MUSIC_BASE + FtModuleHeader::groove_list
+
+        ldy groove_position
+        lda (bhop_ptr), y
+        bne apply_groove
+reached_end_of_groove:
+        ldy groove_index
+        lda (bhop_ptr), y
+apply_groove:
+        iny
+        sty groove_position
+        tax
+        jsr set_speed
+
+done:
         rts
 .endproc
 
@@ -753,6 +793,9 @@ done:
         lda #DPCM_INDEX
         sta channel_index
         jsr advance_channel_row
+
+        ; Every time we update the pattern rows, also advance the groove sequence if enabled
+        jsr update_groove
 
         rts
 .endproc
