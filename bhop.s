@@ -647,7 +647,7 @@ quick_instrument_change:
 
 handle_note:
         cmp #$00 ; note rest
-        beq done_with_bytecode
+        jeq done_with_bytecode
         cmp #$7F ; note off
         bne check_release
         ; a note off immediately mutes the channel
@@ -661,7 +661,19 @@ check_release:
         lda channel_status, x
         ora #CHANNEL_RELEASED
         sta channel_status, x
+.if ::BHOP_PATTERN_BANKING
+        ; Instruments live in the module bank, so we need to swap that in before processing them
+        lda module_bank
+        switch_music_bank
+.endif      
         jsr apply_release
+.if ::BHOP_PATTERN_BANKING
+        ; And now we need to switch back to the pattern bank before continuing
+        ldx channel_index
+        lda channel_pattern_bank, x
+        switch_music_bank
+        ldx channel_index ; un-clobber
+.endif
         jmp done_with_bytecode
 note_trigger:
         ; a contains the selected note at this point
