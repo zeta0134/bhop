@@ -374,12 +374,10 @@ done:
         rts
 .endproc
 
+; see CDPCMChan::HandleEffect() in Dn-FT
+; sets effect_retrigger_period.
+; if effect_retrigger_counter == 0, then queue retrigger
 .proc cmd_eff_retrigger
-; from Channels2A03.cpp:
-; mRetriggerPeriod = std::max((int)EffParam, 1);
-; if (mRetriggerCtr == 0) {	// Most recent row contains note without Xxx
-    ; queueSample();
-; }
         fetch_pattern_byte
         sta effect_retrigger_period
         ; X00 == X01
@@ -431,10 +429,8 @@ p2phasereset:
         sta $4007
         rts
 dpcmphasereset:
-; from Channels2A03.cpp:
-; if (EffParam == 0) {
-    ; triggerSample();
-; }
+; see CDPCMChan::HandleEffect() in Dn-FT
+; triggers a sample again when param is 0
         jsr trigger_sample
         rts
 .endproc

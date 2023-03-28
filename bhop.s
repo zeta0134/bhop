@@ -100,11 +100,12 @@ effect_note_delay: .res BHOP::NUM_CHANNELS
 effect_cut_delay: .res BHOP::NUM_CHANNELS
 effect_skip_target: .byte $00
 
-; Wxx
-effect_dpcm_pitch: .byte $00
-
+; Oxx
 groove_index: .byte $00
 groove_position: .byte $00
+
+; Wxx
+effect_dpcm_pitch: .byte $00
 
 ; Xxx
 effect_retrigger_period: .byte $00
@@ -2348,14 +2349,9 @@ done_with_mmc5:
         and #CHANNEL_SUPPRESSED
         jne done
 
-; if (mRetriggerPeriod != 0) {
-    ; mRetriggerCtr--;
-    ; if (mRetriggerCtr == 0) {
-        ; mRetriggerCtr = mRetriggerPeriod;
-        ; mEnabled = true;
-        ; mTriggerSample = true;
-    ; }
-; }
+; Xxx handling; see CDPCMChan::RefreshChannel() in Dn-FT
+; decrement effect_retrigger_counter while effect_retrigger_counter != zero
+; if retrigger counter is 0, then time to trigger the sample again
         lda effect_retrigger_period
         beq next
         dec effect_retrigger_counter
@@ -2371,45 +2367,18 @@ done_with_mmc5:
         sta channel_status + DPCM_INDEX
 next:
 
-; this block does these two statements
-; if (m_bRelease) { // note release
-    ; // Release command
-    ; WriteRegister(0x4015, 0x0F);
-    ; mEnabled = false;
-    ; m_bRelease = false;
-; }
-; if (!m_bGate) { // note cut
-    ; // Cut sample
-    ; WriteRegister(0x4015, 0x0F);
-    ; WriteRegister(0x4011, 0);	// regain full volume for TN
-    ; mEnabled = false;     // don't write to this channel anymore
-; }
+; handle note cut and note release
+; see CDPCMChan::RefreshChannel() in Dn-FT 
         lda channel_status + DPCM_INDEX
         and #(CHANNEL_MUTED | CHANNEL_RELEASED)
         jne dpcm_muted
 
-; if (!mEnabled)
-    ; return;
+; check if channel is enabled in the first place
         lda dpcm_status
         and #DPCM_ENABLED
         jeq done
 
-; if (mTriggerSample && m_bGate) {
-    ; // Start playing the sample
-    ; WriteRegister(0x4010, (m_iPeriod & 0x0F) | m_iLoop);
-    ; WriteRegister(0x4012, m_iOffset);							    // load address, start at $C000
-    ; WriteRegister(0x4013, m_iSampleLength);						// length
-    ; WriteRegister(0x4015, 0x0F);
-    ; WriteRegister(0x4015, 0x1F);								    // fire sample
-
-    ; // Loop offset
-    ; if (m_iLoopOffset > 0) {
-        ; WriteRegister(0x4012, m_iLoopOffset);
-        ; WriteRegister(0x4013, m_iLoopLength);
-    ; }
-
-    ; mTriggerSample = false;
-; }
+; make arrangements to write to the specific registers
         lda channel_status + DPCM_INDEX
         and #CHANNEL_TRIGGERED
         jeq check_for_inactive
@@ -2553,13 +2522,8 @@ check_for_inactive:
 .endproc
 
 ; resets the retrigger logic upon a new DPCM sample note
+; see CDPCMChan::triggerSample() in Dn-FT
 .proc trigger_sample
-; from Channels2A03.cpp:
-; mEnabled = true;
-; mTriggerSample = true;
-
-; // If mRetriggerPeriod != 0, this initializes retriggering. Otherwise reset mRetriggerCtr.
-; queueSample();
         lda dpcm_status
         ora #DPCM_ENABLED
         sta dpcm_status
@@ -2570,17 +2534,8 @@ check_for_inactive:
         rts
 .endproc
 
+; If effect_retrigger_period != 0, this initializes retriggering. Otherwise reset effect_retrigger_counter.
 .proc queue_sample
-; from Channels2A03.cpp:
-; void CDPCMChan::queueSample() {
-    ; if (mRetriggerPeriod == 0) {
-        ; // Not retriggering, reset mRetriggerCtr.
-        ; mRetriggerCtr = 0;
-    ; } else {
-        ; // mRetriggerCtr gets decremented this frame, and reaches 0 in mRetriggerPeriod frames.
-        ; mRetriggerCtr = mRetriggerPeriod + 1;
-    ; }
-; }
         lda effect_retrigger_period
         beq reset_counter
         sta effect_retrigger_counter
