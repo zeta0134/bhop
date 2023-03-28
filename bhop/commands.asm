@@ -1,5 +1,4 @@
 
-
         .segment BHOP_PLAYER_SEGMENT
 
 command_table:
@@ -117,16 +116,6 @@ no_parameter_byte:
         rts
 .endproc
 
-.proc cmd_instrument
-        fetch_pattern_byte
-        ; of *course* this is pre-shifted, so un-do that:
-        lsr
-        ; store the instrument and load it up
-        sta channel_selected_instrument, x
-        jsr load_instrument
-        rts
-.endproc
-
 .proc cmd_set_duration
         fetch_pattern_byte
         sta channel_global_duration, x
@@ -140,19 +129,6 @@ no_parameter_byte:
         lda channel_status, x
         and #($FF - CHANNEL_GLOBAL_DURATION)
         sta channel_status, x
-        rts
-.endproc
-
-.proc cmd_eff_speed
-        fetch_pattern_byte
-        tax
-        jsr set_speed
-        rts
-.endproc
-
-.proc cmd_eff_tempo
-        fetch_pattern_byte
-        sta tempo
         rts
 .endproc
 
@@ -194,15 +170,19 @@ no_parameter_byte:
         rts
 .endproc
 
-.proc cmd_eff_skip
+.proc cmd_instrument
         fetch_pattern_byte
-        sta effect_skip_target
+        ; of *course* this is pre-shifted, so un-do that:
+        lsr
+        ; store the instrument and load it up
+        sta channel_selected_instrument, x
 
 .if ::BHOP_PATTERN_BANKING
         ; Instruments live in the module bank, so we need to swap that in before processing them
         lda module_bank
         switch_music_bank
 .endif
+        jsr load_instrument
 .if ::BHOP_PATTERN_BANKING
         ; And now we need to switch back to the pattern bank before continuing
         ldx channel_index
@@ -213,31 +193,87 @@ no_parameter_byte:
         rts
 .endproc
 
-.proc cmd_eff_halt
-        fetch_pattern_byte ; and throw it away
-        ; set the tempo to 0 (stops rows from advancing at all)
-        lda #0
-        sta tempo
-        ; immediately mute all channels
-        ldx #NUM_CHANNELS
-loop:
-        dex
-        lda channel_status, x
-        ora #CHANNEL_MUTED
-        sta channel_status, x
-        cpx #0
-        bne loop
+; Gxx
+.proc cmd_eff_delay
+        fetch_pattern_byte
+        ; here we want to store delay +1... but we can't do that to 
+        ; 0xFF or we'll wrap and break the "delay active" logic later. Excessively
+        ; large delay values don't make much sense anyway, so lop off the high bit
+        ; here to avoid this edge case
+        and #$7F
+        clc
+        adc #1
+        ldy channel_index
+        sta effect_note_delay, y
         rts
 .endproc
 
-.proc cmd_eff_clear
+.proc cmd_eff_vibrato
+        fetch_pattern_byte
+        sta channel_vibrato_settings, x
+        bne done
+        ; for `400` specifically, reset the vibrato phase
         lda #0
-        sta channel_pitch_effects_active, x
+        sta channel_vibrato_accumulator, x
+done:
         rts
 .endproc
+
+.proc cmd_eff_pitch
+        fetch_pattern_byte
+        sta scratch_byte
+        sec
+        lda #$80 ; center this on 0, where 0 is in tune
+        sbc scratch_byte
+        sta channel_tuning, x
+        rts
+.endproc
+
+.proc cmd_eff_reset_pitch
+        lda #0
+        sta channel_tuning, x
+        rts
+.endproc
+
+.proc cmd_eff_note_cut
+        fetch_pattern_byte
+        clc
+        adc #1
+        sta effect_cut_delay, x
         lda channel_status, x
         ora #CHANNEL_FRESH_DELAYED_CUT
         sta channel_status, x
+        rts
+.endproc
+
+.proc cmd_eff_speed
+        fetch_pattern_byte
+        tax
+        jsr set_speed
+        rts
+.endproc
+
+.proc cmd_eff_tempo
+        fetch_pattern_byte
+        sta tempo
+        rts
+.endproc
+
+.proc cmd_eff_skip
+        fetch_pattern_byte
+        sta effect_skip_target
+        rts
+.endproc
+
+.proc cmd_eff_arpeggio
+        fetch_pattern_byte
+        sta channel_arpeggio_settings, x
+        lda #0
+        sta channel_arpeggio_counter, x
+        lda #PITCH_EFFECT_ARP
+        sta channel_pitch_effects_active, x
+        rts
+.endproc
 
 .proc cmd_eff_portaup
         fetch_pattern_byte
@@ -263,85 +299,6 @@ loop:
         rts
 .endproc
 
-.proc cmd_eff_arpeggio
-        fetch_pattern_byte
-        sta channel_arpeggio_settings, x
-        lda #0
-        sta channel_arpeggio_counter, x
-        lda #PITCH_EFFECT_ARP
-        sta channel_pitch_effects_active, x
-        rts
-.endproc
-
-.proc cmd_eff_vibrato
-        fetch_pattern_byte
-        sta channel_vibrato_settings, x
-        bne done
-        ; for `400` specifically, reset the vibrato phase
-        lda #0
-        sta channel_vibrato_accumulator, x
-done:
-        rts
-.endproc
-
-.proc cmd_eff_tremolo
-        fetch_pattern_byte
-        sta channel_tremolo_settings, x
-        bne done
-        ; for `700` specifically, reset the tremolo phase
-        lda #0
-        sta channel_tremolo_accumulator, x
-done:
-        rts
-.endproc
-
-.proc cmd_eff_pitch
-        fetch_pattern_byte
-        sta scratch_byte
-        sec
-        lda #$80 ; center this on 0, where 0 is in tune
-        sbc scratch_byte
-        sta channel_tuning, x
-        rts
-.endproc
-
-.proc cmd_eff_reset_pitch
-        lda #0
-        sta channel_tuning, x
-        rts
-.endproc
-
-.proc cmd_eff_delay
-        fetch_pattern_byte
-        ; here we want to store delay +1... but we can't do that to
-        ; 0xFF or we'll wrap and break the "delay active" logic later. Excessively
-        ; large delay values don't make much sense anyway, so lop off the high bit
-        ; here to avoid this edge case
-        and #$7F
-        clc
-        adc #1
-        ldy channel_index
-        sta effect_note_delay, y
-        rts
-.endproc
-
-.proc cmd_eff_duty
-        fetch_pattern_byte
-        ror
-        ror
-        ror
-        ; safety
-        and #%11000000
-        sta channel_duty, x
-        rts
-.endproc
-
-.proc cmd_eff_offset
-        fetch_pattern_byte
-        sta effect_dpcm_offset
-        rts
-.endproc
-
 .proc cmd_eff_slide_up
         fetch_pattern_byte
         sta channel_pitch_effect_settings, x
@@ -358,6 +315,34 @@ done:
         rts
 .endproc
 
+.proc cmd_eff_clear
+        lda #0
+        sta channel_pitch_effects_active, x
+        rts
+.endproc
+
+.proc cmd_eff_duty
+        fetch_pattern_byte
+        ror
+        ror
+        ror
+        ; safety
+        and #%11000000
+        sta channel_duty, x
+        rts
+.endproc
+
+.proc cmd_eff_tremolo
+        fetch_pattern_byte
+        sta channel_tremolo_settings, x
+        bne done
+        ; for `700` specifically, reset the tremolo phase
+        lda #0
+        sta channel_tremolo_accumulator, x
+done:
+        rts
+.endproc
+
 .proc cmd_eff_vol_slide
         fetch_pattern_byte
         sta channel_volume_slide_settings, x
@@ -366,35 +351,41 @@ done:
         rts
 .endproc
 
-.proc cmd_eff_note_cut
-        fetch_pattern_byte
-        clc
-        adc #1
-        sta effect_cut_delay, x
+.proc cmd_eff_halt
+        fetch_pattern_byte ; and throw it away
+        ; set the tempo to 0 (stops rows from advancing at all)
+        lda #0
+        sta tempo
+        ; immediately mute all channels
+        ldx #NUM_CHANNELS
+loop:
+        dex
+        lda channel_status, x
+        ora #CHANNEL_MUTED
+        sta channel_status, x
+        cpx #0
+        bne loop
         rts
 .endproc
 
-; see CDPCMChan::HandleEffect() in Dn-FT
-; sets effect_retrigger_period.
-; if effect_retrigger_counter == 0, then queue retrigger
-.proc cmd_eff_retrigger
+.proc cmd_eff_dac
         fetch_pattern_byte
-        sta effect_retrigger_period
-        ; X00 == X01
-        bne skip_increment
-        inc effect_retrigger_period
-skip_increment:
-        lda effect_retrigger_counter
-        bne done
-        jsr queue_sample
-done:
+        and #$7F
+        sta effect_dac_buffer
+        sta $4011 ; immediately write to $4011
         rts
 .endproc
 
-.proc cmd_eff_dpcm_pitch
+.proc cmd_eff_offset
         fetch_pattern_byte
-        and #$0F
-        sta effect_dpcm_pitch
+        sta effect_dpcm_offset
+        rts
+.endproc
+
+.proc cmd_eff_groove
+        fetch_pattern_byte
+        sta groove_index
+        sta groove_position
         rts
 .endproc
 
@@ -435,18 +426,26 @@ dpcmphasereset:
         rts
 .endproc
 
-.proc cmd_eff_dac
+.proc cmd_eff_dpcm_pitch
         fetch_pattern_byte
-        and #$7F
-        sta effect_dac_buffer
-        sta $4011 ; immediately write to $4011
+        and #$0F
+        sta effect_dpcm_pitch
         rts
 .endproc
 
+; see CDPCMChan::HandleEffect() in Dn-FT
+; sets effect_retrigger_period.
+; if effect_retrigger_counter == 0, then queue retrigger
+.proc cmd_eff_retrigger
+        fetch_pattern_byte
+        sta effect_retrigger_period
+        ; X00 == X01
+        bne skip_increment
+        inc effect_retrigger_period
+skip_increment:
+        lda effect_retrigger_counter
+        bne done
+        jsr queue_sample
+done:
         rts
 .endproc
-
-.proc cmd_eff_groove
-        fetch_pattern_byte
-        sta groove_index
-        sta groove_position
