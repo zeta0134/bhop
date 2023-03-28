@@ -10,7 +10,7 @@ __ZSAW_CONFIG = 1
 ; Shadow OAM high page, for OAM DMA
 ZSAW_SHADOW_OAM = $02
 ; Your custom NMI handler, will be called automatically when vblank begins
-; Note: 
+; Note:
 ;   - Do not perform OAM DMA, Z-Saw will handle that for you
 ;   - Interrupts will be enabled upon entry
 ;   - DO remember to preserve registers

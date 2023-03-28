@@ -19,7 +19,7 @@ no_carry:
 
 .macro dec16 addr
 .scope
-        bit addr 
+        bit addr
         dec addr
         lda #$FF
         cmp addr
@@ -67,7 +67,7 @@ no_carry:
         lda value
         and #$80 ;extract the high bit
         beq positive
-        lda #$FF ; the high bit was high, so set high byte to 0xFF, then add that plus carry 
+        lda #$FF ; the high bit was high, so set high byte to 0xFF, then add that plus carry
         ; note: unless a signed overflow occurred, carry will usually be *set* in this case
 positive:
         ; the high bit was low; a contains #$00, so add that plus carry
@@ -91,7 +91,7 @@ positive:
         pla
         and #$80 ;extract the high bit
         beq positive
-        lda #$FF ; the high bit was high, so set high byte to 0xFF, then add that plus carry 
+        lda #$FF ; the high bit was high, so set high byte to 0xFF, then add that plus carry
         ; note: unless a signed overflow occurred, carry will usually be *set* in this case
 positive:
         ; the high bit was low; a contains #$00, so add that plus carry
@@ -112,7 +112,7 @@ positive:
         lda value
         and #$80 ;extract the high bit
         beq positive
-        lda #$FF ; the high bit was high, so set high byte to 0xFF, then add that plus carry 
+        lda #$FF ; the high bit was high, so set high byte to 0xFF, then add that plus carry
         ; note: unless a signed overflow occurred, carry will usually be *set* in this case
 positive:
         ; the high bit was low; a contains #$00, so add that plus carry
@@ -134,7 +134,7 @@ positive:
         lda value
         and #$80 ;extract the high bit
         beq positive
-        lda #$FF ; the high bit was high, so set high byte to 0xFF, then add that plus carry 
+        lda #$FF ; the high bit was high, so set high byte to 0xFF, then add that plus carry
         ; note: unless a signed overflow occurred, carry will usually be *set* in this case
 positive:
         ; the high bit was low; a contains #$00, so add that plus carry
@@ -159,7 +159,7 @@ positive:
         lda value
         and #$80 ;extract the high bit
         beq positive
-        lda #$FF ; the high bit was high, so set high byte to 0xFF, then add that plus carry 
+        lda #$FF ; the high bit was high, so set high byte to 0xFF, then add that plus carry
         ; note: unless a signed overflow occurred, carry will usually be *set* in this case
 positive:
         ; the high bit was low; a contains #$00, so add that plus carry
@@ -183,7 +183,7 @@ positive:
         lda value
         and #$80 ;extract the high bit
         beq positive
-        lda #$FF ; the high bit was high, so set high byte to 0xFF, then add that plus carry 
+        lda #$FF ; the high bit was high, so set high byte to 0xFF, then add that plus carry
         ; note: unless a signed overflow occurred, carry will usually be *set* in this case
 positive:
         ; the high bit was low; a contains #$00, so add that plus carry
