@@ -28,6 +28,7 @@ bhop_music_data = $A000
         .segment "MUSIC_0"
         .scope MODULE_0
         .include "../music/in_this_together.asm"
+        ;.include "../music/sxx.asm"
         .endscope
 
         .segment "MUSIC_1"

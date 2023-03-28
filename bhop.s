@@ -654,6 +654,9 @@ handle_note:
         lda channel_status, x
         ora #CHANNEL_MUTED
         sta channel_status, x
+        ; we also clear the delayed cut; this *is* a cut, it wins
+        lda #0
+        sta effect_cut_delay, x
         jmp done_with_bytecode
 check_release:
         cmp #$7E
@@ -713,6 +716,15 @@ write_relative_frequency:
         .endif
 
 portamento_active:
+        ; if we have a delayed note cut queued up, cancel it. A new note takes priority,
+        ; and we don't want the unexpired cut to silence it inappropriately.
+        lda channel_status, x
+        and #CHANNEL_FRESH_DELAYED_CUT
+        bne preserve_fresh_cut
+        lda #0
+        sta effect_cut_delay, x
+preserve_fresh_cut:
+
         ; finally, set the channel status as triggered
         ; (this will be cleared after effects are processed)
         lda channel_status, x
@@ -997,6 +1009,9 @@ done_with_note_delay:
         ldx channel_index
         lda effect_cut_delay, x
         beq done_with_cut_delay
+        lda channel_status, x
+        and #($FF - CHANNEL_FRESH_DELAYED_CUT)
+        sta channel_status, x
         dec effect_cut_delay, x
         bne done_with_cut_delay
         ; apply a note cut, immediately silencing this channel

@@ -232,6 +232,9 @@ done:
         clc
         adc #1
         sta effect_cut_delay, x
+        lda channel_status, x
+        ora #CHANNEL_FRESH_DELAYED_CUT
+        sta channel_status, x
         rts
 .endproc
 
