@@ -504,6 +504,7 @@ done_with_banks:
 .endproc
 
 .proc tick_frame_counter
+        clc
         add16 tempo_counter, tempo
         ; have we exceeded the tempo_counter?
         lda tempo_counter+1
