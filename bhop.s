@@ -2548,7 +2548,7 @@ reset_counter:
 .endproc
 
 .if ::BHOP_ZSAW_ENABLED
-; These are used to more or less match N163 volumes in Fn-FamiTracker,
+; These are used to more or less match N163 volumes in Dn-FamiTracker,
 ; which helps to keep the mix as close as possible between the tracker
 ; and the in-engine result.
 zsaw_n163_equivalence_table:

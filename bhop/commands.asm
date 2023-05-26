@@ -323,11 +323,18 @@ done:
 
 .proc cmd_eff_duty
         fetch_pattern_byte
+.if ::BHOP_ZSAW_ENABLED
+        cpx #ZSAW_INDEX
+		beq zsaw_duty
+.endif
         ror
         ror
         ror
         ; safety
         and #%11000000
+.if ::BHOP_ZSAW_ENABLED
+zsaw_duty:
+.endif
         sta channel_duty, x
         rts
 .endproc
