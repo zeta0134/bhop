@@ -1377,12 +1377,6 @@ done:
         adc #4
         tay
         lda (bhop_ptr), y
-        ; shift this into place before storing
-        ror
-        ror
-        ror
-        ; safety
-        and #%11000000
         ldy channel_index
         sta channel_instrument_duty, y
 
@@ -1435,7 +1429,6 @@ done:
         adc #4
         tay
         lda (bhop_ptr), y
-        ; shift this into place before storing
         ldy channel_index
         sta channel_instrument_duty, y
 
@@ -2012,6 +2005,14 @@ tick_pulse1:
         bne tick_pulse2
         bmi pulse1_muted
 
+        ; add in the duty
+        lda channel_instrument_duty + PULSE_1_INDEX
+        ror
+        ror
+        ror
+        and #%11000000
+        sta scratch_byte
+        
         ; apply the combined channel and instrument volume
         lda channel_tremolo_volume + PULSE_1_INDEX
         asl
@@ -2021,10 +2022,8 @@ tick_pulse1:
         ora channel_instrument_volume + PULSE_1_INDEX
         tax
         lda volume_table, x
-
-        ; add in the duty
-        ora channel_instrument_duty + PULSE_1_INDEX
         ora #%00110000 ; disable length counter and envelope
+        ora scratch_byte
         sta $4000
 
         ; disable the sweep unit
@@ -2063,6 +2062,13 @@ tick_pulse2:
         bne tick_triangle
         bmi pulse2_muted
 
+        ; add in the duty
+        lda channel_instrument_duty + PULSE_2_INDEX
+        ror
+        ror
+        ror
+        and #%11000000
+        sta scratch_byte
 
         ; apply the combined channel and instrument volume
         lda channel_tremolo_volume + PULSE_2_INDEX
@@ -2073,10 +2079,8 @@ tick_pulse2:
         ora channel_instrument_volume + PULSE_2_INDEX
         tax
         lda volume_table, x
-
-        ; add in the duty
-        ora channel_instrument_duty + PULSE_2_INDEX
-        ora #%00110000 ; set a duty, disable length counter and envelope
+        ora #%00110000 ; disable length counter and envelope
+        ora scratch_byte
         sta $4004
 
         ; disable the sweep unit
@@ -2171,7 +2175,8 @@ tick_noise:
 
         ; the low bit of channel duty becomes mode bit 1
         lda channel_instrument_duty + NOISE_INDEX
-        asl
+        ror
+        ror
         and #%10000000 ; safety mask
         ora scratch_byte
 
@@ -2251,6 +2256,14 @@ tick_pulse1:
         bne tick_pulse2
         bmi pulse1_muted
 
+        ; add in the duty
+        lda channel_instrument_duty + MMC5_PULSE_1_INDEX
+        ror
+        ror
+        ror
+        and #%11000000
+        sta scratch_byte
+
         ; apply the combined channel and instrument volume
         lda channel_tremolo_volume + MMC5_PULSE_1_INDEX
         asl
@@ -2260,10 +2273,8 @@ tick_pulse1:
         ora channel_instrument_volume + MMC5_PULSE_1_INDEX
         tax
         lda volume_table, x
-
-        ; add in the duty
-        ora channel_instrument_duty + MMC5_PULSE_1_INDEX
         ora #%00110000 ; disable length counter and envelope
+        ora scratch_byte
         sta $5000
 
         lda channel_detuned_frequency_low + MMC5_PULSE_1_INDEX
@@ -2298,6 +2309,13 @@ tick_pulse2:
         bne done_with_mmc5
         bmi pulse2_muted
 
+        ; add in the duty
+        lda channel_instrument_duty + MMC5_PULSE_2_INDEX
+        ror
+        ror
+        ror
+        and #%11000000
+        sta scratch_byte
 
         ; apply the combined channel and instrument volume
         lda channel_tremolo_volume + MMC5_PULSE_2_INDEX
@@ -2308,10 +2326,8 @@ tick_pulse2:
         ora channel_instrument_volume + MMC5_PULSE_2_INDEX
         tax
         lda volume_table, x
-
-        ; add in the duty
-        ora channel_instrument_duty + MMC5_PULSE_2_INDEX
-        ora #%00110000 ; set a duty, disable length counter and envelope
+        ora #%00110000 ; disable length counter and envelope
+        ora scratch_byte
         sta $5004
 
         lda channel_detuned_frequency_low + MMC5_PULSE_2_INDEX
