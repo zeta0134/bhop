@@ -117,10 +117,6 @@ effect_dpcm_offset: .byte $00
 ; Zxx
 effect_dac_buffer: .byte $00
 
-.if ::BHOP_ZSAW_ENABLED
-dpcm_active: .byte $00
-.endif
-
 
         .segment BHOP_PLAYER_SEGMENT
         ; global
@@ -285,7 +281,12 @@ song_uses_groove:
         ; reset DPCM status
         lda #$FF
         sta effect_dac_buffer
+        .if ::BHOP_ZSAW_ENABLED
+        ; Z-Saw is enabled by default
+        lda #DPCM_ZSAW_ENABLED
+        .else
         lda #0
+        .endif
         sta dpcm_status
 
         ; clear out special effects
@@ -313,7 +314,7 @@ effect_init_loop:
         .if ::BHOP_ZSAW_ENABLED
         ; if zsaw happens to be playing, silence it
         jsr zsaw_silence
-        ; Now fully re-initialize z-saw just in case
+        ; Now fully re-initialize Z-Saw just in case
         jsr zsaw_init
         .endif
 
@@ -732,7 +733,7 @@ write_relative_frequency:
         sta channel_relative_frequency_high, x
 
         .if ::BHOP_ZSAW_ENABLED
-        ; for z-saw only, we initialize the relative frequency here as a note index,
+        ; for Z-Saw only, we initialize the relative frequency here as a note index,
         ; since it does not do pitch bends
 
         cpx #ZSAW_INDEX
@@ -1376,12 +1377,6 @@ done:
         adc #4
         tay
         lda (bhop_ptr), y
-        ; shift this into place before storing
-        ror
-        ror
-        ror
-        ; safety
-        and #%11000000
         ldy channel_index
         sta channel_instrument_duty, y
 
@@ -1434,7 +1429,6 @@ done:
         adc #4
         tay
         lda (bhop_ptr), y
-        ; shift this into place before storing
         ldy channel_index
         sta channel_instrument_duty, y
 
@@ -1703,7 +1697,7 @@ done:
 .endproc
 
 .if ::BHOP_ZSAW_ENABLED
-; and yet another variant for z-saw, which simply copies the base note into the
+; and yet another variant for Z-Saw, which simply copies the base note into the
 ; relative frequency byte (which is then played back directly)
 .proc tick_arp_envelope_zsaw
         ldx channel_index
@@ -2011,6 +2005,14 @@ tick_pulse1:
         bne tick_pulse2
         bmi pulse1_muted
 
+        ; add in the duty
+        lda channel_instrument_duty + PULSE_1_INDEX
+        ror
+        ror
+        ror
+        and #%11000000
+        sta scratch_byte
+        
         ; apply the combined channel and instrument volume
         lda channel_tremolo_volume + PULSE_1_INDEX
         asl
@@ -2020,10 +2022,8 @@ tick_pulse1:
         ora channel_instrument_volume + PULSE_1_INDEX
         tax
         lda volume_table, x
-
-        ; add in the duty
-        ora channel_instrument_duty + PULSE_1_INDEX
         ora #%00110000 ; disable length counter and envelope
+        ora scratch_byte
         sta $4000
 
         ; disable the sweep unit
@@ -2062,6 +2062,13 @@ tick_pulse2:
         bne tick_triangle
         bmi pulse2_muted
 
+        ; add in the duty
+        lda channel_instrument_duty + PULSE_2_INDEX
+        ror
+        ror
+        ror
+        and #%11000000
+        sta scratch_byte
 
         ; apply the combined channel and instrument volume
         lda channel_tremolo_volume + PULSE_2_INDEX
@@ -2072,10 +2079,8 @@ tick_pulse2:
         ora channel_instrument_volume + PULSE_2_INDEX
         tax
         lda volume_table, x
-
-        ; add in the duty
-        ora channel_instrument_duty + PULSE_2_INDEX
-        ora #%00110000 ; set a duty, disable length counter and envelope
+        ora #%00110000 ; disable length counter and envelope
+        ora scratch_byte
         sta $4004
 
         ; disable the sweep unit
@@ -2170,7 +2175,8 @@ tick_noise:
 
         ; the low bit of channel duty becomes mode bit 1
         lda channel_instrument_duty + NOISE_INDEX
-        asl
+        ror
+        ror
         and #%10000000 ; safety mask
         ora scratch_byte
 
@@ -2250,6 +2256,14 @@ tick_pulse1:
         bne tick_pulse2
         bmi pulse1_muted
 
+        ; add in the duty
+        lda channel_instrument_duty + MMC5_PULSE_1_INDEX
+        ror
+        ror
+        ror
+        and #%11000000
+        sta scratch_byte
+
         ; apply the combined channel and instrument volume
         lda channel_tremolo_volume + MMC5_PULSE_1_INDEX
         asl
@@ -2259,10 +2273,8 @@ tick_pulse1:
         ora channel_instrument_volume + MMC5_PULSE_1_INDEX
         tax
         lda volume_table, x
-
-        ; add in the duty
-        ora channel_instrument_duty + MMC5_PULSE_1_INDEX
         ora #%00110000 ; disable length counter and envelope
+        ora scratch_byte
         sta $5000
 
         lda channel_detuned_frequency_low + MMC5_PULSE_1_INDEX
@@ -2297,6 +2309,13 @@ tick_pulse2:
         bne done_with_mmc5
         bmi pulse2_muted
 
+        ; add in the duty
+        lda channel_instrument_duty + MMC5_PULSE_2_INDEX
+        ror
+        ror
+        ror
+        and #%11000000
+        sta scratch_byte
 
         ; apply the combined channel and instrument volume
         lda channel_tremolo_volume + MMC5_PULSE_2_INDEX
@@ -2307,10 +2326,8 @@ tick_pulse2:
         ora channel_instrument_volume + MMC5_PULSE_2_INDEX
         tax
         lda volume_table, x
-
-        ; add in the duty
-        ora channel_instrument_duty + MMC5_PULSE_2_INDEX
-        ora #%00110000 ; set a duty, disable length counter and envelope
+        ora #%00110000 ; disable length counter and envelope
+        ora scratch_byte
         sta $5004
 
         lda channel_detuned_frequency_low + MMC5_PULSE_2_INDEX
@@ -2387,10 +2404,11 @@ next:
         ; We're about to trigger a DPCM sample, so silence zsaw. DPCM
         ; will always have higher priority
         jsr zsaw_silence
-        ; Tell Z-Saw that DPCM is active, so it knows not to queue
+        ; Disable Z-Saw, so it knows not to queue
         ; up another note and ruin our work
-        lda #1
-        sta dpcm_active
+        lda dpcm_status
+        and #($FF - (DPCM_ZSAW_ENABLED))
+        sta dpcm_status
         .endif
 
         ; using the current note, read the sample table
@@ -2473,9 +2491,10 @@ done:
 
 dpcm_muted:
         .if ::BHOP_ZSAW_ENABLED
-        ; Only take action if the DPCM channel is currently in control of playback...
-        lda dpcm_active
-        beq done
+        ; Only take action if Z-Saw is currently disabled...
+        lda dpcm_status
+        and #DPCM_ZSAW_ENABLED
+        bne done
         .endif
         ; simply disable the channel and exit (whatever is in the sample playback buffer will
         ; finish, up to 8 bits, there is no way to disable this)
@@ -2493,29 +2512,30 @@ dpcm_cut:
         lda #0 ; regain full volume for TN
         sta $4011
 dpcm_release:
-        .if ::BHOP_ZSAW_ENABLED
-        lda #0
-        sta dpcm_active
-        .endif
         lda dpcm_status
+        .if ::BHOP_ZSAW_ENABLED
+        and #($FF - (DPCM_ZSAW_ENABLED))
+        .endif
         and #($FF - (DPCM_ENABLED))
         sta dpcm_status
 
 check_for_inactive:
         .if ::BHOP_ZSAW_ENABLED
-        ; Only take action if the DPCM channel is in control of playback...
-        lda dpcm_active
-        beq done
+        ; Only take action if Z-Saw is disabled...
+        lda dpcm_status
+        and #DPCM_ZSAW_ENABLED
+        bne done
 
-        ; See if that playback has finished:
+        ; See if that DPCM playback has finished:
         lda $4015
         and #%00010000
         bne done
 
-        ; If it has, mark dpcm as inactive; this enables the z-saw channel
+        ; If it has, enable the Z-Saw channel
         ; to initiate playback on the next tick
-        lda #0
-        sta dpcm_active
+        lda dpcm_status
+        ora #DPCM_ZSAW_ENABLED
+        sta dpcm_status
         .endif
 
         rts
@@ -2548,7 +2568,7 @@ reset_counter:
 .endproc
 
 .if ::BHOP_ZSAW_ENABLED
-; These are used to more or less match N163 volumes in Fn-FamiTracker,
+; These are used to more or less match N163 volumes in Dn-FamiTracker,
 ; which helps to keep the mix as close as possible between the tracker
 ; and the in-engine result.
 zsaw_n163_equivalence_table:
@@ -2564,9 +2584,10 @@ zsaw_7F_volume_table:
 .byte  70,  66,  62,  59
 
 .proc play_zsaw
-        ; Safety: if the DPCM channel is currently playing, DO NOTHING.
-        lda dpcm_active
-        beq safe_to_continue
+        ; Safety: if Z-Saw is disabled, DO NOTHING.
+        lda dpcm_status
+        and #DPCM_ZSAW_ENABLED
+        bne safe_to_continue
         rts
 
 safe_to_continue:
@@ -2604,7 +2625,7 @@ safe_to_continue:
         lda zsaw_n163_equivalence_table, x
         jsr zsaw_set_volume
 
-        ; z-saw will use the tracked note directly
+        ; Z-Saw will use the tracked note directly
         ; TODO: or, for arps, maybe we copy tracked note to one of the "pitch" variables?
         lda zsaw_relative_note
         jsr zsaw_play_note
