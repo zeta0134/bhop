@@ -45,6 +45,11 @@ bhop_music_data = $A000
         .include "../music/mimiga.asm"
         .endscope
 
+        .segment "MUSIC_4"
+        .scope MODULE_4
+        .include "../music/in_another_world.asm"
+        .endscope
+
         .segment "CODE"
 
 ;                            Bank  Track#                         Title                        Artist
@@ -53,14 +58,16 @@ song_heat_death: music_track    0,      0,        "Heat Death - Smooth",        
 song_tactus:     music_track    1,      0,              "Tactus - Demo",                   "zeta0134"
 song_tcg:        music_track    2,      0,        "Pokemon TCG - Diary",           "Ichiro Shimakura"
 song_mimiga:     music_track    3,      0,   "Cave Story - Mimiga Town",              "Daisuke Amaya"
+song_iaw:        music_track    4,      1,           "in another world",                    "Persune"
 
 music_track_table:
         .addr song_heat_death
         .addr song_tactus
         .addr song_tcg
         .addr song_mimiga
+        .addr song_iaw
 
-music_track_count: .byte 4
+music_track_count: .byte 5
 
 .proc player_bank_music
         pha ; preserve bank number on the stack
