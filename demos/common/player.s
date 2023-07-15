@@ -217,6 +217,14 @@ FancyTextPtr := ScratchPtr
 
         ldy #MusicTrack::TrackNumber
         lda (TrackPtr), y
+        pha ; store the track number and reload it after loading the address for the song
+        ldy #MusicTrack::ModulePtr
+        lda (TrackPtr), y
+        tax ; lo ptr for the module address
+        iny
+        lda (TrackPtr), y
+        tay ; hi ptr for the module address
+        pla
         jsr bhop_init
         rts
 .endproc

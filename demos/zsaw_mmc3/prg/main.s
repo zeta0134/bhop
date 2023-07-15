@@ -21,44 +21,42 @@ NmiCounter: .byte $00
         .segment "CHR1"
         .incbin "../../common/bnuuy_obj.chr"
 
-        .export start, demo_nmi, bhop_music_data
-        
-bhop_music_data = $A000
+        .export start, demo_nmi
 
         .segment "MUSIC_0"
-        .scope MODULE_0
+        .proc MODULE_0
         .include "../music/heatdeath.asm"
-        .endscope
+        .endproc
 
         .segment "MUSIC_1"
-        .scope MODULE_1
+        .proc MODULE_1
         .include "../music/tactus.asm"
-        .endscope
+        .endproc
 
         .segment "MUSIC_2"
-        .scope MODULE_2
+        .proc MODULE_2
         .include "../music/tcg.asm"
-        .endscope
+        .endproc
 
         .segment "MUSIC_3"
-        .scope MODULE_3
+        .proc MODULE_3
         .include "../music/mimiga.asm"
-        .endscope
+        .endproc
 
         .segment "MUSIC_4"
-        .scope MODULE_4
+        .proc MODULE_4
         .include "../music/in_another_world.asm"
-        .endscope
+        .endproc
 
         .segment "CODE"
 
-;                            Bank  Track#                         Title                        Artist
-;                             ---     ---  ----------------------------  ----------------------------
-song_heat_death: music_track    0,      0,        "Heat Death - Smooth",                   "zeta0134"
-song_tactus:     music_track    1,      0,              "Tactus - Demo",                   "zeta0134"
-song_tcg:        music_track    2,      0,        "Pokemon TCG - Diary",           "Ichiro Shimakura"
-song_mimiga:     music_track    3,      0,   "Cave Story - Mimiga Town",              "Daisuke Amaya"
-song_iaw:        music_track    4,      1,           "in another world",                    "Persune"
+;                                Address             Bank   Track#                         Title                       Artist
+;                               --------              ---      ---   ----------------------------  ---------------------------
+song_heat_death: music_track    MODULE_0, <.bank(MODULE_0),      0,        "Heat Death - Smooth",                   "zeta0134"
+song_tactus:     music_track    MODULE_1, <.bank(MODULE_1),      0,              "Tactus - Demo",                   "zeta0134"
+song_tcg:        music_track    MODULE_2, <.bank(MODULE_2),      0,        "Pokemon TCG - Diary",           "Ichiro Shimakura"
+song_mimiga:     music_track    MODULE_3, <.bank(MODULE_3),      0,   "Cave Story - Mimiga Town",              "Daisuke Amaya"
+song_iaw:        music_track    MODULE_4, <.bank(MODULE_4),      1,           "in another world",                    "Persune"
 
 music_track_table:
         .addr song_heat_death

@@ -20,6 +20,7 @@ channel_index: .byte $00
 scratch_byte: .byte $00
 
         .segment BHOP_RAM_SEGMENT
+music_header_ptr: .word $0000
 tempo_counter: .word $0000
 tempo_cmp: .word $0000
 tempo: .byte $00
@@ -131,6 +132,18 @@ effect_dac_buffer: .byte $00
         sta bhop_ptr+1
 .endmacro
 
+.macro prepare_ptr_with_fixed_offset address, offset
+        prepare_ptr address
+        ldy #offset
+        lda (bhop_ptr), y
+        pha
+        iny
+        lda (bhop_ptr), y
+        sta bhop_ptr+1
+        pla
+        sta bhop_ptr
+.endmacro
+
 ; add a signed byte, stored in value, to a 16bit word
 ; addressed by (bhop_ptr), y
 ; this is used in a few places, notably pitch bend effects
@@ -166,9 +179,15 @@ positive:
 .endproc
 
 ; param: song index (a)
+;        Low byte pointer to the music data (x)
+;        High byte pointer to the music data (y)
 .proc bhop_init
         ; preserve parameters
         pha ; song index
+
+        ; initialize bhop_ptr with the song header
+        stx music_header_ptr
+        sty music_header_ptr+1
 
 .if ::BHOP_PATTERN_BANKING
         lda module_bank
@@ -185,7 +204,7 @@ positive:
         sta groove_index
 
         ; switch to the requested song
-        prepare_ptr BHOP_MUSIC_BASE + FtModuleHeader::song_list
+        prepare_ptr_with_fixed_offset music_header_ptr, FtModuleHeader::song_list
 
         pla
         asl ; song list is made of words
@@ -195,6 +214,14 @@ positive:
         iny
         lda (bhop_ptr), y
         sta song_ptr+1
+
+.if ::BHOP_PATTERN_BANKING
+        ; load the module flags from the header before changing the pointer
+        prepare_ptr music_header_ptr
+        ldy #FtModuleHeader::flags
+        lda (bhop_ptr), y
+        sta module_flags
+.endif
 
         ; load speed and tempo from the requested song
         prepare_ptr song_ptr
@@ -218,9 +245,6 @@ song_uses_groove:
         ldy #SongInfo::pattern_length
         lda (bhop_ptr), y
         sta row_cmp
-
-        lda BHOP_MUSIC_BASE + FtModuleHeader::flags
-        sta module_flags
 
         ; If this song has grooves enabled, then apply the first groove right away
         jsr update_groove
@@ -340,7 +364,7 @@ loop:
         lda groove_index
         beq done
 
-        prepare_ptr BHOP_MUSIC_BASE + FtModuleHeader::groove_list
+        prepare_ptr_with_fixed_offset music_header_ptr, FtModuleHeader::groove_list
 
         ldy groove_position
         lda (bhop_ptr), y
@@ -1192,7 +1216,7 @@ no_wrap:
 ;   channel_index points to desired channel
 ;   channel_selected_instrument[channel_index] contains desired instrument index
 .proc load_instrument
-        prepare_ptr BHOP_MUSIC_BASE + FtModuleHeader::instrument_list
+        prepare_ptr_with_fixed_offset music_header_ptr, FtModuleHeader::instrument_list
         ldx channel_index
         lda channel_selected_instrument, x
         asl ; select one word
@@ -2412,7 +2436,7 @@ next:
         .endif
 
         ; using the current note, read the sample table
-        prepare_ptr BHOP_MUSIC_BASE + FtModuleHeader::sample_list
+        prepare_ptr_with_fixed_offset music_header_ptr, FtModuleHeader::sample_list
         lda channel_base_note + DPCM_INDEX
 
         sta scratch_byte
@@ -2456,8 +2480,11 @@ skip_dac:
         lda (bhop_ptr), y
         ; this is the index into the samples table, here it is pre-multiplied
         ; so we can use it directly
+        ; save the y value since it is scratched by the prepare_ptr
+        pha
+        prepare_ptr_with_fixed_offset music_header_ptr, FtModuleHeader::samples
+        pla
         tay
-        prepare_ptr BHOP_MUSIC_BASE + FtModuleHeader::samples
         ; the sample table should contain, in order:
         ; - location byte
         ; - size byte

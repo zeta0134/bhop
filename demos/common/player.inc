@@ -1,4 +1,5 @@
 .struct MusicTrack
+        ModulePtr .word
         BankNumber .byte
         TrackNumber .byte
         TitleStringPtr .word
@@ -16,8 +17,9 @@
 
 ; This macro helps to make the track list less stupid
 
-.macro music_track bank_number, track_number, title_string, artist_string
+.macro music_track module_ptr, bank_number, track_number, title_string, artist_string
 .scope
+.addr module_ptr
 .byte bank_number
 .byte track_number
 .addr title_str
