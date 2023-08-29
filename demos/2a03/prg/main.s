@@ -65,6 +65,11 @@ bhop_music_data = $A000
         .scope MODULE_7
         .include "../music/simian_segue.asm"
         .endscope
+		
+		.segment "MUSIC_8"
+		.scope MODULE_8
+		.include "../music/sotn_stage1.asm"
+		.endscope
 
         .segment "CODE"
 
@@ -78,6 +83,7 @@ song_nsmb:      music_track         4,      0,   "New Super Mario Bros - 1-1",  
 song_sanctuary: music_track         5,      0,        "Earthbound - Guardian",      "K. Suzuki, H. Tanaka"
 song_gato:      music_track         6,      0,      "Chrono Trigger - Battle",          "Yasunori Mitsuda"
 song_simian:    music_track         7,      0,           "DKC - Simian Segue",           "Eveline Fischer"
+song_sotn_stg1: music_track         8,      0,"Shadow of the Ninja - Stage 1", "I. Mizutani, K. Yamanishi"
 
 music_track_table:
         .addr song_itt
@@ -88,8 +94,9 @@ music_track_table:
         .addr song_sanctuary
         .addr song_gato
         .addr song_simian
+		.addr song_sotn_stg1
 
-music_track_count: .byte 8
+music_track_count: .byte 9
 
 .proc player_bank_music
         pha ; preserve bank number on the stack
