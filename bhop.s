@@ -1982,6 +1982,12 @@ end_not_reached:
         sta scratch_byte
         cpx scratch_byte
         bne release_point_not_reached
+		
+		; are we released?
+        ldy channel_index
+        lda channel_status, y
+        and #CHANNEL_RELEASED
+		bne done
 
         ; is there a loop point?
         ldy #SequenceHeader::loop_point
@@ -2026,6 +2032,8 @@ done:
         beq done_with_sequence
         ; set the sequence index to the release point immediately
         ; (it will be ticked *past* this point on the next cycle)
+		sec
+		sbc #1
         sta pitch_sequence_index, x
 done_with_sequence:
 .endscope

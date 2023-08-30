@@ -250,8 +250,7 @@ done:
 .proc cmd_eff_note_release
         fetch_pattern_byte
         clc
-		; NOTE: this is a compensation for the bug that is not as easily solved where bhop skips the first frame of release. When that bug is fixed this must be changed to #1.
-        adc #2
+        adc #1
         sta effect_release_delay, x
         lda channel_status, x
         ora #CHANNEL_FRESH_DELAYED_RELEASE
