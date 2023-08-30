@@ -65,11 +65,11 @@ bhop_music_data = $A000
         .scope MODULE_7
         .include "../music/simian_segue.asm"
         .endscope
-		
-		.segment "MUSIC_8"
-		.scope MODULE_8
-		.include "../music/sotn_stage1.asm"
-		.endscope
+        
+        .segment "MUSIC_8"
+        .scope MODULE_8
+        .include "../music/sotn_stage1.asm"
+        .endscope
 
         .segment "CODE"
 
@@ -94,7 +94,7 @@ music_track_table:
         .addr song_sanctuary
         .addr song_gato
         .addr song_simian
-		.addr song_sotn_stg1
+        .addr song_sotn_stg1
 
 music_track_count: .byte 9
 
