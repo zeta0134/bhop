@@ -246,6 +246,7 @@ done:
         rts
 .endproc
 
+.if ::BHOP_DELAYED_RELEASE_ENABLED
 .proc cmd_eff_note_release
         fetch_pattern_byte
         clc
@@ -257,6 +258,9 @@ done:
         sta channel_status, x
         rts
 .endproc
+.else
+cmd_eff_note_release := cmd_unimplemented
+.endif
 
 .proc cmd_eff_speed
         fetch_pattern_byte

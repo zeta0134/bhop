@@ -98,7 +98,9 @@ duty_sequence_index: .res BHOP::NUM_CHANNELS
 ; memory for various effects
 effect_note_delay: .res BHOP::NUM_CHANNELS
 effect_cut_delay: .res BHOP::NUM_CHANNELS
+.if ::BHOP_DELAYED_RELEASE_ENABLED
 effect_release_delay: .res BHOP::NUM_CHANNELS
+.endif
 effect_skip_target: .byte $00
 
 ; Oxx
@@ -685,7 +687,9 @@ handle_note:
         ; we also clear the delayed cut/release; this *is* a cut, it wins
         lda #0
         sta effect_cut_delay, x
-		sta effect_release_delay, x
+.if ::BHOP_DELAYED_RELEASE_ENABLED
+        sta effect_release_delay, x
+.endif
         jmp done_with_bytecode
 check_release:
         cmp #$7E
@@ -706,9 +710,11 @@ check_release:
         switch_music_bank
         ldx channel_index ; un-clobber
 .endif
+.if ::BHOP_DELAYED_RELEASE_ENABLED
         ; clear delayed release if any
-		lda #0
-		sta effect_release_delay, x
+        lda #0
+        sta effect_release_delay, x
+.endif
         jmp done_with_bytecode
 note_trigger:
         ; a contains the selected note at this point
@@ -756,14 +762,15 @@ portamento_active:
         lda #0
         sta effect_cut_delay, x
 preserve_fresh_cut:
+.if ::BHOP_DELAYED_RELEASE_ENABLED
         ; ditto with delayed release
-		lda channel_status, x
-		and #CHANNEL_FRESH_DELAYED_RELEASE
-		bne preserve_release_delay
-		lda #0
-		sta effect_release_delay, x
+        lda channel_status, x
+        and #CHANNEL_FRESH_DELAYED_RELEASE
+        bne preserve_release_delay
+        lda #0
+        sta effect_release_delay, x
 preserve_release_delay:
-
+.endif
         ; finally, set the channel status as triggered
         ; (this will be cleared after effects are processed)
         lda channel_status, x
@@ -1060,19 +1067,22 @@ done_with_note_delay:
         dec effect_cut_delay, x
         bne done_with_cut_delay
         ; apply a note cut, immediately silencing this channel and cancel delayed release
-		lda #0
-		sta effect_release_delay, x
+.if ::BHOP_DELAYED_RELEASE_ENABLED
+        lda #0
+        sta effect_release_delay, x
+.endif
         lda channel_status, x
         and #($FF - CHANNEL_FRESH_DELAYED_CUT - CHANNEL_FRESH_DELAYED_RELEASE)
         ora #CHANNEL_MUTED
         sta channel_status, x
-		jne done_with_delays
+        jne done_with_delays
 done_with_cut_delay:
+.if ::BHOP_DELAYED_RELEASE_ENABLED
         lda effect_release_delay, x
-		beq done_with_delays
-		dec effect_release_delay, x
-		bne done_with_delays
-		; note release
+        beq done_with_delays
+        dec effect_release_delay, x
+        bne done_with_delays
+        ; note release
         lda channel_status, x
         and #($FF - CHANNEL_FRESH_DELAYED_RELEASE)
         ora #CHANNEL_RELEASED
@@ -1089,6 +1099,7 @@ done_with_cut_delay:
         lda channel_pattern_bank, x
         switch_music_bank
         ldx channel_index ; un-clobber
+.endif
 .endif
 done_with_delays:
         rts
