@@ -593,7 +593,18 @@ done_advancing_rows:
 ; prep:
 ; - channel_index is set to desired channel
 .proc advance_channel_row
+        ; see CChannelHandler::PlayNote() in Dn-FT
+        ; check first if we still have lingering delay from the previous row
         ldx channel_index
+        lda effect_note_delay, x
+        beq skip_handle_delay
+        ; see CChannelHandler::HandleDelay() in Dn-FT
+        ; if so, advance one row to sync
+        lda #0
+        sta effect_note_delay, x
+        jsr advance_channel_row
+skip_handle_delay:
+        ldx channel_index ; the recursive call may have clobbered X
         lda channel_row_delay_counter, x
         cmp #0
         jne skip
