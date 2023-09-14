@@ -2456,9 +2456,9 @@ skip_pitch:
         iny
         sta scratch_byte
         lda effect_dac_buffer ; check for Zxx
-        bmi skip_dac ; != -1? then it was already written
+        bpl skip_dac ; != -1? then it was already written
         lda scratch_byte
-        bpl skip_dac
+        bmi skip_dac
         sta $4011
 skip_dac:
         lda #$FF
