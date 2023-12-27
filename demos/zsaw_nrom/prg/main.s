@@ -20,15 +20,16 @@ NmiCounter: .byte $00
         .incbin "../../common/bnuuy_obj.chr"
 
         .segment "PRG0_8000"
-        .export start, demo_nmi, bhop_music_data
+        .export start, demo_nmi
 
-bhop_music_data:
+.proc MODULE_0
         .include "../music/zsaw_demo_tracks.asm"
+.endproc
 
-;                            Bank  Track#                         Title                        Artist
-;                             ---     ---  ----------------------------  ----------------------------
-song_heat_death: music_track    0,      0,        "Heat Death - Smooth",                   "zeta0134"
-song_tactus:     music_track    0,      1,              "Tactus - Demo",                   "zeta0134"
+;                                Address              Bank  Track#                          Title                        Artist
+;                               --------               ---     ---   ----------------------------  ----------------------------
+song_heat_death: music_track    MODULE_0, <.bank(MODULE_0),      0,        "Heat Death - Smooth",                   "zeta0134"
+song_tactus:     music_track    MODULE_0, <.bank(MODULE_0),      1,              "Tactus - Demo",                   "zeta0134"
 
 music_track_table:
         .addr song_heat_death

@@ -21,63 +21,61 @@ NmiCounter: .byte $00
         .segment "CHR1"
         .incbin "../../common/bnuuy_obj.chr"
 
-        .export start, nmi, irq, bhop_music_data
-        
-bhop_music_data = $A000
+        .export start, nmi, irq
 
         .segment "MUSIC_0"
-        .scope MODULE_0
+        .proc MODULE_0
         .include "../music/in_this_together.asm"
         ;.include "../music/sxx.asm"
-        .endscope
+        .endproc
 
         .segment "MUSIC_1"
-        .scope MODULE_1
+        .proc MODULE_1
         .include "../music/virus-busting.asm"
-        .endscope
+        .endproc
 
         .segment "MUSIC_2"
-        .scope MODULE_2
+        .proc MODULE_2
         .include "../music/world-1-1.asm"
-        .endscope
+        .endproc
 
         .segment "MUSIC_3"
-        .scope MODULE_3
+        .proc MODULE_3
         .include "../music/yakra.asm"
-        .endscope
+        .endproc
 
         .segment "MUSIC_4"
-        .scope MODULE_4
+        .proc MODULE_4
         .include "../music/nsmb.asm"
-        .endscope
+        .endproc
 
         .segment "MUSIC_5"
-        .scope MODULE_5
+        .proc MODULE_5
         .include "../music/sanctuary.asm"
-        .endscope
+        .endproc
 
         .segment "MUSIC_6"
-        .scope MODULE_6
+        .proc MODULE_6
         .include "../music/gato.asm"
-        .endscope
+        .endproc
 
         .segment "MUSIC_7"
-        .scope MODULE_7
+        .proc MODULE_7
         .include "../music/simian_segue.asm"
-        .endscope
+        .endproc
 
         .segment "CODE"
 
-;                                Bank  Track#                          Title                        Artist
-;                                 ---     ---   ----------------------------  ----------------------------
-song_itt:       music_track         0,      0,  "Ikenfell - In This Together",           "aivi & surasshu"
-song_virus:     music_track         1,      0,        "MMBN. - Virus Busting",              "Yoshino Aoki"
-song_smb:       music_track         2,      0, "Super Mario Bros - World 1-1",                "Koji Kondo"
-song_yakra:     music_track         3,      0, "Chrono Trigger - Boss Battle",          "Yasunori Mitsuda"
-song_nsmb:      music_track         4,      0,   "New Super Mario Bros - 1-1",                "Koji Kondo"
-song_sanctuary: music_track         5,      0,        "Earthbound - Guardian",      "K. Suzuki, H. Tanaka"
-song_gato:      music_track         6,      0,      "Chrono Trigger - Battle",          "Yasunori Mitsuda"
-song_simian:    music_track         7,      0,           "DKC - Simian Segue",           "Eveline Fischer"
+;                                Address               Bank   Track#                          Title                        Artist
+;                               --------                ---      ---   ----------------------------  ----------------------------
+song_itt:       music_track     MODULE_0,  <.bank(MODULE_0),      0,  "Ikenfell - In This Together",           "aivi & surasshu"
+song_virus:     music_track     MODULE_1,  <.bank(MODULE_1),      0,        "MMBN. - Virus Busting",              "Yoshino Aoki"
+song_smb:       music_track     MODULE_2,  <.bank(MODULE_2),      0, "Super Mario Bros - World 1-1",                "Koji Kondo"
+song_yakra:     music_track     MODULE_3,  <.bank(MODULE_3),      0, "Chrono Trigger - Boss Battle",          "Yasunori Mitsuda"
+song_nsmb:      music_track     MODULE_4,  <.bank(MODULE_4),      0,   "New Super Mario Bros - 1-1",                "Koji Kondo"
+song_sanctuary: music_track     MODULE_5,  <.bank(MODULE_5),      0,        "Earthbound - Guardian",      "K. Suzuki, H. Tanaka"
+song_gato:      music_track     MODULE_6,  <.bank(MODULE_6),      0,      "Chrono Trigger - Battle",          "Yasunori Mitsuda"
+song_simian:    music_track     MODULE_7,  <.bank(MODULE_7),      0,           "DKC - Simian Segue",           "Eveline Fischer"
 
 music_track_table:
         .addr song_itt
