@@ -19,21 +19,19 @@ NmiCounter: .byte $00
         .segment "CHR1"
         .incbin "../../common/bnuuy_obj.chr"
 
-        .export start, nmi, irq, bhop_music_data
-        
-bhop_music_data = $A000
+        .export start, nmi, irq
 
         .segment "MUSIC_0"
-        .scope MODULE_0
+        .proc MODULE_0
         .include "../music/brain_age.asm"
-        .endscope
+        .endproc
 
 
         .segment "CODE"
 
-;                                Bank  Track#                          Title                        Artist
-;                                 ---     ---   ----------------------------  ----------------------------
-song_brain_age:     music_track         0,      0, "Brain Age - Menu",           "M. Hamano, A. Nakatsuka"
+;                                  Address              Bank  Track#                          Title                        Artist
+;                                 --------               ---     ---   ----------------------------  ----------------------------
+song_brain_age:     music_track  MODULE_0,  <.bank(MODULE_0),      0,            "Brain Age - Menu",     "M. Hamano, A. Nakatsuka"
 
 music_track_table:
         .addr song_brain_age

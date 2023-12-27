@@ -12,13 +12,6 @@ __BHOP_CONFIG = 1
 ; are temporary, so feel free to allocate them in your scratch region and
 ; clobber them freely between calls to bhop_play.
 
-.import bhop_music_data
-
-; To play a module, export "music.asm" from FamiTracker, and
-; place it in memory here. Ensure this memory is paged in
-; during bhop_init and bhop_play.
-BHOP_MUSIC_BASE = bhop_music_data
-
 ; Banking support. Disabled by default, as the relevant
 ; mapper code is project specific.
 BHOP_DPCM_BANKING = 0
