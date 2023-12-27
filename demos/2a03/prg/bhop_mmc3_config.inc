@@ -24,5 +24,9 @@ BHOP_DPCM_SWITCH_ROUTINE = bhop_apply_dpcm_bank
 BHOP_PATTERN_SWITCH_ROUTINE = bhop_apply_music_bank
 .endif
 
+; Options for different features that can be disabled to save space
+
+BHOP_DELAYED_RELEASE_ENABLED = 1
+
 BHOP_ZSAW_ENABLED = 0
 BHOP_MMC5_ENABLED = 0

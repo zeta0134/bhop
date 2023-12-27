@@ -63,6 +63,11 @@ NmiCounter: .byte $00
         .proc MODULE_7
         .include "../music/simian_segue.asm"
         .endproc
+        
+        .segment "MUSIC_8"
+        .proc MODULE_8
+        .include "../music/sotn_stage1.asm"
+        .endproc
 
         .segment "CODE"
 
@@ -76,6 +81,7 @@ song_nsmb:      music_track     MODULE_4,  <.bank(MODULE_4),      0,   "New Supe
 song_sanctuary: music_track     MODULE_5,  <.bank(MODULE_5),      0,        "Earthbound - Guardian",      "K. Suzuki, H. Tanaka"
 song_gato:      music_track     MODULE_6,  <.bank(MODULE_6),      0,      "Chrono Trigger - Battle",          "Yasunori Mitsuda"
 song_simian:    music_track     MODULE_7,  <.bank(MODULE_7),      0,           "DKC - Simian Segue",           "Eveline Fischer"
+song_sotn_stg1: music_track     MODULE_8,  <.bank(MODULE_8),      0,"Shadow of the Ninja - Stage 1", "I. Mizutani, K. Yamanishi"
 
 music_track_table:
         .addr song_itt
@@ -86,8 +92,9 @@ music_track_table:
         .addr song_sanctuary
         .addr song_gato
         .addr song_simian
+        .addr song_sotn_stg1
 
-music_track_count: .byte 8
+music_track_count: .byte 9
 
 .proc player_bank_music
         pha ; preserve bank number on the stack

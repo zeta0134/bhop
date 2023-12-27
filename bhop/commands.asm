@@ -36,7 +36,7 @@ command_table:
     .word cmd_eff_note_cut         ;($9B)       CMD_EFF_NOTE_CUT            Sxx
     .word cmd_eff_retrigger        ;($9C)       CMD_EFF_RETRIGGER           Xxx DPCM, EffParam + 1
     .word cmd_eff_dpcm_pitch       ;($9D)       CMD_EFF_DPCM_PITCH          Wxx DPCM, EffParam + 1
-    .word cmd_unimplemented        ;($9E)       CMD_EFF_NOTE_RELEASE        Lxx
+    .word cmd_eff_note_release     ;($9E)       CMD_EFF_NOTE_RELEASE        Lxx
     .word cmd_unimplemented        ;($9F)       CMD_EFF_LINEAR_COUNTER      Sxx triangle, xx >= 0x80, EffParam - 0x80
     .word cmd_eff_groove           ;($A0)       CMD_EFF_GROOVE              Oxx
     .word cmd_unimplemented        ;($A1)       CMD_EFF_DELAYED_VOLUME      Mxy if ((EffParam >> 4) && (EffParam & 0x0F))
@@ -245,6 +245,21 @@ done:
         sta channel_status, x
         rts
 .endproc
+
+.if ::BHOP_DELAYED_RELEASE_ENABLED
+.proc cmd_eff_note_release
+        fetch_pattern_byte
+        clc
+        adc #1
+        sta effect_release_delay, x
+        lda channel_status, x
+        ora #CHANNEL_FRESH_DELAYED_RELEASE
+        sta channel_status, x
+        rts
+.endproc
+.else
+cmd_eff_note_release := cmd_unimplemented
+.endif
 
 .proc cmd_eff_speed
         fetch_pattern_byte
