@@ -1062,17 +1062,6 @@ done:
         rts
 .endproc
 
-.proc fix_noise_freq
-        lda channel_status + NOISE_INDEX
-        and #CHANNEL_TRIGGERED
-        beq done
-        lda channel_base_note + NOISE_INDEX
-        sta channel_base_frequency_low + NOISE_INDEX
-        sta channel_relative_frequency_low + NOISE_INDEX
-done:
-        rts
-.endproc
-
 .proc tick_delayed_effects
         ; Gxx: delayed pattern row
         ldx channel_index
@@ -1208,7 +1197,7 @@ done_with_delays:
         sta channel_index
         jsr tick_delayed_effects
 
-        .if ::BHOP_ZSAW_ENABLED
+.if ::BHOP_ZSAW_ENABLED
         ; Z-Saw
         lda #ZSAW_INDEX
         sta channel_index
@@ -1218,9 +1207,9 @@ done_with_delays:
         jsr tick_duty_envelope_zsaw
         jsr update_arp_zsaw
         jsr tick_arp_envelope_zsaw
-        .endif
+.endif
 
-        .if ::BHOP_MMC5_ENABLED
+.if ::BHOP_MMC5_ENABLED
         lda #MMC5_PULSE_1_INDEX
         sta channel_index
         jsr tick_delayed_effects
@@ -1248,7 +1237,7 @@ done_with_delays:
         initialize_detuned_frequency
         jsr update_vibrato
         jsr update_tuning
-        .endif
+.endif
 
         rts
 .endproc
@@ -1489,59 +1478,6 @@ done:
         rts
 .endproc
 
-.if ::BHOP_ZSAW_ENABLED
-; a variant without all the shifting and masking business
-.proc tick_duty_envelope_zsaw
-        ldy channel_index
-        lda sequences_active, y
-        and #SEQUENCE_DUTY
-        beq done ; if sequence isn't enabled, bail fast
-
-        ; prepare the duty pointer for reading
-        lda duty_sequence_ptr_low, y
-        sta bhop_ptr
-        lda duty_sequence_ptr_high, y
-        sta bhop_ptr + 1
-
-        ; read the current sequence byte, and set instrument_volume to this
-        lda duty_sequence_index, y
-        tax ; stash for later
-        ; for reading the sequence, +4
-        clc
-        adc #4
-        tay
-        lda (bhop_ptr), y
-        ldy channel_index
-        sta channel_instrument_duty, y
-
-        ; tick the sequence counter and exit
-        jsr tick_sequence_counter
-
-        ; have we reached the end of the sequence?
-        ldy #SequenceHeader::length
-        lda (bhop_ptr), y
-        sta scratch_byte
-        cpx scratch_byte
-        bne end_not_reached
-
-        ; this sequence is finished! Disable the sequence flag and exit
-        ldy channel_index
-        lda sequences_active, y
-        and #($FF - SEQUENCE_DUTY)
-        sta sequences_active, y
-        rts
-
-end_not_reached:
-        ; write the new sequence index (should still be in x)
-        ldy channel_index
-        txa
-        sta duty_sequence_index, y
-
-done:
-        rts
-.endproc
-.endif
-
 ; If this channel has an arp envelope active, process that
 ; envelope. Upon return, base_note and relative_frequency are set
 ; setup:
@@ -1669,235 +1605,6 @@ done:
         rts
 .endproc
 
-; We need a special variant of this just for noise, which uses a different
-; means of frequency to base_note mapping
-; setup:
-;   channel_index points to channel structure
-.proc tick_noise_arp_envelope
-        ldx channel_index
-        lda sequences_active, x
-        and #SEQUENCE_ARP
-        beq early_exit ; if sequence isn't enabled, bail fast
-
-        ; prepare the arp pointer for reading
-        lda arpeggio_sequence_ptr_low, x
-        sta bhop_ptr
-        lda arpeggio_sequence_ptr_high, x
-        sta bhop_ptr + 1
-
-        ; For fixed arps, we need to "reset" the channel if the envelope finishes, so we're doing
-        ; the length check first thing
-
-        lda arpeggio_sequence_index, x
-        sta scratch_byte
-        ; have we reached the end of the sequence?
-        ldy #SequenceHeader::length
-        lda (bhop_ptr), y
-        cmp scratch_byte
-        bne end_not_reached
-
-        ; this sequence is finished! Disable the sequence flag
-        lda sequences_active, x
-        and #($FF - SEQUENCE_ARP)
-        sta sequences_active, x
-
-        ; is this a fixed arp?
-        ldy #SequenceHeader::mode
-        lda (bhop_ptr), y
-        cmp #ARP_MODE_FIXED
-        bne early_exit
-
-        ; now apply the current base note as the channel frequency,
-        ; then exit:
-        lda channel_base_note, x
-        sta channel_relative_frequency_low, x
-early_exit:
-        rts
-
-end_not_reached:
-        ; read the current sequence byte, and set instrument_volume to this
-        lda arpeggio_sequence_index, x
-        pha ; stash for later
-        ; for reading the sequence, +4
-        clc
-        adc #4
-        tay
-        lda (bhop_ptr), y
-        sta scratch_byte ; will affect the note, depending on mode
-        clc
-
-        ; what we actually *do* with the arp byte depends on the mode
-        ldy #SequenceHeader::mode
-        lda (bhop_ptr), y
-        cmp #ARP_MODE_ABSOLUTE
-        beq arp_absolute
-        cmp #ARP_MODE_RELATIVE
-        beq arp_relative
-        cmp #ARP_MODE_FIXED
-        beq arp_fixed
-        ; ARP SCHEME, unimplemented! for now, treat this just like absolute
-arp_absolute:
-        ; arp is an offset from base note to apply each frame
-        lda channel_base_note, x
-        clc
-        adc scratch_byte
-        tay
-        jmp apply_arp
-arp_relative:
-        ; arp accumulates an offset each frame, from the previous frame
-        lda channel_base_note, x
-        clc
-        adc scratch_byte
-        sta channel_base_note, x
-        tay
-        jmp apply_arp
-arp_fixed:
-        ; the arp value +1 is the note to apply
-        lda scratch_byte
-        clc
-        adc #1
-        tay
-        ; fall through to apply_arp
-apply_arp:
-        tya ; for noise, we'll use the value directly
-        sta channel_relative_frequency_low, x
-
-done_applying_arp:
-        pla ; unstash the sequence counter
-        tax ; move into x, which tick_sequence_counter expects
-
-        ; tick the sequence counter and exit
-        jsr tick_sequence_counter
-
-        ; write the new sequence index (should still be in x)
-        ldy channel_index
-        txa
-        sta arpeggio_sequence_index, y
-
-done:
-        rts
-.endproc
-
-.if ::BHOP_ZSAW_ENABLED
-; and yet another variant for Z-Saw, which simply copies the base note into the
-; relative frequency byte (which is then played back directly)
-.proc tick_arp_envelope_zsaw
-        ldx channel_index
-        lda sequences_active, x
-        and #SEQUENCE_ARP
-        beq early_exit ; if sequence isn't enabled, bail fast
-
-        ; prepare the arp pointer for reading
-        lda arpeggio_sequence_ptr_low, x
-        sta bhop_ptr
-        lda arpeggio_sequence_ptr_high, x
-        sta bhop_ptr + 1
-
-        ; For fixed arps, we need to "reset" the channel if the envelope finishes, so we're doing
-        ; the length check first thing
-
-        lda arpeggio_sequence_index, x
-        sta scratch_byte
-        ; have we reached the end of the sequence?
-        ldy #SequenceHeader::length
-        lda (bhop_ptr), y
-        cmp scratch_byte
-        bne end_not_reached
-
-        ; this sequence is finished! Disable the sequence flag
-        lda sequences_active, x
-        and #($FF - SEQUENCE_ARP)
-        sta sequences_active, x
-
-        ; is this a fixed arp?
-        ldy #SequenceHeader::mode
-        lda (bhop_ptr), y
-        cmp #ARP_MODE_FIXED
-        bne early_exit
-
-        ; apply the current base note as the channel frequency,
-        ; then exit:
-        lda channel_base_note, x
-        sta zsaw_relative_note
-early_exit:
-        rts
-
-end_not_reached:
-        ; read the current sequence byte, and set instrument_volume to this
-        lda arpeggio_sequence_index, x
-        pha ; stash for later
-        ; for reading the sequence, +4
-        clc
-        adc #4
-        tay
-        lda (bhop_ptr), y
-        sta scratch_byte ; will affect the note, depending on mode
-        clc
-
-        ; what we actually *do* with the arp byte depends on the mode
-        ldy #SequenceHeader::mode
-        lda (bhop_ptr), y
-        cmp #ARP_MODE_ABSOLUTE
-        beq arp_absolute
-        cmp #ARP_MODE_RELATIVE
-        beq arp_relative
-        cmp #ARP_MODE_FIXED
-        beq arp_fixed
-        ; ARP SCHEME, unimplemented! for now, treat this just like absolute
-arp_absolute:
-        ; arp is an offset from base note to apply each frame
-        lda channel_base_note, x
-        clc
-        adc scratch_byte
-        tay
-        jmp apply_arp
-arp_relative:
-        ; were we just triggered? if so, reset the relative offset
-        lda channel_status, x
-        and #CHANNEL_TRIGGERED
-        beq not_triggered
-        lda #0
-        sta channel_relative_note_offset, x
-not_triggered:
-        ; arp accumulates an offset each frame, from the previous frame
-        lda channel_relative_note_offset, x
-        clc
-        adc scratch_byte
-        sta channel_relative_note_offset, x
-        ; this offset is then applied to base_note
-        lda channel_base_note, x
-        clc
-        adc channel_relative_note_offset, x
-        ; stuff that result in y, and apply it
-        tay
-        jmp apply_arp
-arp_fixed:
-        ; the arp value +1 is the note to apply
-        lda scratch_byte
-        clc
-        adc #1
-        tay
-        ; fall through to apply_arp
-apply_arp:
-        sty zsaw_relative_note
-
-done_applying_arp:
-        pla ; unstash the sequence counter
-        tax ; move into x, which tick_sequence_counter expects
-
-        ; tick the sequence counter and exit
-        jsr tick_sequence_counter
-
-        ; write the new sequence index (should still be in x)
-        ldy channel_index
-        txa
-        sta arpeggio_sequence_index, y
-
-done:
-        rts
-.endproc
-.endif
-
 ; If this channel has a pitch envelope active, process that
 ; envelope. Upon return, relative_pitch is set
 ; setup:
@@ -1948,6 +1655,7 @@ relative_pitch_mode:
         ; add this data to relative_pitch
         ldy channel_index
         sadd16_split_y channel_relative_frequency_low, channel_relative_frequency_high, scratch_byte
+        ; TODO: if we were to implement bounds checks, they would go here
 
 done_applying_pitch:
         ; tick the sequence counter and exit
@@ -2285,12 +1993,12 @@ noise_muted:
 
 tick_dpcm:
         jsr play_dpcm_samples
-        .if ::BHOP_ZSAW_ENABLED
+.if ::BHOP_ZSAW_ENABLED
         jsr play_zsaw
-        .endif
-        .if ::BHOP_MMC5_ENABLED
+.endif
+.if ::BHOP_MMC5_ENABLED
         jsr play_mmc5
-        .endif
+.endif
 
 cleanup:
         ; clear the triggered flag from every instrument
@@ -2332,124 +2040,6 @@ cleanup:
 
         rts
 .endproc
-
-.if ::BHOP_MMC5_ENABLED
-.proc play_mmc5
-; basically identical to 2A03 updates, except with MMC5 registers instead of APU ones
-        ; firstly, enable MMC5 audio
-        lda #%00000011
-        sta $5015
-
-tick_pulse1:
-        lda #CHANNEL_SUPPRESSED
-        bit channel_status + MMC5_PULSE_1_INDEX
-        bne tick_pulse2
-        bmi pulse1_muted
-
-        ; add in the duty
-        lda channel_instrument_duty + MMC5_PULSE_1_INDEX
-        ror
-        ror
-        ror
-        and #%11000000
-        sta scratch_byte
-
-        ; apply the combined channel and instrument volume
-        lda channel_tremolo_volume + MMC5_PULSE_1_INDEX
-        asl
-        asl
-        asl
-        asl
-        ora channel_instrument_volume + MMC5_PULSE_1_INDEX
-        tax
-        lda volume_table, x
-        ora #%00110000 ; disable length counter and envelope
-        ora scratch_byte
-        sta $5000
-
-        lda channel_detuned_frequency_low + MMC5_PULSE_1_INDEX
-        sta $5002
-
-        ; If we triggered this frame, write unconditionally
-        lda channel_status + MMC5_PULSE_1_INDEX
-        and #CHANNEL_TRIGGERED
-        bne write_pulse1
-
-        ; otherwise, to avoid resetting the sequence counter, only
-        ; write if the high byte has changed since the last time
-        lda channel_detuned_frequency_high + MMC5_PULSE_1_INDEX
-        cmp shadow_mmc5_pulse1_freq_hi
-        beq tick_pulse2
-
-write_pulse1:
-        lda channel_detuned_frequency_high + MMC5_PULSE_1_INDEX
-        sta shadow_mmc5_pulse1_freq_hi
-        ora #%11111000
-        sta $5003
-        jmp tick_pulse2
-pulse1_muted:
-        ; if the channel is muted, little else matters, but ensure
-        ; we set the volume to 0
-        lda #%00110000
-        sta $5000
-
-tick_pulse2:
-        lda #CHANNEL_SUPPRESSED
-        bit channel_status + MMC5_PULSE_2_INDEX
-        bne done_with_mmc5
-        bmi pulse2_muted
-
-        ; add in the duty
-        lda channel_instrument_duty + MMC5_PULSE_2_INDEX
-        ror
-        ror
-        ror
-        and #%11000000
-        sta scratch_byte
-
-        ; apply the combined channel and instrument volume
-        lda channel_tremolo_volume + MMC5_PULSE_2_INDEX
-        asl
-        asl
-        asl
-        asl
-        ora channel_instrument_volume + MMC5_PULSE_2_INDEX
-        tax
-        lda volume_table, x
-        ora #%00110000 ; disable length counter and envelope
-        ora scratch_byte
-        sta $5004
-
-        lda channel_detuned_frequency_low + MMC5_PULSE_2_INDEX
-        sta $5006
-
-        ; If we triggered this frame, write unconditionally
-        lda channel_status + MMC5_PULSE_2_INDEX
-        and #CHANNEL_TRIGGERED
-        bne write_pulse2
-
-        ; otherwise, to avoid resetting the sequence counter, only
-        ; write if the high byte has changed since the last time
-        lda channel_detuned_frequency_high + MMC5_PULSE_2_INDEX
-        cmp shadow_mmc5_pulse2_freq_hi
-        beq done_with_mmc5
-
-write_pulse2:
-        lda channel_detuned_frequency_high + MMC5_PULSE_2_INDEX
-        sta shadow_mmc5_pulse2_freq_hi
-        ora #%11111000
-        sta $5007
-        jmp done_with_mmc5
-pulse2_muted:
-        ; if the channel is muted, little else matters, but ensure
-        ; we set the volume to 0
-        lda #%00110000
-        sta $5004
-
-done_with_mmc5:
-        rts
-.endproc
-.endif
 
 .proc play_dpcm_samples
         lda channel_status + DPCM_INDEX
@@ -2660,79 +2250,6 @@ reset_counter:
         rts
 .endproc
 
-.if ::BHOP_ZSAW_ENABLED
-; These are used to more or less match N163 volumes in Dn-FamiTracker,
-; which helps to keep the mix as close as possible between the tracker
-; and the in-engine result.
-zsaw_n163_equivalence_table:
-zsaw_00_volume_table:
-.byte   0,   3,   5,   8
-.byte  11,  13,  16,  19
-.byte  22,  25,  28,  31
-.byte  34,  38,  41,  44
-zsaw_7F_volume_table:
-.byte 127, 122, 116, 111
-.byte 106, 101,  96,  92
-.byte  87,  83,  79,  74
-.byte  70,  66,  62,  59
-
-.proc play_zsaw
-        ; Safety: if Z-Saw is disabled, DO NOTHING.
-        lda dpcm_status
-        and #DPCM_ZSAW_ENABLED
-        bne safe_to_continue
-        rts
-
-safe_to_continue:
-        lda #CHANNEL_SUPPRESSED
-        bit channel_status + ZSAW_INDEX
-        bne skip
-        bmi zsaw_muted
-
-        lda channel_instrument_duty + ZSAW_INDEX
-        and #%00000111
-        jsr zsaw_set_timbre
-
-        ; apply the combined channel and instrument volume
-        lda channel_tremolo_volume + ZSAW_INDEX
-        asl
-        asl
-        asl
-        asl
-        ora channel_instrument_volume + ZSAW_INDEX
-        tax
-        lda volume_table, x
-        beq zsaw_muted
-
-        ; New approach: use the tracked volume to index into our N163 equivalence lookup table
-        ; First we need to pick which table, so do that based on the timbre
-        sta scratch_byte
-        lda channel_instrument_duty + ZSAW_INDEX
-        and #%00000001
-        asl
-        asl
-        asl
-        asl
-        ora scratch_byte
-        tax
-        lda zsaw_n163_equivalence_table, x
-        jsr zsaw_set_volume
-
-        ; Z-Saw will use the tracked note directly
-        ; TODO: or, for arps, maybe we copy tracked note to one of the "pitch" variables?
-        lda zsaw_relative_note
-        jsr zsaw_play_note
-        rts
-
-zsaw_muted:
-        jsr zsaw_silence
-
-skip:
-        ; Do not pass go. Do not collect $200
-        rts
-.endproc
-.endif
-
 .proc bhop_play
 .if ::BHOP_PATTERN_BANKING
         lda module_bank
@@ -2777,6 +2294,15 @@ done:
         sta channel_status, x
         rts
 .endproc
+
+.include "bhop/2a03_noise.asm"
+.if ::BHOP_ZSAW_ENABLED
+.include "bhop/2a03_zsaw.asm"
+.endif
+.if ::BHOP_MMC5_ENABLED
+.include "bhop/mmc5.inc"
+.endif
+
 
 volume_table:
         .byte $0, $0, $0, $0, $0, $0, $0, $0, $0, $0, $0, $0, $0, $0, $0, $0
