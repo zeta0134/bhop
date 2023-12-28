@@ -26,6 +26,7 @@ BHOP_PATTERN_SWITCH_ROUTINE = bhop_apply_music_bank
 
 BHOP_ZSAW_ENABLED = 1
 BHOP_MMC5_ENABLED = 0
+BHOP_VRC6_ENABLED = 0
 
 ; For ZSAW purposes, we need to override that config file as well
 __ZSAW_CONFIG = 1
