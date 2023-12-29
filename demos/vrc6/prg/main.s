@@ -27,17 +27,22 @@ NmiCounter: .byte $00
         .proc MODULE_0
         .include "../music/tactus.asm"
         .endproc
+        .proc MODULE_1
+        .include "../music/saw_vol_test.asm"
+        .endproc
 
         .segment "CODE"
 
 ;                                Address               Bank   Track#                          Title                        Artist
 ;                               --------                ---      ---   ----------------------------  ----------------------------
 song_tactus:    music_track     MODULE_0,  <.bank(MODULE_0),       0,      "Tactus - Shower Groove",                   "zeta0134"
+song_sawvol:    music_track     MODULE_1,  <.bank(MODULE_1),       0,           "Sawtooth Vol Test",                          "-"
 
 music_track_table:
         .addr song_tactus
+        .addr song_sawvol
 
-music_track_count: .byte 1
+music_track_count: .byte 2
 
 .proc player_bank_music
         rts

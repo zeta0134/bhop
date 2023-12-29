@@ -74,6 +74,8 @@ channel_instrument_duty: .res BHOP::NUM_CHANNELS
 channel_selected_instrument: .res BHOP::NUM_CHANNELS
 channel_pitch_effects_active: .res BHOP::NUM_CHANNELS
 
+channel_volume_mode: .res BHOP::NUM_CHANNELS
+
 ; DPCM status
 dpcm_status: .byte $00
 
@@ -887,6 +889,8 @@ skip_sample_trigger:
         ; sequence, this will be immediately overwritten with the first element)
         lda #$F
         sta channel_instrument_volume, x
+        lda #0
+        sta channel_volume_mode, x
         ; reset the instrument duty to the channel_duty (again, this will usually
         ; be overwritten by the instrument sequence)
         lda channel_duty, x
@@ -1523,6 +1527,14 @@ done_loading_sequences:
         sta bhop_ptr
         lda volume_sequence_ptr_high, y
         sta bhop_ptr + 1
+
+.if ::BHOP_VRC6_ENABLED
+        ; grab and stash the mode byte, which some expansion instruments need
+        ldy #SequenceHeader::mode
+        lda (bhop_ptr), y
+        ldy channel_index
+        sta channel_volume_mode, y
+.endif
 
         ; read the current sequence byte, and set instrument_volume to this
         lda volume_sequence_index, y
