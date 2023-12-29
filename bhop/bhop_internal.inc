@@ -50,6 +50,17 @@ MMC5_PULSE_2_INDEX = _channel_index
 _channel_index .set (_channel_index+1)
 .endif
 
+.if ::BHOP_VRC6_ENABLED
+VRC6_PULSE_1_INDEX = _channel_index
+_channel_index .set (_channel_index+1)
+
+VRC6_PULSE_2_INDEX = _channel_index
+_channel_index .set (_channel_index+1)
+
+VRC6_SAWTOOTH_INDEX = _channel_index
+_channel_index .set (_channel_index+1)
+.endif
+
 DPCM_INDEX = _channel_index
 _channel_index .set (_channel_index+1)
 

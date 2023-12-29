@@ -116,7 +116,6 @@ third_tick:
         and #$0F
         clc
         adc channel_base_note, x
-        tay
         jmp apply_adjusted_note
 second_tick:
         ; add the high nybble to the base note
@@ -127,18 +126,13 @@ second_tick:
         lsr
         clc
         adc channel_base_note, x
-        tay
         jmp apply_adjusted_note
 first_tick:
         ; use the base_note directly
         lda channel_base_note, x
-        tay
         ; fall through to:
 apply_adjusted_note:
-        lda ntsc_period_low, y
-        sta channel_relative_frequency_low, x
-        lda ntsc_period_high, y
-        sta channel_relative_frequency_high, x
+        jsr set_channel_relative_frequency
 increment_arp_counter:
         inc channel_arpeggio_counter, x
         lda #3
@@ -291,11 +285,9 @@ done:
 ; note: does not disable itself automatically (that's the "automatic" part)
 .proc update_portamento
         ; work out the target frequency based on the base_note
-        ldy channel_base_note, x
-        lda ntsc_period_low, y
-        sta scratch_target_frequency
-        lda ntsc_period_high, y
-        sta scratch_target_frequency+1
+        lda channel_base_note, x
+        jsr set_scratch_target_frequency
+
         ; determine if our current relative_frequency is above or below the target
 check_high:
         lda channel_relative_frequency_high, x

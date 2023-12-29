@@ -1,3 +1,6 @@
+; TODO: roll these into the frequency setting functions?
+; also not having done this consistently might explain
+; why noise arps were being weird...
 .proc fix_noise_freq
         lda channel_status + NOISE_INDEX
         and #CHANNEL_TRIGGERED

@@ -755,11 +755,7 @@ note_trigger:
         ; a contains the selected note at this point
         sta channel_base_note, x
         ; use a to read the LUT and apply base_frequency
-        tay
-        lda ntsc_period_low, y
-        sta channel_base_frequency_low, x
-        lda ntsc_period_high, y
-        sta channel_base_frequency_high, x
+        jsr set_channel_base_frequency
 
         ; if portamento is active AND we are not currently muted,
         ; then skip writing the relative frequency
@@ -1519,11 +1515,8 @@ done:
         ; apply the current base note as the channel frequency,
         ; then exit:
         lda channel_base_note, x
-        tay
-        lda ntsc_period_low, y
-        sta channel_relative_frequency_low, x
-        lda ntsc_period_high, y
-        sta channel_relative_frequency_high, x
+        jsr set_channel_relative_frequency
+
 early_exit:
         rts
 
@@ -1554,7 +1547,6 @@ arp_absolute:
         lda channel_base_note, x
         clc
         adc scratch_byte
-        tay
         jmp apply_arp
 arp_relative:
         ; were we just triggered? if so, reset the relative offset
@@ -1574,20 +1566,15 @@ not_triggered:
         clc
         adc channel_relative_note_offset, x
         ; stuff that result in y, and apply it
-        tay
         jmp apply_arp
 arp_fixed:
         ; the arp value +1 is the note to apply
         lda scratch_byte
         clc
         adc #1
-        tay
         ; fall through to apply_arp
 apply_arp:
-        lda ntsc_period_low, y
-        sta channel_relative_frequency_low, x
-        lda ntsc_period_high, y
-        sta channel_relative_frequency_high, x
+        jsr set_channel_relative_frequency
 
 done_applying_arp:
         pla ; unstash the sequence counter
@@ -2295,6 +2282,7 @@ done:
         rts
 .endproc
 
+.include "bhop/util.asm"
 .include "bhop/2a03_noise.asm"
 .if ::BHOP_ZSAW_ENABLED
 .include "bhop/2a03_zsaw.asm"
