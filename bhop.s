@@ -271,8 +271,16 @@ song_uses_groove:
         sta channel_volume + ZSAW_INDEX
         .endif
         .if ::BHOP_MMC5_ENABLED
+        lda #$0F
         sta channel_volume + MMC5_PULSE_1_INDEX
         sta channel_volume + MMC5_PULSE_2_INDEX
+        .endif
+        .if ::BHOP_VRC6_ENABLED
+        lda #$0F
+        sta channel_volume + VRC6_PULSE_1_INDEX
+        sta channel_volume + VRC6_PULSE_2_INDEX
+        lda #$3F
+        sta channel_volume + VRC6_SAWTOOTH_INDEX
         .endif
 
         ; disable any active effects
@@ -289,6 +297,11 @@ song_uses_groove:
         sta channel_pitch_effects_active + MMC5_PULSE_1_INDEX
         sta channel_pitch_effects_active + MMC5_PULSE_2_INDEX
         .endif
+        .if ::BHOP_VRC6_ENABLED
+        sta channel_pitch_effects_active + VRC6_PULSE_1_INDEX
+        sta channel_pitch_effects_active + VRC6_PULSE_2_INDEX
+        sta channel_pitch_effects_active + VRC6_SAWTOOTH_INDEX
+        .endif
 
         ; reset every channel's status
         lda #(CHANNEL_MUTED)
@@ -303,6 +316,11 @@ song_uses_groove:
         .if ::BHOP_MMC5_ENABLED
         sta channel_status + MMC5_PULSE_1_INDEX
         sta channel_status + MMC5_PULSE_2_INDEX
+        .endif
+        .if ::BHOP_VRC6_ENABLED
+        sta channel_status + VRC6_PULSE_1_INDEX
+        sta channel_status + VRC6_PULSE_2_INDEX
+        sta channel_status + VRC6_SAWTOOTH_INDEX
         .endif
         
         ; reset DPCM status
@@ -477,6 +495,29 @@ done:
         iny
         .endif
 
+        .if ::BHOP_VRC6_ENABLED
+        lda (bhop_ptr), y
+        sta channel_pattern_ptr_low+VRC6_PULSE_1_INDEX
+        iny
+        lda (bhop_ptr), y
+        sta channel_pattern_ptr_high+VRC6_PULSE_1_INDEX
+        iny
+
+        lda (bhop_ptr), y
+        sta channel_pattern_ptr_low+VRC6_PULSE_2_INDEX
+        iny
+        lda (bhop_ptr), y
+        sta channel_pattern_ptr_high+VRC6_PULSE_2_INDEX
+        iny
+
+        lda (bhop_ptr), y
+        sta channel_pattern_ptr_low+VRC6_SAWTOOTH_INDEX
+        iny
+        lda (bhop_ptr), y
+        sta channel_pattern_ptr_high+VRC6_SAWTOOTH_INDEX
+        iny
+        .endif
+
         ; DPCM
         lda (bhop_ptr), y
         sta channel_pattern_ptr_low+DPCM_INDEX
@@ -515,6 +556,17 @@ done:
         sta channel_pattern_bank+MMC5_PULSE_2_INDEX
         iny
         .endif
+        .if ::BHOP_VRC6_ENABLED
+        lda (bhop_ptr), y
+        sta channel_pattern_bank+VRC6_PULSE_1_INDEX
+        iny
+        lda (bhop_ptr), y
+        sta channel_pattern_bank+VRC6_PULSE_2_INDEX
+        iny
+        lda (bhop_ptr), y
+        sta channel_pattern_bank+VRC6_SAWTOOTH_INDEX
+        iny
+        .endif
         lda (bhop_ptr), y
         sta channel_pattern_bank+DPCM_INDEX
         iny
@@ -534,6 +586,11 @@ banking_not_enabled:
         sta channel_pattern_bank + MMC5_PULSE_1_INDEX
         sta channel_pattern_bank + MMC5_PULSE_2_INDEX
         .endif
+        .if ::BHOP_VRC6_ENABLED
+        sta channel_pattern_bank + VRC6_PULSE_1_INDEX
+        sta channel_pattern_bank + VRC6_PULSE_2_INDEX
+        sta channel_pattern_bank + VRC6_SAWTOOTH_INDEX
+        .endif
         sta channel_pattern_bank + DPCM_INDEX
 done_with_banks:
 .endif
@@ -550,6 +607,11 @@ done_with_banks:
         .if ::BHOP_MMC5_ENABLED
         sta channel_row_delay_counter + MMC5_PULSE_1_INDEX
         sta channel_row_delay_counter + MMC5_PULSE_2_INDEX
+        .endif
+        .if ::BHOP_VRC6_ENABLED
+        sta channel_row_delay_counter + VRC6_PULSE_1_INDEX
+        sta channel_row_delay_counter + VRC6_PULSE_2_INDEX
+        sta channel_row_delay_counter + VRC6_SAWTOOTH_INDEX
         .endif
         sta channel_row_delay_counter + DPCM_INDEX
 
@@ -989,6 +1051,21 @@ done:
         jsr advance_channel_row
         .endif
 
+        .if ::BHOP_VRC6_ENABLED
+        ; VRC6
+        lda #VRC6_PULSE_1_INDEX
+        sta channel_index
+        jsr advance_channel_row
+
+        lda #VRC6_PULSE_2_INDEX
+        sta channel_index
+        jsr advance_channel_row
+
+        lda #VRC6_SAWTOOTH_INDEX
+        sta channel_index
+        jsr advance_channel_row
+        .endif
+
         ; DPCM
         lda #DPCM_INDEX
         sta channel_index
@@ -1046,6 +1123,21 @@ done:
         jsr skip_channel_row
 
         lda #MMC5_PULSE_2_INDEX
+        sta channel_index
+        jsr skip_channel_row
+        .endif
+
+        .if ::BHOP_VRC6_ENABLED
+        ; MMC5
+        lda #VRC6_PULSE_1_INDEX
+        sta channel_index
+        jsr skip_channel_row
+
+        lda #VRC6_PULSE_2_INDEX
+        sta channel_index
+        jsr skip_channel_row
+
+        lda #VRC6_SAWTOOTH_INDEX
         sta channel_index
         jsr skip_channel_row
         .endif
@@ -1228,6 +1320,50 @@ done_with_delays:
         jsr update_arp
         jsr update_pitch_effects
         jsr update_volume_effects
+        jsr tick_arp_envelope
+        jsr tick_pitch_envelope
+        initialize_detuned_frequency
+        jsr update_vibrato
+        jsr update_tuning
+.endif
+
+.if ::BHOP_VRC6_ENABLED
+        lda #VRC6_PULSE_1_INDEX
+        sta channel_index
+        jsr tick_delayed_effects
+        jsr tick_volume_envelope
+        jsr tick_duty_envelope
+        jsr update_arp
+        jsr update_pitch_effects
+        jsr update_volume_effects
+        jsr tick_arp_envelope
+        jsr tick_pitch_envelope
+        initialize_detuned_frequency
+        jsr update_vibrato
+        jsr update_tuning
+
+        lda #VRC6_PULSE_2_INDEX
+        sta channel_index
+        jsr tick_delayed_effects
+        jsr tick_volume_envelope
+        jsr tick_duty_envelope
+        jsr update_arp
+        jsr update_pitch_effects
+        jsr update_volume_effects
+        jsr tick_arp_envelope
+        jsr tick_pitch_envelope
+        initialize_detuned_frequency
+        jsr update_vibrato
+        jsr update_tuning
+
+        lda #VRC6_SAWTOOTH_INDEX
+        sta channel_index
+        jsr tick_delayed_effects
+        jsr tick_volume_envelope ; TODO: does these need different logic to handle $3F range!?
+        ;jsr tick_duty_envelope ; TODO: what does this even do for sawtooth? anything?
+        jsr update_arp
+        jsr update_pitch_effects
+        jsr update_volume_effects ; TODO: does these need different logic to handle $3F range!?
         jsr tick_arp_envelope
         jsr tick_pitch_envelope
         initialize_detuned_frequency
@@ -1986,6 +2122,9 @@ tick_dpcm:
 .if ::BHOP_MMC5_ENABLED
         jsr play_mmc5
 .endif
+.if ::BHOP_VRC6_ENABLED
+        jsr play_vrc6
+.endif
 
 cleanup:
         ; clear the triggered flag from every instrument
@@ -2019,6 +2158,20 @@ cleanup:
         lda channel_status + MMC5_PULSE_2_INDEX
         and #($FF - CHANNEL_TRIGGERED)
         sta channel_status + MMC5_PULSE_2_INDEX
+        .endif
+
+        .if ::BHOP_VRC6_ENABLED
+        lda channel_status + VRC6_PULSE_1_INDEX
+        and #($FF - CHANNEL_TRIGGERED)
+        sta channel_status + VRC6_PULSE_1_INDEX
+
+        lda channel_status + VRC6_PULSE_2_INDEX
+        and #($FF - CHANNEL_TRIGGERED)
+        sta channel_status + VRC6_PULSE_2_INDEX
+
+        lda channel_status + VRC6_SAWTOOTH_INDEX
+        and #($FF - CHANNEL_TRIGGERED)
+        sta channel_status + VRC6_SAWTOOTH_INDEX
         .endif
 
         lda channel_status + DPCM_INDEX
@@ -2288,7 +2441,10 @@ done:
 .include "bhop/2a03_zsaw.asm"
 .endif
 .if ::BHOP_MMC5_ENABLED
-.include "bhop/mmc5.inc"
+.include "bhop/mmc5.asm"
+.endif
+.if ::BHOP_VRC6_ENABLED
+.include "bhop/vrc6.asm"
 .endif
 
 
