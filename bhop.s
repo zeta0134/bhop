@@ -367,6 +367,12 @@ effect_init_loop:
         lda #%00001111
         sta $4015
 
+        ; enable any expansion audio chips here, if they can be disabled
+        .if ::BHOP_VRC6_ENABLED
+        lda #0
+        sta $9003 ; enable all channels, disable frequency scaling
+        .endif
+
         rts
 .endproc
 
@@ -1359,11 +1365,11 @@ done_with_delays:
         lda #VRC6_SAWTOOTH_INDEX
         sta channel_index
         jsr tick_delayed_effects
-        jsr tick_volume_envelope ; TODO: does these need different logic to handle $3F range!?
-        ;jsr tick_duty_envelope ; TODO: what does this even do for sawtooth? anything?
+        jsr tick_volume_envelope
+        jsr tick_duty_envelope
         jsr update_arp
         jsr update_pitch_effects
-        jsr update_volume_effects ; TODO: does these need different logic to handle $3F range!?
+        jsr update_volume_effects
         jsr tick_arp_envelope
         jsr tick_pitch_envelope
         initialize_detuned_frequency
