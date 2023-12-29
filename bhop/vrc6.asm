@@ -76,6 +76,46 @@ pulse2_muted:
         sta $A000
 
 tick_sawtooth:
-        ; TODO
+        ; TODO: support 6bit volume mode... somehow!
+        lda #CHANNEL_SUPPRESSED
+        bit channel_status + VRC6_SAWTOOTH_INDEX
+        bne done
+        bmi sawtooth_muted
+
+        ; add in the duty
+        lda channel_instrument_duty + VRC6_SAWTOOTH_INDEX
+        asl
+        asl
+        asl
+        asl
+        and #%00100000
+        sta scratch_byte
+        
+        ; apply the combined channel and instrument volume
+        lda channel_tremolo_volume + VRC6_SAWTOOTH_INDEX
+        asl
+        asl
+        asl
+        asl
+        ora channel_instrument_volume + VRC6_SAWTOOTH_INDEX
+        tax
+        lda volume_table, x
+        asl
+        ora scratch_byte
+        sta $B000
+
+        lda channel_detuned_frequency_low + VRC6_SAWTOOTH_INDEX
+        sta $B001
+        lda channel_detuned_frequency_high + VRC6_SAWTOOTH_INDEX
+        ora #%10000000
+        sta $B002
+        jmp done
+sawtooth_muted:
+        ; if the channel is muted, little else matters, but ensure
+        ; we set the volume to 0
+        lda #%00000000
+        sta $B000
+        
+done:
         rts
 .endproc
