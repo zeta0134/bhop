@@ -371,8 +371,7 @@ effect_init_loop:
 
         ; enable any expansion audio chips here, if they can be disabled
         .if ::BHOP_VRC6_ENABLED
-        lda #0
-        sta $9003 ; enable all channels, disable frequency scaling
+        jsr bhop_vrc6_init
         .endif
 
         rts
