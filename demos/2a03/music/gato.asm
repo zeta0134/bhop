@@ -163,13 +163,14 @@ ft_sample_list:
 
 ; DPCM samples list (location, size, bank)
 ft_samples:
-  .byte <((ft_sample_0  - $C000) >> 6),  78, <.bank(ft_sample_0)
-  .byte <((ft_sample_1  - $C000) >> 6),  93,  <.bank(ft_sample_1)
-  .byte <((ft_sample_2  - $C000) >> 6),  70, <.bank(ft_sample_2)
-  .byte <((ft_sample_3  - $C000) >> 6),  62,  <.bank(ft_sample_3)
-  .byte <((ft_sample_4  - $C000) >> 6),  52, <.bank(ft_sample_4)
-  .byte <((ft_sample_5  - $C000) >> 6),  47,  <.bank(ft_sample_5)
-  .byte <((ft_sample_6  - $C000) >> 6),  46,  <.bank(ft_sample_6)
+	.byte <((ft_sample_0 - $C000) >> 6), 78, <.bank(ft_sample_0)
+	.byte <((ft_sample_1 - $C000) >> 6), 93, <.bank(ft_sample_1)
+	.byte <((ft_sample_2 - $C000) >> 6), 70, <.bank(ft_sample_2)
+	.byte <((ft_sample_3 - $C000) >> 6), 62, <.bank(ft_sample_3)
+	.byte <((ft_sample_4 - $C000) >> 6), 52, <.bank(ft_sample_4)
+	.byte <((ft_sample_5 - $C000) >> 6), 47, <.bank(ft_sample_5)
+	.byte <((ft_sample_6 - $C000) >> 6), 46, <.bank(ft_sample_6)
+
 ; Groove list
 ft_groove_list:
 	.byte $00
