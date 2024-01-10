@@ -43,4 +43,9 @@ BHOP_ZSAW_ENABLED = 0
 BHOP_MMC5_ENABLED = 0
 BHOP_VRC6_ENABLED = 0
 
+; VRC6 variants for compatible mappers
+; Only enable one of these at a time
+BHOP_VRC6_MAPPER24 = 0
+BHOP_VRC6_RAINBOW = 0
+
 .endif ; __BHOP_CONFIG
