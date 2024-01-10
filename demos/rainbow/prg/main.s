@@ -7,7 +7,9 @@
         .include "../../common/word_util.inc"
         .include "../../common/vram_buffer.inc"
 
-        .include "../../../bhop/zsaw.inc"
+        .include "../../../bhop/bhop.inc"
+
+        .include "rainbow.inc"
 
         .zeropage
 
@@ -25,8 +27,13 @@ NmiCounter: .byte $00
         .proc MODULE_0
         .include "../music/tactus.asm"
         .endproc
+
         .proc MODULE_1
         .include "../music/saw_vol_test.asm"
+        .endproc
+        
+        .proc MODULE_2
+        .include "../music/zpcm_vol_test.asm"
         .endproc
 
         .segment "CODE"
@@ -35,12 +42,14 @@ NmiCounter: .byte $00
 ;                               --------                ---      ---   ----------------------------  ----------------------------
 song_tactus:    music_track     MODULE_0,  <.bank(MODULE_0),       0,      "Tactus - Shower Groove",                   "zeta0134"
 song_sawvol:    music_track     MODULE_1,  <.bank(MODULE_1),       0,           "Sawtooth Vol Test",                          "-"
+song_zpcmvol:   music_track     MODULE_2,  <.bank(MODULE_2),       0,               "ZPCM Vol Test",                          "-"
 
 music_track_table:
         .addr song_tactus
         .addr song_sawvol
+        .addr song_zpcmvol
 
-music_track_count: .byte 2
+music_track_count: .byte 3
 
 .proc player_bank_music
         rts
@@ -72,6 +81,7 @@ loop:
         ; player init
         jsr player_init
 
+
         ; re-enable graphics and NMI
         lda #$1E
         sta PPUMASK
@@ -80,18 +90,51 @@ loop:
 
         jsr wait_for_nmi ; safety sync
 
+        ; perform exactly one OAM DMA here
+        lda #0
+        sta OAMADDR
+        lda #$02
+        sta OAM_DMA
+
+        ; RAINBOW init
+        ; setup ZPCM mode
+        lda #%00000100
+        sta MAP_SND_EXP_CTRL
+        ; setup CPU-based IRQ every 128 cycles, matching Rainbow demo
+        lda #128
+        sta MAP_CPU_IRQ_LATCH_LO
+        lda #0
+        sta MAP_CPU_IRQ_LATCH_HI
+        ; actually turn those on
+        lda #%00000011 ; enable / repeat on acknowledge
+        sta MAP_CPU_IRQ_CONTROL
+        cli
+
 gameloop:
         jsr player_update
-        jsr wait_for_nmi ; safety sync
+
+        ; disable DPCM entirely, which works around a minor bug with the MUTED
+        ; status. If we don't do this, bhop writes 0x00 to the PCM level every tick,
+        ; which interferes with the zpcm test
+
+        ; it's easier to do this here than to try to inject it into the shared
+        ; player; it's not like we're doing anything else in the game loop
+        lda #7 ; DPCM index
+        jsr bhop_mute_channel
+
+        jsr wait_for_nmi
         jmp gameloop ; forever
 
 .endproc
 
 .proc irq
+        inc $4011 ; copy in zpcm value
+        sta MAP_CPU_IRQ_ACK ; acknowledge CPU IRQ, which should re-enable automatically
         rti
 .endproc
 
 .proc nmi
+        cli ; it's fine, let these happen
         ; preserve registers
         pha
         txa
@@ -103,10 +146,10 @@ gameloop:
 
         jsr vram_zipper
 
-        lda #0
-        sta OAMADDR
-        lda #$02
-        sta OAM_DMA
+        ;lda #0
+        ;sta OAMADDR
+        ;lda #$02
+        ;sta OAM_DMA
 
         lda #(VBLANK_NMI | OBJ_1000 | BG_0000)
         sta PPUCTRL

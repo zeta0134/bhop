@@ -134,6 +134,8 @@ MAP_SND_SAW_ACC     = $41A6
 MAP_SND_SAW_LOW     = $41A7
 MAP_SND_SAW_HIGH    = $41A8
 
+MAP_SND_EXP_CTRL    = $41A9
+
 ; ################################################################################
 ; MAPPER FLAGS / MASKS
 
