@@ -29,10 +29,14 @@ NmiCounter: .byte $00
         .endproc
 
         .proc MODULE_1
+        .include "../music/in_another_world_(head_in_the_clouds)_zpcm.asm"
+        .endproc
+
+        .proc MODULE_2
         .include "../music/saw_vol_test.asm"
         .endproc
         
-        .proc MODULE_2
+        .proc MODULE_3
         .include "../music/zpcm_vol_test.asm"
         .endproc
 
@@ -41,15 +45,17 @@ NmiCounter: .byte $00
 ;                                Address               Bank   Track#                          Title                        Artist
 ;                               --------                ---      ---   ----------------------------  ----------------------------
 song_tactus:    music_track     MODULE_0,  <.bank(MODULE_0),       0,      "Tactus - Shower Groove",                   "zeta0134"
-song_sawvol:    music_track     MODULE_1,  <.bank(MODULE_1),       0,           "Sawtooth Vol Test",                          "-"
-song_zpcmvol:   music_track     MODULE_2,  <.bank(MODULE_2),       0,               "ZPCM Vol Test",                          "-"
+song_iaw:       music_track     MODULE_1,  <.bank(MODULE_1),       1,            "in another world",                    "Persune"
+song_sawvol:    music_track     MODULE_2,  <.bank(MODULE_2),       0,           "Sawtooth Vol Test",                          "-"
+song_zpcmvol:   music_track     MODULE_3,  <.bank(MODULE_3),       0,               "ZPCM Vol Test",                          "-"
 
 music_track_table:
         .addr song_tactus
+        .addr song_iaw
         .addr song_sawvol
         .addr song_zpcmvol
 
-music_track_count: .byte 3
+music_track_count: .byte 4
 
 .proc player_bank_music
         rts
@@ -119,8 +125,8 @@ gameloop:
 
         ; it's easier to do this here than to try to inject it into the shared
         ; player; it's not like we're doing anything else in the game loop
-        lda #7 ; DPCM index
-        jsr bhop_mute_channel
+        ; lda #7 ; DPCM index
+        ; jsr bhop_mute_channel
 
         jsr wait_for_nmi
         jmp gameloop ; forever
@@ -169,3 +175,18 @@ gameloop:
         ; all done
         rti
 .endproc
+
+.proc bhop_disable_zpcm
+        sta MAP_CPU_IRQ_ACK
+        lda #0
+        sta MAP_CPU_IRQ_CONTROL
+        rts
+.endproc
+.export bhop_disable_zpcm
+
+.proc bhop_enable_zpcm
+        lda #%00000011 ; enable / repeat on acknowledge
+        sta MAP_CPU_IRQ_CONTROL
+        rts
+.endproc
+.export bhop_enable_zpcm

@@ -328,12 +328,9 @@ song_uses_groove:
         ; reset DPCM status
         lda #$FF
         sta effect_dac_buffer
-        .if ::BHOP_ZSAW_ENABLED
-        ; Z-Saw is enabled by default
-        lda #DPCM_ZSAW_ENABLED
-        .else
+
+        ; DPCM is disabled by default
         lda #0
-        .endif
         sta dpcm_status
 
         ; clear out special effects
@@ -358,11 +355,18 @@ effect_init_loop:
         sta effect_retrigger_period
         sta effect_retrigger_counter
 
+        ; if using virtual Z channels, enable by default
+
         .if ::BHOP_ZSAW_ENABLED
-        ; if zsaw happens to be playing, silence it
+        ; if Z-Saw happens to be playing, silence it
         jsr zsaw_silence
         ; Now fully re-initialize Z-Saw just in case
         jsr zsaw_init
+        jsr zsaw_enable
+        .endif
+
+        .if ::BHOP_ZPCM_ENABLED
+        jsr zpcm_enable
         .endif
 
         ; finally, enable all channels except DMC
@@ -2205,10 +2209,10 @@ cleanup:
 
 ; Xxx handling; see CDPCMChan::RefreshChannel() in Dn-FT
 ; decrement effect_retrigger_counter while effect_retrigger_counter != zero
-; if retrigger counter is 0, then time to trigger the sample again
         lda effect_retrigger_period
         beq next
         dec effect_retrigger_counter
+; if retrigger counter is 0 here, then time to trigger the sample again
         lda effect_retrigger_counter
         bne next
         lda effect_retrigger_period
@@ -2237,15 +2241,13 @@ next:
         and #CHANNEL_TRIGGERED
         jeq check_for_inactive
 
+        ; We're about to trigger a DPCM sample,
+        ; so silence virtual Z channels.
+        ; DPCM will always have higher priority
         .if ::BHOP_ZSAW_ENABLED
-        ; We're about to trigger a DPCM sample, so silence zsaw. DPCM
-        ; will always have higher priority
-        jsr zsaw_silence
-        ; Disable Z-Saw, so it knows not to queue
-        ; up another note and ruin our work
-        lda dpcm_status
-        and #($FF - (DPCM_ZSAW_ENABLED))
-        sta dpcm_status
+        jsr zsaw_disable
+        .elseif ::BHOP_ZPCM_ENABLED
+        jsr zpcm_disable
         .endif
 
         ; using the current note, read the sample table
@@ -2330,10 +2332,14 @@ done:
         rts
 
 dpcm_muted:
-        .if ::BHOP_ZSAW_ENABLED
-        ; Only take action if Z-Saw is currently disabled...
+        ; Only take action if virtual Z channels are disabled...
+        .if ::BHOP_ZSAW_ENABLED .or ::BHOP_ZPCM_ENABLED
         lda dpcm_status
-        and #DPCM_ZSAW_ENABLED
+            .if ::BHOP_ZSAW_ENABLED
+            and #DPCM_ZSAW_ENABLED
+            .elseif ::BHOP_ZPCM_ENABLED
+            and #DPCM_ZPCM_ENABLED
+            .endif
         bne done
         .endif
         ; simply disable the channel and exit (whatever is in the sample playback buffer will
@@ -2353,33 +2359,97 @@ dpcm_cut:
         sta $4011
 dpcm_release:
         lda dpcm_status
-        .if ::BHOP_ZSAW_ENABLED
-        and #($FF - (DPCM_ZSAW_ENABLED))
-        .endif
         and #($FF - (DPCM_ENABLED))
         sta dpcm_status
 
 check_for_inactive:
-        .if ::BHOP_ZSAW_ENABLED
-        ; Only take action if Z-Saw is disabled...
-        lda dpcm_status
-        and #DPCM_ZSAW_ENABLED
-        bne done
+        ; Only take action if virtual Z channels are disabled...
+        .if ::BHOP_ZSAW_ENABLED .or ::BHOP_ZPCM_ENABLED
 
         ; See if that DPCM playback has finished:
         lda $4015
         and #%00010000
         bne done
 
-        ; If it has, enable the Z-Saw channel
+        ; If it has, enable virtual Z channels
         ; to initiate playback on the next tick
-        lda dpcm_status
-        ora #DPCM_ZSAW_ENABLED
-        sta dpcm_status
+            .if ::BHOP_ZSAW_ENABLED
+            jsr zsaw_enable
+            .elseif ::BHOP_ZPCM_ENABLED
+            jsr zpcm_enable
+            .endif
         .endif
 
         rts
 .endproc
+
+.if ::BHOP_ZPCM_ENABLED
+; request to disable ZPCM
+.proc zpcm_disable
+        ; check if ZPCM is already disabled first
+        lda dpcm_status
+        and #DPCM_ZPCM_ENABLED
+        beq done
+        jsr BHOP_ZPCM_DISABLE_ROUTINE
+        
+        ; set status flag
+        lda dpcm_status
+        and #($FF - (DPCM_ZPCM_ENABLED))
+        sta dpcm_status
+done:
+        rts
+.endproc
+
+; request to enable ZPCM
+.proc zpcm_enable
+        ; check if ZPCM is already enabled first
+        lda dpcm_status
+        and #DPCM_ZPCM_ENABLED
+        bne done
+        jsr BHOP_ZPCM_ENABLE_ROUTINE
+        
+        ; set status flag
+        lda dpcm_status
+        ora #DPCM_ZPCM_ENABLED
+        sta dpcm_status
+done:
+        rts
+.endproc
+.endif
+
+.if ::BHOP_ZSAW_ENABLED
+; request to disable Z-Saw
+.proc zsaw_disable
+        ; check if Z-Saw is already disabled first
+        lda dpcm_status
+        and #DPCM_ZSAW_ENABLED
+        beq done
+        jsr zsaw_silence
+        
+        ; set status flag
+        lda dpcm_status
+        and #($FF - (DPCM_ZSAW_ENABLED))
+        sta dpcm_status
+done:
+        rts
+.endproc
+
+; request to enable Z-Saw
+.proc zsaw_enable
+        ; check if ZPCM is already enabled first
+        lda dpcm_status
+        and #DPCM_ZSAW_ENABLED
+        bne done
+        ; do nothing, will play on the next tick
+        
+        ; set status flag
+        lda dpcm_status
+        ora #DPCM_ZSAW_ENABLED
+        sta dpcm_status
+done:
+        rts
+.endproc
+.endif
 
 ; resets the retrigger logic upon a new DPCM sample note
 ; see CDPCMChan::triggerSample() in Dn-FT

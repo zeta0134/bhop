@@ -11,23 +11,30 @@ __BHOP_CONFIG = 1
 .define BHOP_RAM_SEGMENT "RAM"
 .define BHOP_ZP_SEGMENT "ZEROPAGE"
 
-BHOP_DPCM_BANKING = 1
 BHOP_PATTERN_BANKING = 1
-
-.if ::BHOP_DPCM_BANKING
-.import bhop_apply_dpcm_bank
-BHOP_DPCM_SWITCH_ROUTINE = bhop_apply_dpcm_bank
-.endif
 
 .if ::BHOP_PATTERN_BANKING
 .import bhop_apply_music_bank
 BHOP_PATTERN_SWITCH_ROUTINE = bhop_apply_music_bank
 .endif
 
+BHOP_DPCM_BANKING = 1
+
+.if ::BHOP_DPCM_BANKING
+.import bhop_apply_dpcm_bank
+BHOP_DPCM_SWITCH_ROUTINE = bhop_apply_dpcm_bank
+.endif
+
 ; Options for different features that can be disabled to save space
 
 BHOP_DELAYED_RELEASE_ENABLED = 1
 
-BHOP_ZSAW_ENABLED = 0
 BHOP_MMC5_ENABLED = 0
+
 BHOP_VRC6_ENABLED = 0
+    BHOP_VRC6_MAPPER24 = 0
+    BHOP_VRC6_RAINBOW = 0
+
+BHOP_ZSAW_ENABLED = 0
+
+BHOP_ZPCM_ENABLED = 0
