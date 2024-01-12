@@ -884,7 +884,9 @@ preserve_release_delay:
         sta channel_status, x
         cpx #DPCM_INDEX
         bne skip_sample_trigger
+        ; see CDPCMChan::triggerSample() in Dn-FT
         jsr trigger_sample
+        jsr queue_sample
 skip_sample_trigger:
         ; reset the instrument envelopes to the beginning
         jsr reset_instrument ; clobbers a, y
@@ -2207,36 +2209,35 @@ cleanup:
         and #CHANNEL_SUPPRESSED
         jne done
 
-; Xxx handling; see CDPCMChan::RefreshChannel() in Dn-FT
-; decrement effect_retrigger_counter while effect_retrigger_counter != zero
+        ; Xxx handling; see CDPCMChan::RefreshChannel() in Dn-FT
+        ; decrement effect_retrigger_counter while effect_retrigger_counter != zero
         lda effect_retrigger_period
         beq next
         dec effect_retrigger_counter
-; if retrigger counter is 0 here, then time to trigger the sample again
+
+        ; if retrigger counter is decremented to 0 at this point
+        ; then time to trigger the sample again
         lda effect_retrigger_counter
         bne next
         lda effect_retrigger_period
         sta effect_retrigger_counter
-        lda dpcm_status
-        ora #DPCM_ENABLED
-        sta dpcm_status
-        lda channel_status + DPCM_INDEX
-        ora #CHANNEL_TRIGGERED
-        sta channel_status + DPCM_INDEX
+        
+        ; trigger_sample without resetting effect_retrigger_counter via queue_sample
+        jsr trigger_sample
 next:
 
-; handle note cut and note release
-; see CDPCMChan::RefreshChannel() in Dn-FT 
+        ; handle note cut and note release
+        ; see CDPCMChan::RefreshChannel() in Dn-FT 
         lda channel_status + DPCM_INDEX
         and #(CHANNEL_MUTED | CHANNEL_RELEASED)
         jne dpcm_muted
 
-; check if channel is enabled in the first place
+        ; check if channel is enabled in the first place
         lda dpcm_status
         and #DPCM_ENABLED
         jeq done
 
-; make arrangements to write to the specific registers
+        ; make arrangements to write to the specific registers
         lda channel_status + DPCM_INDEX
         and #CHANNEL_TRIGGERED
         jeq check_for_inactive
@@ -2390,7 +2391,10 @@ check_for_inactive:
         lda dpcm_status
         and #DPCM_ZPCM_ENABLED
         beq done
+
+        .if ::BHOP_ZPCM_CONFLICT_AVOIDANCE
         jsr BHOP_ZPCM_DISABLE_ROUTINE
+        .endif
         
         ; set status flag
         lda dpcm_status
@@ -2406,7 +2410,10 @@ done:
         lda dpcm_status
         and #DPCM_ZPCM_ENABLED
         bne done
+
+        .if ::BHOP_ZPCM_CONFLICT_AVOIDANCE
         jsr BHOP_ZPCM_ENABLE_ROUTINE
+        .endif
         
         ; set status flag
         lda dpcm_status
@@ -2452,15 +2459,23 @@ done:
 .endif
 
 ; resets the retrigger logic upon a new DPCM sample note
-; see CDPCMChan::triggerSample() in Dn-FT
 .proc trigger_sample
+        .if ::BHOP_ZPCM_ENABLED .and (.not ::BHOP_ZPCM_CONFLICT_AVOIDANCE)
+        ; since we don't have any means to disable ZPCM,
+        ; avoid playing samples altogether when ZPCM is enabled
+        lda dpcm_status
+        and #DPCM_ZPCM_ENABLED
+        beq next
+        rts
+next:
+        .endif
+
         lda dpcm_status
         ora #DPCM_ENABLED
         sta dpcm_status
         lda channel_status + DPCM_INDEX
         ora #CHANNEL_TRIGGERED
         sta channel_status + DPCM_INDEX
-        jsr queue_sample
         rts
 .endproc
 

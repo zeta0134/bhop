@@ -1,4 +1,4 @@
-; Dn-FamiTracker exported music data: zpcm test.dnm
+; Dn-FamiTracker exported music data: in_another_world_zpcm.dnm
 ;
 
 ; Module header
