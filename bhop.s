@@ -2460,7 +2460,8 @@ done:
 
 ; resets the retrigger logic upon a new DPCM sample note
 .proc trigger_sample
-        .if ::BHOP_ZPCM_ENABLED .and (.not ::BHOP_ZPCM_CONFLICT_AVOIDANCE)
+        .if ::BHOP_ZPCM_ENABLED
+        .if .not ::BHOP_ZPCM_CONFLICT_AVOIDANCE
         ; since we don't have any means to disable ZPCM,
         ; avoid playing samples altogether when ZPCM is enabled
         lda dpcm_status
@@ -2468,6 +2469,7 @@ done:
         beq next
         rts
 next:
+        .endif
         .endif
 
         lda dpcm_status
