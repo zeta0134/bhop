@@ -45,7 +45,7 @@ NmiCounter: .byte $00
 
         .segment "MUSIC_4"
         .proc MODULE_4
-        .include "../music/in_another_world.asm"
+        .include "../music/in_another_world_(head_in_the_clouds).asm"
         .endproc
 
         .segment "CODE"

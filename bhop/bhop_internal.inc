@@ -81,9 +81,12 @@ SEQUENCE_PITCH   = %00000100
 SEQUENCE_HIPITCH = %00001000
 SEQUENCE_DUTY    = %00010000
 
-; DPCM state flags
+; DPCM channel state flags
+; sorted in order of priority
+; concurrent Z-Saw and ZPCM is not supported (yet?).
 DPCM_ENABLED      = %00000001
 DPCM_ZSAW_ENABLED = %00000010
+DPCM_ZPCM_ENABLED = %00000100
 
 ; for active effects
 PITCH_EFFECT_UP           = %00000001
