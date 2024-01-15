@@ -1,5 +1,6 @@
 build
 *.nes
+*.nsf
 *.sav
 *.o
 *.dbg

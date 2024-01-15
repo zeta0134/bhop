@@ -3,6 +3,9 @@
 .include "bhop/zsaw.asm"
 .endif
 
+BHOP_VER_MAJ = $00
+BHOP_VER_MIN = $00
+
 .scope BHOP
 .include "bhop/bhop_internal.inc"
 .include "bhop/longbranch.inc"
