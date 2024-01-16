@@ -4,8 +4,11 @@
         .setcpu "6502"
         .include "nsf.inc"
 ;
-; NSF (1.0) header
+; NSF2 header
+; with NSFe metadata appended
 ; https://www.nesdev.org/wiki/NSF
+; https://www.nesdev.org/wiki/NSF2
+; https://www.nesdev.org/wiki/NSFe
 ;
 
 .segment "HEADER"
@@ -17,11 +20,11 @@
         .addr nsf_init                  ; INIT address
         .addr bhop_play                 ; PLAY address
 align_strings:
-        .byte "bhop NSF demo"    ; Name, 32 bytes
+        .byte "bhop NSF demo"           ; Name, 32 bytes
         .res align_strings+32-*, $00
-        .byte "Jenny, v.a."    ; Artist, 32 bytes
+        .byte "Jenny, v.a."             ; Artist, 32 bytes
         .res align_strings+64-*, $00
-        .byte "2024"    ; Copyright, 32 bytes
+        .byte "2024"                    ; Copyright, 32 bytes
         .res align_strings+96-*, $00
 
         .word $40FF                     ; NTSC play rate = round(1000000 / ((21477272 / 4)  / (341 * 262)))
