@@ -161,19 +161,19 @@ ScratchByte: .res 1
 .export bhop_apply_dpcm_bank
 
 
-;                                    Address               Bank   Track#        NSF Exp. Flags                           Title                        Artist
-;                                   --------                ---      ---   -------------------    ----------------------------  ----------------------------
-song_itt:       music_track_nsf     MODULE_0,  <.bank(MODULE_0),      0,                     0;   "Ikenfell - In This Together",           "aivi & surasshu"
-song_virus:     music_track_nsf     MODULE_1,  <.bank(MODULE_1),      0,                     0;         "MMBN. - Virus Busting",              "Yoshino Aoki"
-song_smb:       music_track_nsf     MODULE_2,  <.bank(MODULE_2),      0,                     0;  "Super Mario Bros - World 1-1",                "Koji Kondo"
-song_yakra:     music_track_nsf     MODULE_3,  <.bank(MODULE_3),      0,                     0;  "Chrono Trigger - Boss Battle",          "Yasunori Mitsuda"
-song_nsmb:      music_track_nsf     MODULE_4,  <.bank(MODULE_4),      0,                     0;    "New Super Mario Bros - 1-1",                "Koji Kondo"
-song_sanctuary: music_track_nsf     MODULE_5,  <.bank(MODULE_5),      0,                     0;         "Earthbound - Guardian",      "K. Suzuki, H. Tanaka"
-song_gato:      music_track_nsf     MODULE_6,  <.bank(MODULE_6),      0,                     0;       "Chrono Trigger - Battle",          "Yasunori Mitsuda"
-song_simian:    music_track_nsf     MODULE_7,  <.bank(MODULE_7),      0,                     0;            "DKC - Simian Segue",           "Eveline Fischer"
-song_sotn_stg1: music_track_nsf     MODULE_8,  <.bank(MODULE_8),      0,                     0; "Shadow of the Ninja - Stage 1", "I. Mizutani, K. Yamanishi"
-song_tactus:    music_track_nsf     MODULE_9,  <.bank(MODULE_9),      0,    NSF_EXPANSION_VRC6;        "Tactus - Shower Groove",                  "zeta0134"
-song_brain_age: music_track_nsf     MODULE_10, <.bank(MODULE_10),     0,    NSF_EXPANSION_MMC5;              "Brain Age - Menu",   "M. Hamano, A. Nakatsuka"
+;                                    Address               Bank Track#      NSF Expansion Flags                           Title                        Artist
+;                                   --------                ---    ---  -----------------------    ----------------------------  ----------------------------
+song_itt:       music_track_nsf     MODULE_0,  <.bank(MODULE_0),     0,                       0;   "Ikenfell - In This Together",           "aivi & surasshu"
+song_virus:     music_track_nsf     MODULE_1,  <.bank(MODULE_1),     0,                       0;         "MMBN. - Virus Busting",              "Yoshino Aoki"
+song_smb:       music_track_nsf     MODULE_2,  <.bank(MODULE_2),     0,                       0;  "Super Mario Bros - World 1-1",                "Koji Kondo"
+song_yakra:     music_track_nsf     MODULE_3,  <.bank(MODULE_3),     0,                       0;  "Chrono Trigger - Boss Battle",          "Yasunori Mitsuda"
+song_nsmb:      music_track_nsf     MODULE_4,  <.bank(MODULE_4),     0,                       0;    "New Super Mario Bros - 1-1",                "Koji Kondo"
+song_sanctuary: music_track_nsf     MODULE_5,  <.bank(MODULE_5),     0,                       0;         "Earthbound - Guardian",      "K. Suzuki, H. Tanaka"
+song_gato:      music_track_nsf     MODULE_6,  <.bank(MODULE_6),     0,                       0;       "Chrono Trigger - Battle",          "Yasunori Mitsuda"
+song_simian:    music_track_nsf     MODULE_7,  <.bank(MODULE_7),     0,                       0;            "DKC - Simian Segue",           "Eveline Fischer"
+song_sotn_stg1: music_track_nsf     MODULE_8,  <.bank(MODULE_8),     0,                       0; "Shadow of the Ninja - Stage 1", "I. Mizutani, K. Yamanishi"
+song_tactus:    music_track_nsf     MODULE_9,  <.bank(MODULE_9),     0, NSF_EXPANSION_FLAG_VRC6;        "Tactus - Shower Groove",                  "zeta0134"
+song_brain_age: music_track_nsf     MODULE_10, <.bank(MODULE_10),    0, NSF_EXPANSION_FLAG_MMC5;              "Brain Age - Menu",   "M. Hamano, A. Nakatsuka"
 
 music_track_table:
         .addr song_itt

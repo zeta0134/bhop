@@ -13,6 +13,12 @@
 ; https://www.nesdev.org/wiki/NSFe
 ;
 
+.macro nsf_string str
+.assert .strlen(str) <= 32, error, "NSF string longer than 32 characters"
+.byte str
+.res 32 - .strlen(str), $00
+.endmacro
+
 .segment "HEADER"
         .byte $4E, $45, $53, $4D, $1A   ; ID
         .byte $02                       ; Version
@@ -21,13 +27,9 @@
         .addr __NSFDRV_LOAD__           ; LOAD address
         .addr nsf_init                  ; INIT address
         .addr bhop_play                 ; PLAY address
-align_strings:
-        .byte "bhop NSF demo"           ; Name, 32 bytes
-        .res align_strings+32-*, $00
-        .byte "Jenny, v.a."             ; Artist, 32 bytes
-        .res align_strings+64-*, $00
-        .byte "2024"                    ; Copyright, 32 bytes
-        .res align_strings+96-*, $00
+        nsf_string "bhop NSF demo"      ; Name, 32 bytes
+        nsf_string "Jenny, v.a."        ; Artist, 32 bytes
+        nsf_string "2024"               ; Copyright, 32 bytes
 
         .word $40FF                     ; NTSC play rate = round(1000000 / ((21477272 / 4)  / (341 * 262)))
         ; Bank values

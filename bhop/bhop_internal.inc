@@ -61,6 +61,76 @@ VRC6_SAWTOOTH_INDEX = _channel_index
 _channel_index .set (_channel_index+1)
 .endif
 
+; These chips below are not yet implemented!
+; bhop will handle them by ignoring their pattern and instrument data
+
+.if ::BHOP_N163_ENABLED
+; allocate 8 channels
+; driver will use amount of channels declared in module
+N163_1_INDEX = _channel_index
+_channel_index .set (_channel_index+1)
+
+N163_2_INDEX = _channel_index
+_channel_index .set (_channel_index+1)
+
+N163_3_INDEX = _channel_index
+_channel_index .set (_channel_index+1)
+
+N163_4_INDEX = _channel_index
+_channel_index .set (_channel_index+1)
+
+N163_5_INDEX = _channel_index
+_channel_index .set (_channel_index+1)
+
+N163_6_INDEX = _channel_index
+_channel_index .set (_channel_index+1)
+
+N163_7_INDEX = _channel_index
+_channel_index .set (_channel_index+1)
+
+N163_8_INDEX = _channel_index
+_channel_index .set (_channel_index+1)
+.endif
+
+.if ::BHOP_FDS_ENABLED
+FDS_INDEX = _channel_index
+_channel_index .set (_channel_index+1)
+.endif
+
+.if ::BHOP_S5B_ENABLED
+S5B_PULSE_1_INDEX = _channel_index
+_channel_index .set (_channel_index+1)
+
+S5B_PULSE_2_INDEX = _channel_index
+_channel_index .set (_channel_index+1)
+
+S5B_PULSE_3_INDEX = _channel_index
+_channel_index .set (_channel_index+1)
+.endif
+
+.if ::BHOP_VRC7_ENABLED
+VRC7_FM_1_INDEX = _channel_index
+_channel_index .set (_channel_index+1)
+
+VRC7_FM_2_INDEX = _channel_index
+_channel_index .set (_channel_index+1)
+
+VRC7_FM_3_INDEX = _channel_index
+_channel_index .set (_channel_index+1)
+
+VRC7_FM_4_INDEX = _channel_index
+_channel_index .set (_channel_index+1)
+
+VRC7_FM_5_INDEX = _channel_index
+_channel_index .set (_channel_index+1)
+
+VRC7_FM_6_INDEX = _channel_index
+_channel_index .set (_channel_index+1)
+
+; todo: support rhythm channels?
+.endif
+
+; DPCM is indexed last
 DPCM_INDEX = _channel_index
 _channel_index .set (_channel_index+1)
 
@@ -93,6 +163,15 @@ PITCH_EFFECT_NOTE_UP      = %00001000
 PITCH_EFFECT_NOTE_DOWN    = %00010000
 PITCH_EFFECT_ARP          = %00100000
 PITCH_EFFECT_TRIGGERED    = %10000000
+
+; expansion flags, for multichip handling
+EXPANSION_VRC6 = %00000001
+EXPANSION_VRC7 = %00000010
+EXPANSION_FDS  = %00000100
+EXPANSION_MMC5 = %00001000
+EXPANSION_N163 = %00010000
+EXPANSION_S5B  = %00100000
+EXPANSION_VT02 = %01000000  ; are we gonna support this?
 
 ARP_MODE_ABSOLUTE = $00
 ARP_MODE_FIXED =    $01

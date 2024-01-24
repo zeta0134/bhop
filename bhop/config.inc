@@ -43,8 +43,16 @@ BHOP_ZSAW_ENABLED = 0
 BHOP_MMC5_ENABLED = 0
 BHOP_VRC6_ENABLED = 0
 
-; Toggle to support multiple expansion audio chips at once
-; at the cost of needing a byte in bss to declare which expansion audio types are used
+; The following chips below are not yet implemented
+; if you enable them, they will not read nor write any data associated
+
+BHOP_N163_ENABLED = 0
+BHOP_FDS_ENABLED = 0
+BHOP_S5B_ENABLED = 0
+BHOP_VRC7_ENABLED = 0
+
+; Toggle to enable multiple expansion audio chips at once
+; at the cost of needing a byte in bss to determine which expansion audio types are used
 
 BHOP_MULTICHIP = 0
 
