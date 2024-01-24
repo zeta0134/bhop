@@ -2464,27 +2464,11 @@ tick_dpcm:
 .endif
 
 .if ::BHOP_MMC5_ENABLED
-            .if ::BHOP_MULTICHIP
-            lda expansion_flags
-            and #EXPANSION_MMC5
-            beq skip_mmc5
-            .endif
         jsr play_mmc5
-            .if ::BHOP_MULTICHIP
-skip_mmc5:
-            .endif
 .endif
 
 .if ::BHOP_VRC6_ENABLED
-            .if ::BHOP_MULTICHIP
-            lda expansion_flags
-            and #EXPANSION_VRC6
-            beq skip_vrc6
-            .endif
         jsr play_vrc6
-            .if ::BHOP_MULTICHIP
-skip_vrc6:
-            .endif
 .endif
 
 cleanup:
