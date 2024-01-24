@@ -63,6 +63,16 @@ ScratchByte: .res 1
         .proc MODULE_8
         .include "../music/sotn_stage1.asm"
         .endproc
+        
+        .segment "MUSIC_9"
+        .proc MODULE_9
+        .include "../music/tactus.asm"
+        .endproc
+
+        .segment "MUSIC_10"
+        .proc MODULE_10
+        .include "../music/brain_age.asm"
+        .endproc
 
         .segment "CODE"
 
@@ -70,26 +80,21 @@ ScratchByte: .res 1
         sta CurrentTrack
         stx RegionType
         sty NonReturnInit
-        ; disable unusual IRQ sources
-        lda #%01000000
-        sta $4017 ; APU frame counter
-        lda #0
-        sta $4010 ; DMC DMA
 
         jsr initialize_current_track_nsf
-
-        jmp bhop_play
+        rts
 .endproc
 
 .export nsf_init
 
 ; modified essential handler subroutines from player.s
 
-.macro music_track_nsf module_ptr, bank_number, track_number
+.macro music_track_nsf module_ptr, bank_number, track_number, expansion_flags
 .scope
 .addr module_ptr
 .byte bank_number
 .byte track_number
+.byte expansion_flags
 .endscope
 .endmacro
 
@@ -97,6 +102,7 @@ ScratchByte: .res 1
         ModulePtr .word
         BankNumber .byte
         TrackNumber .byte
+        ExpansionFlags .byte
 .endstruct
 
 .proc initialize_current_track_nsf
@@ -107,6 +113,10 @@ ScratchByte: .res 1
         sta TrackPtr+0
         lda music_track_table+1, x
         sta TrackPtr+1
+
+        ldy #MusicTrackNSF::ExpansionFlags
+        lda (TrackPtr), y
+        jsr bhop_set_expansion_flags
 
         ldy #MusicTrackNSF::BankNumber
         lda (TrackPtr), y
@@ -151,17 +161,19 @@ ScratchByte: .res 1
 .export bhop_apply_dpcm_bank
 
 
-;                                    Address               Bank   Track#                          Title                        Artist
-;                                   --------                ---      ---   ----------------------------  ----------------------------
-song_itt:       music_track_nsf     MODULE_0,  <.bank(MODULE_0),      0;  "Ikenfell - In This Together",           "aivi & surasshu"
-song_virus:     music_track_nsf     MODULE_1,  <.bank(MODULE_1),      0;        "MMBN. - Virus Busting",              "Yoshino Aoki"
-song_smb:       music_track_nsf     MODULE_2,  <.bank(MODULE_2),      0; "Super Mario Bros - World 1-1",                "Koji Kondo"
-song_yakra:     music_track_nsf     MODULE_3,  <.bank(MODULE_3),      0; "Chrono Trigger - Boss Battle",          "Yasunori Mitsuda"
-song_nsmb:      music_track_nsf     MODULE_4,  <.bank(MODULE_4),      0;   "New Super Mario Bros - 1-1",                "Koji Kondo"
-song_sanctuary: music_track_nsf     MODULE_5,  <.bank(MODULE_5),      0;        "Earthbound - Guardian",      "K. Suzuki, H. Tanaka"
-song_gato:      music_track_nsf     MODULE_6,  <.bank(MODULE_6),      0;      "Chrono Trigger - Battle",          "Yasunori Mitsuda"
-song_simian:    music_track_nsf     MODULE_7,  <.bank(MODULE_7),      0;           "DKC - Simian Segue",           "Eveline Fischer"
-song_sotn_stg1: music_track_nsf     MODULE_8,  <.bank(MODULE_8),      0;"Shadow of the Ninja - Stage 1", "I. Mizutani, K. Yamanishi"
+;                                    Address               Bank   Track#        NSF Exp. Flags                           Title                        Artist
+;                                   --------                ---      ---   -------------------    ----------------------------  ----------------------------
+song_itt:       music_track_nsf     MODULE_0,  <.bank(MODULE_0),      0,                     0;   "Ikenfell - In This Together",           "aivi & surasshu"
+song_virus:     music_track_nsf     MODULE_1,  <.bank(MODULE_1),      0,                     0;         "MMBN. - Virus Busting",              "Yoshino Aoki"
+song_smb:       music_track_nsf     MODULE_2,  <.bank(MODULE_2),      0,                     0;  "Super Mario Bros - World 1-1",                "Koji Kondo"
+song_yakra:     music_track_nsf     MODULE_3,  <.bank(MODULE_3),      0,                     0;  "Chrono Trigger - Boss Battle",          "Yasunori Mitsuda"
+song_nsmb:      music_track_nsf     MODULE_4,  <.bank(MODULE_4),      0,                     0;    "New Super Mario Bros - 1-1",                "Koji Kondo"
+song_sanctuary: music_track_nsf     MODULE_5,  <.bank(MODULE_5),      0,                     0;         "Earthbound - Guardian",      "K. Suzuki, H. Tanaka"
+song_gato:      music_track_nsf     MODULE_6,  <.bank(MODULE_6),      0,                     0;       "Chrono Trigger - Battle",          "Yasunori Mitsuda"
+song_simian:    music_track_nsf     MODULE_7,  <.bank(MODULE_7),      0,                     0;            "DKC - Simian Segue",           "Eveline Fischer"
+song_sotn_stg1: music_track_nsf     MODULE_8,  <.bank(MODULE_8),      0,                     0; "Shadow of the Ninja - Stage 1", "I. Mizutani, K. Yamanishi"
+song_tactus:    music_track_nsf     MODULE_9,  <.bank(MODULE_9),      0,    NSF_EXPANSION_VRC6;        "Tactus - Shower Groove",                  "zeta0134"
+song_brain_age: music_track_nsf     MODULE_10, <.bank(MODULE_10),     0,    NSF_EXPANSION_MMC5;              "Brain Age - Menu",   "M. Hamano, A. Nakatsuka"
 
 music_track_table:
         .addr song_itt
@@ -173,44 +185,11 @@ music_track_table:
         .addr song_gato
         .addr song_simian
         .addr song_sotn_stg1
+        .addr song_tactus
+        .addr song_brain_age
 music_track_table_size := * - music_track_table
 
 track_count = <(music_track_table_size/2)
 .export track_count
 
 music_track_count: .byte track_count
-
-; stuff the track labels and authors here
-.segment "FOOTER"
-    .dword tlbl_size
-    .byte "tlbl"
-tlbl:
-    .asciiz "Ikenfell - In This Together"
-    .asciiz "MMBN. - Virus Busting"
-    .asciiz "Super Mario Bros - World 1-1"
-    .asciiz "Chrono Trigger - Boss Battle"
-    .asciiz "New Super Mario Bros - 1-1"
-    .asciiz "Earthbound - Guardian"
-    .asciiz "Chrono Trigger - Battle"
-    .asciiz "DKC - Simian Segue"
-    .asciiz "Shadow of the Ninja - Stage 1"
-tlbl_size := * - tlbl
-
-    .dword taut_size
-    .byte "taut"
-taut:
-    .asciiz "aivi & surasshu"
-    .asciiz "Yoshino Aoki"
-    .asciiz "Koji Kondo"
-    .asciiz "Yasunori Mitsuda"
-    .asciiz "Koji Kondo"
-    .asciiz "K. Suzuki, H. Tanaka"
-    .asciiz "Yasunori Mitsuda"
-    .asciiz "Eveline Fischer"
-    .asciiz "I. Mizutani, K. Yamanishi"
-taut_size := * - taut
-
-    .dword NEND_size
-    .byte "NEND"
-NEND:
-NEND_size := * - NEND

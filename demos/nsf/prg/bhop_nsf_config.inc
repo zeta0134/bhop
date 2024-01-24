@@ -1,3 +1,4 @@
+.include "nsf.inc"
 __BHOP_CONFIG = 1
 
 ; Demo-specific config for 2A03 on NSF
@@ -31,10 +32,16 @@ BHOP_DELAYED_RELEASE_ENABLED = 1
 
 ; Toggle the following flags to enable various expansion channel types
 
-BHOP_MMC5_ENABLED = 0
+BHOP_MMC5_ENABLED = NSF_EXPANSION_VRC6
 
-BHOP_VRC6_ENABLED = 0
+BHOP_VRC6_ENABLED = NSF_EXPANSION_MMC5
 
 BHOP_ZSAW_ENABLED = 0
 
 BHOP_ZPCM_ENABLED = 0
+
+; Toggle to support multiple expansion audio chips at once
+; at the cost of needing a byte in bss to declare which expansion audio types are used
+
+BHOP_MULTICHIP = 1
+

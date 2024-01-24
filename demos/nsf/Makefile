@@ -31,5 +31,5 @@ $(ROM_NAME): $(SOURCEDIR)/nsf.cfg $(O_FILES)
 	ld65 -m $(BUILDDIR)/map.txt --dbgfile $(DBG_NAME) -o $@ -C $^
 
 $(BUILDDIR)/%.o: $(SOURCEDIR)/%.s
-	ca65 -g -o $@ $<
+	ca65 -g -o $@ $< -l $(BUILDDIR)/$(basename $(notdir $<)).lst
 

@@ -34,6 +34,10 @@ frame_cmp: .byte $00
 
 module_flags: .byte $00
 
+.if ::BHOP_MULTICHIP
+expansion_flags: .byte $00
+.endif
+
 .if ::BHOP_ZSAW_ENABLED
 zsaw_relative_note: .byte $00
 .endif
@@ -131,6 +135,10 @@ effect_dac_buffer: .byte $00
         ; global
         .export bhop_init, bhop_play, bhop_mute_channel, bhop_unmute_channel, bhop_set_module_bank
 
+.if ::BHOP_MULTICHIP
+        .export bhop_set_expansion_flags
+.endif
+
 .include "bhop/midi_lut.inc"
 
 .macro prepare_ptr address
@@ -182,6 +190,16 @@ positive:
 .proc bhop_set_module_bank
 .if ::BHOP_PATTERN_BANKING
         sta module_bank
+.endif
+        rts
+.endproc
+
+
+; param:    expansion audio flags of module (a)
+;           format is the same as NSF expansion audio flags    
+.proc bhop_set_expansion_flags
+.if ::BHOP_MULTICHIP
+        sta expansion_flags
 .endif
         rts
 .endproc
@@ -368,6 +386,11 @@ effect_init_loop:
         jsr zsaw_init
         .endif
 
+        ; disable unusual IRQ sources
+        lda #%01000000
+        sta $4017 ; APU frame counter
+        lda #0
+        sta $4010 ; DMC DMA
         ; finally, enable all channels except DMC
         lda #%00001111
         sta $4015

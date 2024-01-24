@@ -1,6 +1,8 @@
         .import nsf_init, bhop_play
         .importzp track_count
-        .import __NSFDRV_LOAD__
+        .import __NSFDRV_LOAD__, __HDR_SIZE__, __FTR_FILEOFFS__
+        NSF2_SIZE = __FTR_FILEOFFS__ - __HDR_SIZE__
+
         .setcpu "6502"
         .include "nsf.inc"
 ;
@@ -37,19 +39,57 @@ align_strings:
         .byte NSF_REGION_NTSC           ; Region, NTSC
         .byte NSF_EXPANSION_FLAGS       ; Expansion audio flags
         .byte NSF2_FEATURE_FLAGS        ; NSF2 flags
-        ; todo: figure out NSF data length on compile
-        .faraddr $100000                ; NSF data length
+        .faraddr NSF2_SIZE              ; NSF data length
 
 .segment "NSFDRV"
         .byte "bhop"
         .byte $08, $67, $53, $09
 
+; stuff the track labels and authors here
 .segment "FOOTER"
-    .dword auth_size
-    .byte "auth"
+        .dword auth_size
+        .byte "auth"
 auth:
-    .asciiz "bhop NSF demo"
-    .asciiz "Jenny, v.a."
-    .asciiz "2024"
-    .asciiz "bhop"
+        .asciiz "bhop NSF demo"
+        .asciiz "Jenny, v.a."
+        .asciiz "2024"
+        .asciiz "bhop"
 auth_size := * - auth
+
+        .dword tlbl_size
+        .byte "tlbl"
+tlbl:
+        .asciiz "Ikenfell - In This Together"
+        .asciiz "MMBN. - Virus Busting"
+        .asciiz "Super Mario Bros - World 1-1"
+        .asciiz "Chrono Trigger - Boss Battle"
+        .asciiz "New Super Mario Bros - 1-1"
+        .asciiz "Earthbound - Guardian"
+        .asciiz "Chrono Trigger - Battle"
+        .asciiz "DKC - Simian Segue"
+        .asciiz "Shadow of the Ninja - Stage 1"
+        .asciiz "Tactus - Shower Groove"
+        .asciiz "Brain Age - Menu"
+tlbl_size := * - tlbl
+
+        .dword taut_size
+        .byte "taut"
+taut:
+        .asciiz "aivi & surasshu"
+        .asciiz "Yoshino Aoki"
+        .asciiz "Koji Kondo"
+        .asciiz "Yasunori Mitsuda"
+        .asciiz "Koji Kondo"
+        .asciiz "K. Suzuki, H. Tanaka"
+        .asciiz "Yasunori Mitsuda"
+        .asciiz "Eveline Fischer"
+        .asciiz "I. Mizutani, K. Yamanishi"
+        .asciiz "zeta0134"
+        .asciiz "M. Hamano, A. Nakatsuka"
+taut_size := * - taut
+
+        .dword NEND_size
+        .byte "NEND"
+NEND:
+        .asciiz "Jenny sends her regards!"
+NEND_size := * - NEND
