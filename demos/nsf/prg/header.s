@@ -1,7 +1,7 @@
         .import nsf_init, bhop_play
         .importzp track_count
-        .import __NSFDRV_LOAD__, __HDR_SIZE__, __FTR_FILEOFFS__
-        NSF2_SIZE = __FTR_FILEOFFS__ - __HDR_SIZE__
+        .import __NSFDRV_LOAD__, __FTR_FILEOFFS__
+        NSF2_SIZE = __FTR_FILEOFFS__
 
         .setcpu "6502"
         .include "nsf.inc"

@@ -19,6 +19,8 @@ dir:
 clean:
 	-@rm -rf build
 	-@rm -f $(ROM_NAME)
+	-@rm -f $(BUILDDIR)/$(basename $(notdir $(ROM_NAME)))
+	-@rm -f $(BUILDDIR)/$(basename $(notdir $(ROM_NAME)))_header
 	-@rm -f $(DBG_NAME)
 
 run: dir $(ROM_NAME)
@@ -27,7 +29,10 @@ run: dir $(ROM_NAME)
 beta: dir $(ROM_NAME)
 	/home/zeta0134/Downloads/MesenBeta/Mesen $(ROM_NAME)
 
-$(ROM_NAME): $(SOURCEDIR)/nsf.cfg $(O_FILES)
+$(ROM_NAME): $(BUILDDIR)/$(basename $(notdir $(ROM_NAME)))
+	cat $^_header $^ > $@
+
+$(BUILDDIR)/$(basename $(notdir $(ROM_NAME))): $(SOURCEDIR)/nsf.cfg $(O_FILES)
 	ld65 -m $(BUILDDIR)/map.txt --dbgfile $(DBG_NAME) -o $@ -C $^
 
 $(BUILDDIR)/%.o: $(SOURCEDIR)/%.s
