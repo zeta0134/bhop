@@ -129,6 +129,16 @@ done:
         rts
 .endproc
 
+.proc init_vrc6
+        ; if the channel is muted, little else matters, but ensure
+        ; we set the volume to 0
+        lda #%00000000
+        sta $9000
+        sta $A000
+        sta $B000
+        rts
+.endproc
+
 ; This is slightly wrong; Dn-FamiTracker expects a /15, while this produces
 ; an effective /16. For the moment I've decided that I don't care, as doing
 ; it properly is stupidly expensive.

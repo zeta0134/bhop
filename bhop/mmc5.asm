@@ -113,3 +113,12 @@ pulse2_muted:
 done_with_mmc5:
         rts
 .endproc
+
+.proc init_mmc5
+        ; if the channel is muted, little else matters, but ensure
+        ; we set the volume to 0
+        lda #%00110000
+        sta $5000
+        sta $5004
+        rts
+.endproc

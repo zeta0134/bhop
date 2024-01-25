@@ -375,6 +375,8 @@ effect_init_loop:
         sta effect_retrigger_period
         sta effect_retrigger_counter
 
+        ; initialize registers
+
         .if ::BHOP_ZSAW_ENABLED
         ; if zsaw happens to be playing, silence it
         jsr zsaw_silence
@@ -382,14 +384,15 @@ effect_init_loop:
         jsr zsaw_init
         .endif
 
-        ; disable unusual IRQ sources
-        lda #%01000000
-        sta $4017 ; APU frame counter
-        lda #0
-        sta $4010 ; DMC DMA
-        ; finally, enable all channels except DMC
-        lda #%00001111
-        sta $4015
+        jsr init_2a03
+
+.if ::BHOP_MMC5_ENABLED
+        jsr init_mmc5
+.endif
+
+.if ::BHOP_VRC6_ENABLED
+        jsr init_vrc6
+.endif
 
         ; enable any expansion audio chips here, if they can be disabled
         .if ::BHOP_VRC6_ENABLED
@@ -2464,11 +2467,27 @@ tick_dpcm:
 .endif
 
 .if ::BHOP_MMC5_ENABLED
+            .if ::BHOP_MULTICHIP
+            lda expansion_flags
+            and #EXPANSION_MMC5
+            beq skip_mmc5
+            .endif
         jsr play_mmc5
+            .if ::BHOP_MULTICHIP
+skip_mmc5:
+            .endif
 .endif
 
 .if ::BHOP_VRC6_ENABLED
+            .if ::BHOP_MULTICHIP
+            lda expansion_flags
+            and #EXPANSION_VRC6
+            beq skip_vrc6
+            .endif
         jsr play_vrc6
+            .if ::BHOP_MULTICHIP
+skip_vrc6:
+            .endif
 .endif
 
 cleanup:
@@ -2784,6 +2803,34 @@ check_pulse_2:
         lda #$FF
         sta shadow_pulse2_freq_hi
 done:
+        rts
+.endproc
+
+.proc init_2a03
+        ; if the channel is muted, little else matters, but ensure
+        ; we set the volume to 0
+        lda #%00110000
+        sta $4000
+        sta $4004
+        sta $400C
+
+        ; since triangle has no volume, we'll instead choose to mute it by
+        ; setting the length counter to 0 and forcing an immediate reload.
+        ; This will delay the mute by up to 1/4 of a frame, but this is the
+        ; best we can do without conflicting with the DMC channel
+        lda #$80
+        sta $4008
+
+        ; disable unusual IRQ sources
+        lda #%01000000
+        sta $4017 ; APU frame counter
+        lda #0
+        sta $4010 ; DMC DMA
+        sta $4011 ; regain full volume for TN
+
+        ; disable DPCM channel
+        lda #%00001111
+        sta $4015
         rts
 .endproc
 
