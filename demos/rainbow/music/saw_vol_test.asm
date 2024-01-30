@@ -1,4 +1,4 @@
-; Dn-FamiTracker exported music data: extended_sxx.dnm
+; Dn-FamiTracker exported music data: Untitled
 ;
 
 ; Module header
@@ -17,13 +17,16 @@ ft_instrument_list:
 
 ; Instruments
 ft_inst_0:
-	.byte 0
+	.byte 4
 	.byte $01
-	.word ft_seq_2a03_0
+	.word ft_seq_vrc6_0
 
 ; Sequences
-ft_seq_2a03_0:
-	.byte $0F, $FF, $00, $00, $0F, $0E, $0D, $0C, $0B, $0A, $09, $08, $07, $06, $05, $04, $03, $02, $01
+ft_seq_vrc6_0:
+	.byte $40, $FF, $00, $01, $3F, $3E, $3D, $3C, $3B, $3A, $39, $38, $37, $36, $35, $34, $33, $32, $31, $30
+	.byte $2F, $2E, $2D, $2C, $2B, $2A, $29, $28, $27, $26, $25, $24, $23, $22, $21, $20, $1F, $1E, $1D, $1C
+	.byte $1B, $1A, $19, $18, $17, $16, $15, $14, $13, $12, $11, $10, $0F, $0E, $0D, $0C, $0B, $0A, $09, $08
+	.byte $07, $06, $05, $04, $03, $02, $01, $00
 
 ; DPCM instrument list (pitch, sample index)
 ft_sample_list:
@@ -46,7 +49,7 @@ ft_song_0:
 	.word ft_s0_frames
 	.byte 1	; frame count
 	.byte 64	; pattern length
-	.byte 6	; speed
+	.byte 24	; speed
 	.byte 150	; tempo
 	.byte 0	; groove position
 	.byte 0	; initial bank
@@ -60,19 +63,15 @@ ft_song_0:
 ft_s0_frames:
 	.word ft_s0f0
 ft_s0f0:
-	.word ft_s0p0c0, ft_s0p0c1, ft_s0p0c1, ft_s0p0c1, ft_s0p0c1
+	.word ft_s0p0c0, ft_s0p0c0, ft_s0p0c0, ft_s0p0c0, ft_s0p0c0, ft_s0p0c0, ft_s0p0c7, ft_s0p0c0
 ; Bank 0
 ft_s0p0c0:
-	.byte $82, $00, $E0, $25, $27, $29, $2A, $82, $01, $2C, $2C, $2C, $2C, $83, $7F, $03, $82, $00, $9B, $02
-	.byte $25, $9B, $02, $27, $9B, $02, $29, $9B, $02, $2A, $82, $01, $9B, $02, $2C, $9B, $02, $2C, $9B, $02
-	.byte $2C, $9B, $02, $2C, $83, $7F, $03, $82, $00, $9B, $08, $25, $27, $9B, $08, $29, $2A, $82, $01, $9B
-	.byte $08, $2C, $9B, $08, $2C, $9B, $08, $2C, $9B, $08, $2C, $83, $7F, $03, $82, $00, $9B, $7F, $25, $27
-	.byte $9B, $7F, $29, $2A, $82, $01, $9B, $7F, $2C, $9B, $7F, $2C, $9B, $7F, $2C, $9B, $7F, $2C, $83, $7F
-	.byte $03
+	.byte $00, $3F
 
 ; Bank 0
-ft_s0p0c1:
-	.byte $00, $3F
+ft_s0p0c7:
+	.byte $82, $03, $E0, $FF, $25, $FE, $25, $FD, $25, $FC, $25, $FB, $25, $FA, $25, $F9, $25, $F8, $25, $F7
+	.byte $25, $F6, $25, $F5, $25, $F4, $25, $F3, $25, $F2, $25, $F1, $25, $83, $7F, $03
 
 
 ; DPCM samples (located at DPCM segment)

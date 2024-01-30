@@ -1,3 +1,61 @@
+.if ::BHOP_VRC6_MAPPER24
+
+VRC6_REG_PULSE1_CTRL = $9000
+VRC6_REG_PULSE1_LOW  = $9002
+VRC6_REG_PULSE1_HIGH = $9001
+
+VRC6_REG_PULSE2_CTRL = $A000
+VRC6_REG_PULSE2_LOW  = $A002
+VRC6_REG_PULSE2_HIGH = $A001
+
+VRC6_REG_SAWTOOTH_ACC = $B000
+VRC6_REG_SAW_LOW      = $B002
+VRC6_REG_SAW_HIGH     = $B001
+
+VRC6_FREQ_CTRL = $9003
+
+.elseif ::BHOP_VRC6_RAINBOW
+
+VRC6_REG_PULSE1_CTRL = $41A0
+VRC6_REG_PULSE1_LOW  = $41A1
+VRC6_REG_PULSE1_HIGH = $41A2
+
+VRC6_REG_PULSE2_CTRL = $41A3
+VRC6_REG_PULSE2_LOW  = $41A4
+VRC6_REG_PULSE2_HIGH = $41A5
+
+VRC6_REG_SAWTOOTH_ACC = $41A6
+VRC6_REG_SAW_LOW      = $41A7
+VRC6_REG_SAW_HIGH     = $41A8
+
+.else
+
+VRC6_REG_PULSE1_CTRL = $9000
+VRC6_REG_PULSE1_LOW  = $9001
+VRC6_REG_PULSE1_HIGH = $9002
+
+VRC6_REG_PULSE2_CTRL = $A000
+VRC6_REG_PULSE2_LOW  = $A001
+VRC6_REG_PULSE2_HIGH = $A002
+
+VRC6_REG_SAWTOOTH_ACC = $B000
+VRC6_REG_SAW_LOW      = $B001
+VRC6_REG_SAW_HIGH     = $B002
+
+VRC6_FREQ_CTRL = $9003
+
+.endif
+
+.proc bhop_vrc6_init
+.if ::BHOP_VRC6_RAINBOW
+        ; do nothing!
+.else
+        lda #0
+        sta $9003 ; enable all channels, disable frequency scaling
+.endif
+        rts
+.endproc
+
 .proc play_vrc6
 tick_pulse1:
         lda #CHANNEL_SUPPRESSED
@@ -23,19 +81,19 @@ tick_pulse1:
         tax
         lda volume_table, x
         ora scratch_byte
-        sta $9000
+        sta VRC6_REG_PULSE1_CTRL
 
         lda channel_detuned_frequency_low + VRC6_PULSE_1_INDEX
-        sta $9001
+        sta VRC6_REG_PULSE1_LOW
         lda channel_detuned_frequency_high + VRC6_PULSE_1_INDEX
         ora #%10000000
-        sta $9002
+        sta VRC6_REG_PULSE1_HIGH
         jmp tick_pulse2
 pulse1_muted:
         ; if the channel is muted, little else matters, but ensure
         ; we set the volume to 0
         lda #%00000000
-        sta $9000
+        sta VRC6_REG_PULSE1_CTRL
 
 tick_pulse2:
         lda #CHANNEL_SUPPRESSED
@@ -61,19 +119,19 @@ tick_pulse2:
         tax
         lda volume_table, x
         ora scratch_byte
-        sta $A000
+        sta VRC6_REG_PULSE2_CTRL
 
         lda channel_detuned_frequency_low + VRC6_PULSE_2_INDEX
-        sta $A001
+        sta VRC6_REG_PULSE2_LOW
         lda channel_detuned_frequency_high + VRC6_PULSE_2_INDEX
         ora #%10000000
-        sta $A002
+        sta VRC6_REG_PULSE2_HIGH
         jmp tick_sawtooth
 pulse2_muted:
         ; if the channel is muted, little else matters, but ensure
         ; we set the volume to 0
         lda #%00000000
-        sta $A000
+        sta VRC6_REG_PULSE2_CTRL
 
 tick_sawtooth:
         ; TODO: support 6bit volume mode... somehow!
@@ -111,19 +169,19 @@ apply_4bit_vol:
         asl
         ora scratch_byte
 sawvol_converge:
-        sta $B000
+        sta VRC6_REG_SAWTOOTH_ACC
 
         lda channel_detuned_frequency_low + VRC6_SAWTOOTH_INDEX
-        sta $B001
+        sta VRC6_REG_SAW_LOW
         lda channel_detuned_frequency_high + VRC6_SAWTOOTH_INDEX
         ora #%10000000
-        sta $B002
+        sta VRC6_REG_SAW_HIGH
         jmp done
 sawtooth_muted:
         ; if the channel is muted, little else matters, but ensure
         ; we set the volume to 0
         lda #%00000000
-        sta $B000
+        sta VRC6_REG_SAWTOOTH_ACC
         
 done:
         rts
