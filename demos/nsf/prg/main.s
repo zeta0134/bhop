@@ -74,6 +74,11 @@ ScratchByte: .res 1
         .include "../music/brain_age.asm"
         .endproc
 
+        .segment "MUSIC_11"
+        .proc MODULE_11
+        .include "../music/in_another_world_(head_in_the_clouds)_vrc6.asm"
+        .endproc
+
         .segment "CODE"
 
 .proc nsf_init
@@ -174,6 +179,7 @@ song_simian:    music_track_nsf     MODULE_7,  <.bank(MODULE_7),     0,         
 song_sotn_stg1: music_track_nsf     MODULE_8,  <.bank(MODULE_8),     0,                       0; "Shadow of the Ninja - Stage 1", "I. Mizutani, K. Yamanishi"
 song_tactus:    music_track_nsf     MODULE_9,  <.bank(MODULE_9),     0, NSF_EXPANSION_FLAG_VRC6;        "Tactus - Shower Groove",                  "zeta0134"
 song_brain_age: music_track_nsf     MODULE_10, <.bank(MODULE_10),    0, NSF_EXPANSION_FLAG_MMC5;              "Brain Age - Menu",   "M. Hamano, A. Nakatsuka"
+song_iaw:       music_track_nsf     MODULE_11, <.bank(MODULE_11),    1, NSF_EXPANSION_FLAG_VRC6;              "in another world",                   "Persune"
 
 music_track_table:
         .addr song_itt
@@ -187,6 +193,7 @@ music_track_table:
         .addr song_sotn_stg1
         .addr song_tactus
         .addr song_brain_age
+        .addr song_iaw
 music_track_table_size := * - music_track_table
 
 track_count = <(music_track_table_size/2)

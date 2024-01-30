@@ -72,6 +72,7 @@ tlbl:
         .asciiz "Shadow of the Ninja - Stage 1"
         .asciiz "Tactus - Shower Groove"
         .asciiz "Brain Age - Menu"
+        .asciiz "in another world (head in the clouds)"
 tlbl_size := * - tlbl
 
         .dword taut_size
@@ -88,6 +89,7 @@ taut:
         .asciiz "I. Mizutani, K. Yamanishi"
         .asciiz "zeta0134"
         .asciiz "M. Hamano, A. Nakatsuka"
+        .asciiz "Persune"
 taut_size := * - taut
 
         .dword NEND_size
