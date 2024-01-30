@@ -31,10 +31,13 @@ BHOP_DPCM_SWITCH_ROUTINE = bhop_apply_dpcm_bank
 BHOP_DELAYED_RELEASE_ENABLED = 1
 
 ; Toggle the following flags to enable various expansion channel types
+; Expansion flags are toggled in nsf.inc
 
-BHOP_MMC5_ENABLED = NSF_EXPANSION_VRC6
+BHOP_MMC5_ENABLED = NSF_EXPANSION_MMC5
 
-BHOP_VRC6_ENABLED = NSF_EXPANSION_MMC5
+BHOP_VRC6_ENABLED = NSF_EXPANSION_VRC6
+    BHOP_VRC6_MAPPER24 = 0
+    BHOP_VRC6_RAINBOW = 0
 
 BHOP_ZSAW_ENABLED = 0
 
@@ -43,10 +46,10 @@ BHOP_ZPCM_ENABLED = 0
 ; The following chips below are not yet implemented
 ; if you enable them, they will not read nor write any data associated
 
-BHOP_N163_ENABLED = 0
-BHOP_FDS_ENABLED = 0
-BHOP_S5B_ENABLED = 0
-BHOP_VRC7_ENABLED = 0
+BHOP_N163_ENABLED = NSF_EXPANSION_N163
+BHOP_FDS_ENABLED  = NSF_EXPANSION_FDS
+BHOP_S5B_ENABLED  = NSF_EXPANSION_5B
+BHOP_VRC7_ENABLED = NSF_EXPANSION_VRC7
 
 ; Toggle to enable multiple expansion audio chips at once
 ; at the cost of needing a byte in bss to declare which expansion audio types are used
