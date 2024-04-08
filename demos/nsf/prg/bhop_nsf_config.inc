@@ -55,4 +55,3 @@ BHOP_VRC7_ENABLED = NSF_EXPANSION_VRC7
 ; at the cost of needing a byte in bss to declare which expansion audio types are used
 
 BHOP_MULTICHIP = 1
-
