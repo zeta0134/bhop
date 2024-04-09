@@ -19,7 +19,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-VERSION = "0.0.0"
+VERSION = "0.0.1"
 
 import argparse, subprocess, sys
 import pack8k
@@ -64,7 +64,6 @@ def main(argv=None):
     args = parse_argv(argv or sys.argv)
 
     def segment_pack(addr_start, addr_end, seg_prefix, bank_max_size, banks_start, banks_end, doubling=False, align_dpcm=False):
-
         seg_assignments = {}
         seg_mem_area = {}
         mult = 2 if doubling else 1
@@ -72,8 +71,7 @@ def main(argv=None):
         # first pass: generate fresh memory areas and see which ones get allocated
         for bank in range(banks_start ,banks_end):
             new_bank_name = "PRG_%02X"%(bank*mult)
-            if not new_bank_name in mem:
-                # print("creating %s..."%new_bank_name)
+            if new_bank_name not in mem:
                 mem[new_bank_name] = (addr_start, bank_max_size) # bankname: (start, size)
                 seg_mem_area[new_bank_name] = (addr_start, bank_max_size, bank*mult)
 
@@ -93,26 +91,19 @@ def main(argv=None):
 
         # clear unused memory areas
         for bankname, _ in seg_mem_area.copy().items():
-            if bankname not in list({b:(a,c) for a,b,c in seg_assignments}):
-                # print("deleting %s..."%bankname)
+            if bankname not in [bank for _, bank, _ in seg_assignments]:
                 del mem[bankname]
                 del seg_mem_area[bankname]
 
         # second pass: we finally pruned the unneccessary memory areas and segment allocations
+        # regenerate seg_bank_sizes
         seg_bank_sizes = {
             bankname: size
             for bankname, (start, size) in mem.items()
             if start >= addr_start and start + size <= addr_end
         }
 
-        seg_static_segs = {
-            segname: bankname
-            for segname, bankname in segtomem.items()
-            if bankname in seg_bank_sizes
-        }
-
-        seg_assignments, seg_bank_sizes = pack8k.pack_segs(szs, seg_prefix, seg_bank_sizes, seg_static_segs, verbose=args.verbose)
-        seg_assignments = [list(tup)+[align_dpcm] for tup in seg_assignments]
+        seg_assignments = [list(data) + [align_dpcm] for data in seg_assignments]
         
         return seg_assignments, seg_mem_area
 
@@ -143,7 +134,7 @@ def main(argv=None):
     mus_assignments, mus_mem_area = segment_pack(mus_addr_start, mus_addr_end, "MUSIC", bank_max_size, reserve_banks_start, bank_count-reserve_banks_end, double_count)
     dmc_assignments, dmc_mem_area = segment_pack(dmc_addr_start, dmc_addr_end, "DPCM", bank_max_size, reserve_banks_start, bank_count-reserve_banks_end, double_count, align_dpcm=True)
 
-    assignments = list(mus_assignments) + list(dmc_assignments)
+    assignments = mus_assignments + dmc_assignments
     mem_area = mus_mem_area | dmc_mem_area
 
     out, addedseg, addedmem = [], False, False
@@ -152,8 +143,7 @@ def main(argv=None):
             if line.strip() == '#arrmem':
                 out.append("    # Begin arranged memory by doctor_fill.py\n")
                 out.extend(
-                   # PRG_DC:            start = $C000, size = $2000, type = ro, file = %O, fill = yes, fillval = $FF, bank = $DC;
-                    "    %s:            start = $%04X, size = $%04X, type = ro, file = %%O, fill = yes, fillval = $FF, bank=$%02X;\n" % (memname, start, size, bank)
+                    "    %s:            start = $%04X, size = $%04X, type = ro, file = %%O, fill = yes, fillval = $FF, bank = $%02X;\n" % (memname, start, size, bank)
                     for memname, (start, size, bank) in mem_area.items()
                 )
                 out.append("    # End arranged memory by doctor_fill.py\n")
@@ -162,9 +152,7 @@ def main(argv=None):
             elif line.strip() == '#arrseg':
                 out.append("    # Begin arranged segments by doctor_fill.py\n")
                 out.extend(
-
-             # DPCM_1:     load = PRG_84,              type = ro, align=64;
-                    "    %-11s load = %s,              type=ro%s;\n" % (segname+":", bankname, ", align=64" if align_dpcm else "")
+                    "    %-11s load = %s,              type = ro%s;\n" % (segname+":", bankname, ", align = 64" if align_dpcm else "")
                     for segname, bankname, _, align_dpcm in assignments
                 )
                 out.append("    # End arranged segments by doctor_fill.py\n")
