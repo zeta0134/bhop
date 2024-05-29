@@ -1759,7 +1759,7 @@ done:
         ldy channel_index
         lda sequences_active, y
         and #SEQUENCE_PITCH
-        beq done ; if sequence isn't enabled, bail fast
+        jeq done ; if sequence isn't enabled, bail fast
 
         ; prepare the pitch pointer for reading
         lda pitch_sequence_ptr_low, y
@@ -1801,7 +1801,8 @@ relative_pitch_mode:
         ; add this data to relative_pitch
         ldy channel_index
         sadd16_split_y channel_relative_frequency_low, channel_relative_frequency_high, scratch_byte
-        ; TODO: if we were to implement bounds checks, they would go here
+        ; clamp pitch within range
+        clamp_detune_pitch_split_y channel_relative_frequency_low, channel_relative_frequency_high
 
 done_applying_pitch:
         ; tick the sequence counter and exit

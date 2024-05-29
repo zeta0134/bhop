@@ -173,6 +173,36 @@ end_clamp:
 .endscope
 .endmacro
 
+; clamps pitch
+; both tables are indexed by y
+; min <= pitch <= max
+.macro clamp_detune_pitch_split_y low_pitch, high_pitch
+.scope
+.if ::BHOP_PITCH_DETUNE_CLAMP_ENABLED
+        ; check min <= pitch
+        scmp16_split_y low_pitch, high_pitch, channel_min_frequency_low, channel_min_frequency_high
+        bpl clamp_min
+        ; check pitch <= max
+        scmp16_split_y channel_max_frequency_low, channel_max_frequency_high, low_pitch, high_pitch
+        bpl clamp_max
+        jmp end_clamp
+clamp_min:
+        lda channel_min_frequency_low,y
+        sta low_pitch,y
+        lda channel_min_frequency_high,y
+        sta high_pitch,y
+        jmp end_clamp
+clamp_max:
+        lda channel_max_frequency_low,y
+        sta low_pitch,y
+        lda channel_max_frequency_high,y
+        sta high_pitch,y
+        ; fall through
+end_clamp:
+.endif
+.endscope
+.endmacro
+
 ; signed comparison of two 16 bit integers
 ; both values are indexed by x
 ; negative flag set: a_table < b_table
@@ -183,6 +213,22 @@ end_clamp:
         cmp b_low_table,x
         lda a_high_table,x
         sbc b_high_table,x
+        bvc skip_invert
+        eor #$80
+skip_invert:
+.endscope
+.endmacro
+
+; signed comparison of two 16 bit integers
+; both values are indexed by x
+; negative flag set: a_table < b_table
+; negative flag clear: a_table >= b_table
+.macro scmp16_split_y a_low_table, a_high_table, b_low_table, b_high_table
+.scope
+        lda a_low_table,y
+        cmp b_low_table,y
+        lda a_high_table,y
+        sbc b_high_table,y
         bvc skip_invert
         eor #$80
 skip_invert:
