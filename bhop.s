@@ -2641,10 +2641,10 @@ channel_max_frequency_low:
         ; TRIANGLE_INDEX
         .byte <FREQUENCY_MAX_2A03
         ; NOISE_INDEX
-        .byte 0
+        .byte $FF
 .if ::BHOP_ZSAW_ENABLED
         ; ZSAW_INDEX
-        .byte 0     ; Z-Saw doesn't support pitch bends
+        .byte $FF   ; Z-Saw doesn't support pitch bends
 .endif
 .if ::BHOP_MMC5_ENABLED
         ; MMC5_PULSE_1_INDEX
@@ -2661,7 +2661,7 @@ channel_max_frequency_low:
         .byte <FREQUENCY_MAX_VRC6
 .endif
         ; DPCM_INDEX
-        .byte 0
+        .byte $FF
 
 channel_max_frequency_high:
         ; PULSE_1_INDEX
@@ -2671,10 +2671,10 @@ channel_max_frequency_high:
         ; TRIANGLE_INDEX
         .byte >FREQUENCY_MAX_2A03
         ; NOISE_INDEX
-        .byte 0
+        .byte $7F
 .if ::BHOP_ZSAW_ENABLED
         ; ZSAW_INDEX
-        .byte 0     ; Z-Saw doesn't support pitch bends
+        .byte $7F   ; Z-Saw doesn't support pitch bends
 .endif
 .if ::BHOP_MMC5_ENABLED
         ; MMC5_PULSE_1_INDEX
@@ -2691,7 +2691,7 @@ channel_max_frequency_high:
         .byte >FREQUENCY_MAX_VRC6
 .endif
         ; DPCM_INDEX
-        .byte 0
+        .byte $7F
 .endif
 
 .endscope

@@ -149,6 +149,16 @@ done:
 .macro clamp_detune_pitch_split_x low_pitch, high_pitch
 .scope
 .if ::BHOP_PITCH_DETUNE_CLAMP_ENABLED
+        ; quit if the index isn't a supported channel
+        cpx #NOISE_INDEX
+        beq end_clamp
+.if ::BHOP_ZSAW_ENABLED
+        cpx #ZSAW_INDEX
+        beq end_clamp
+.endif
+        cpx #DPCM_INDEX
+        beq end_clamp
+
         ; check min <= pitch
         scmp16_split_x low_pitch, high_pitch, channel_min_frequency_low, channel_min_frequency_high
         bpl clamp_min
@@ -179,6 +189,16 @@ end_clamp:
 .macro clamp_detune_pitch_split_y low_pitch, high_pitch
 .scope
 .if ::BHOP_PITCH_DETUNE_CLAMP_ENABLED
+        ; quit if the index isn't a supported channel
+        cpy #NOISE_INDEX
+        beq end_clamp
+.if ::BHOP_ZSAW_ENABLED
+        cpy #ZSAW_INDEX
+        beq end_clamp
+.endif
+        cpy #DPCM_INDEX
+        beq end_clamp
+
         ; check min <= pitch
         scmp16_split_y low_pitch, high_pitch, channel_min_frequency_low, channel_min_frequency_high
         bpl clamp_min
