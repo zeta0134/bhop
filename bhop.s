@@ -2570,6 +2570,129 @@ volume_table:
         .byte $0, $1, $1, $2, $3, $4, $5, $6, $7, $8, $9, $A, $B, $C, $D, $E
         .byte $0, $1, $2, $3, $4, $5, $6, $7, $8, $9, $A, $B, $C, $D, $E, $F
 
+
+.if ::BHOP_PITCH_DETUNE_CLAMP_ENABLED
+channel_min_frequency_low:
+        ; PULSE_1_INDEX
+        .byte <FREQUENCY_MIN_2A03
+        ; PULSE_2_INDEX
+        .byte <FREQUENCY_MIN_2A03
+        ; TRIANGLE_INDEX
+        .byte <FREQUENCY_MIN_2A03
+        ; NOISE_INDEX
+        .byte 0
+.if ::BHOP_ZSAW_ENABLED
+        ; ZSAW_INDEX
+        .byte 0     ; Z-Saw doesn't support pitch bends
+.endif
+.if ::BHOP_MMC5_ENABLED
+        ; MMC5_PULSE_1_INDEX
+        .byte <FREQUENCY_MIN_2A03
+        ; MMC5_PULSE_2_INDEX
+        .byte <FREQUENCY_MIN_2A03
+.endif
+.if ::BHOP_VRC6_ENABLED
+        ; VRC6_PULSE_1_INDEX
+        .byte <FREQUENCY_MIN_VRC6
+        ; VRC6_PULSE_2_INDEX
+        .byte <FREQUENCY_MIN_VRC6
+        ; VRC6_SAWTOOTH_INDEX
+        .byte <FREQUENCY_MIN_VRC6
+.endif
+        ; DPCM_INDEX
+        .byte 0
+
+channel_min_frequency_high:
+        ; PULSE_1_INDEX
+        .byte >FREQUENCY_MIN_2A03
+        ; PULSE_2_INDEX
+        .byte >FREQUENCY_MIN_2A03
+        ; TRIANGLE_INDEX
+        .byte >FREQUENCY_MIN_2A03
+        ; NOISE_INDEX
+        .byte 0
+.if ::BHOP_ZSAW_ENABLED
+        ; ZSAW_INDEX
+        .byte 0     ; Z-Saw doesn't support pitch bends
+.endif
+.if ::BHOP_MMC5_ENABLED
+        ; MMC5_PULSE_1_INDEX
+        .byte >FREQUENCY_MIN_2A03
+        ; MMC5_PULSE_2_INDEX
+        .byte >FREQUENCY_MIN_2A03
+.endif
+.if ::BHOP_VRC6_ENABLED
+        ; VRC6_PULSE_1_INDEX
+        .byte >FREQUENCY_MIN_VRC6
+        ; VRC6_PULSE_2_INDEX
+        .byte >FREQUENCY_MIN_VRC6
+        ; VRC6_SAWTOOTH_INDEX
+        .byte >FREQUENCY_MIN_VRC6
+.endif
+        ; DPCM_INDEX
+        .byte 0
+
+channel_max_frequency_low:
+        ; PULSE_1_INDEX
+        .byte <FREQUENCY_MAX_2A03
+        ; PULSE_2_INDEX
+        .byte <FREQUENCY_MAX_2A03
+        ; TRIANGLE_INDEX
+        .byte <FREQUENCY_MAX_2A03
+        ; NOISE_INDEX
+        .byte 0
+.if ::BHOP_ZSAW_ENABLED
+        ; ZSAW_INDEX
+        .byte 0     ; Z-Saw doesn't support pitch bends
+.endif
+.if ::BHOP_MMC5_ENABLED
+        ; MMC5_PULSE_1_INDEX
+        .byte <FREQUENCY_MAX_2A03
+        ; MMC5_PULSE_2_INDEX
+        .byte <FREQUENCY_MAX_2A03
+.endif
+.if ::BHOP_VRC6_ENABLED
+        ; VRC6_PULSE_1_INDEX
+        .byte <FREQUENCY_MAX_VRC6
+        ; VRC6_PULSE_2_INDEX
+        .byte <FREQUENCY_MAX_VRC6
+        ; VRC6_SAWTOOTH_INDEX
+        .byte <FREQUENCY_MAX_VRC6
+.endif
+        ; DPCM_INDEX
+        .byte 0
+
+channel_max_frequency_high:
+        ; PULSE_1_INDEX
+        .byte >FREQUENCY_MAX_2A03
+        ; PULSE_2_INDEX
+        .byte >FREQUENCY_MAX_2A03
+        ; TRIANGLE_INDEX
+        .byte >FREQUENCY_MAX_2A03
+        ; NOISE_INDEX
+        .byte 0
+.if ::BHOP_ZSAW_ENABLED
+        ; ZSAW_INDEX
+        .byte 0     ; Z-Saw doesn't support pitch bends
+.endif
+.if ::BHOP_MMC5_ENABLED
+        ; MMC5_PULSE_1_INDEX
+        .byte >FREQUENCY_MAX_2A03
+        ; MMC5_PULSE_2_INDEX
+        .byte >FREQUENCY_MAX_2A03
+.endif
+.if ::BHOP_VRC6_ENABLED
+        ; VRC6_PULSE_1_INDEX
+        .byte >FREQUENCY_MAX_VRC6
+        ; VRC6_PULSE_2_INDEX
+        .byte >FREQUENCY_MAX_VRC6
+        ; VRC6_SAWTOOTH_INDEX
+        .byte >FREQUENCY_MAX_VRC6
+.endif
+        ; DPCM_INDEX
+        .byte 0
+.endif
+
 .endscope
 
 
