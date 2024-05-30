@@ -143,8 +143,21 @@ done:
 .endscope
 .endmacro
 
-; clamps pitch
-; both tables are indexed by x
+; note: target bank in A
+; MUST assume all registers are clobbered
+.macro switch_music_bank
+.scope
+        cmp current_music_bank
+        beq all_done
+        sta current_music_bank
+        jsr BHOP_PATTERN_SWITCH_ROUTINE
+all_done:
+.endscope
+.endmacro
+
+; clamps pitch between min and max
+; both indexed by x
+; clobbers a, flags
 ; min <= pitch <= max
 .macro clamp_detune_pitch_split_x low_pitch, high_pitch
 .scope
@@ -167,24 +180,25 @@ done:
         bpl clamp_max
         jmp end_clamp
 clamp_min:
-        lda channel_min_frequency_low,x
-        sta low_pitch,x
-        lda channel_min_frequency_high,x
-        sta high_pitch,x
+        lda channel_min_frequency_low, x
+        sta low_pitch, x
+        lda channel_min_frequency_high, x
+        sta high_pitch, x
         jmp end_clamp
 clamp_max:
-        lda channel_max_frequency_low,x
-        sta low_pitch,x
-        lda channel_max_frequency_high,x
-        sta high_pitch,x
+        lda channel_max_frequency_low, x
+        sta low_pitch, x
+        lda channel_max_frequency_high, x
+        sta high_pitch, x
         ; fall through
 end_clamp:
 .endif
 .endscope
 .endmacro
 
-; clamps pitch
-; both tables are indexed by y
+; clamps pitch between min and max
+; both indexed by y
+; clobbers a, flags
 ; min <= pitch <= max
 .macro clamp_detune_pitch_split_y low_pitch, high_pitch
 .scope
@@ -207,63 +221,19 @@ end_clamp:
         bpl clamp_max
         jmp end_clamp
 clamp_min:
-        lda channel_min_frequency_low,y
-        sta low_pitch,y
-        lda channel_min_frequency_high,y
-        sta high_pitch,y
+        lda channel_min_frequency_low, y
+        sta low_pitch, y
+        lda channel_min_frequency_high, y
+        sta high_pitch, y
         jmp end_clamp
 clamp_max:
-        lda channel_max_frequency_low,y
-        sta low_pitch,y
-        lda channel_max_frequency_high,y
-        sta high_pitch,y
+        lda channel_max_frequency_low, y
+        sta low_pitch, y
+        lda channel_max_frequency_high, y
+        sta high_pitch, y
         ; fall through
 end_clamp:
 .endif
-.endscope
-.endmacro
-
-; signed comparison of two 16 bit integers
-; both values are indexed by x
-; negative flag set: a_table < b_table
-; negative flag clear: a_table >= b_table
-.macro scmp16_split_x a_low_table, a_high_table, b_low_table, b_high_table
-.scope
-        lda a_low_table,x
-        cmp b_low_table,x
-        lda a_high_table,x
-        sbc b_high_table,x
-        bvc skip_invert
-        eor #$80
-skip_invert:
-.endscope
-.endmacro
-
-; signed comparison of two 16 bit integers
-; both values are indexed by x
-; negative flag set: a_table < b_table
-; negative flag clear: a_table >= b_table
-.macro scmp16_split_y a_low_table, a_high_table, b_low_table, b_high_table
-.scope
-        lda a_low_table,y
-        cmp b_low_table,y
-        lda a_high_table,y
-        sbc b_high_table,y
-        bvc skip_invert
-        eor #$80
-skip_invert:
-.endscope
-.endmacro
-
-; note: target bank in A
-; MUST assume all registers are clobbered
-.macro switch_music_bank
-.scope
-        cmp current_music_bank
-        beq all_done
-        sta current_music_bank
-        jsr BHOP_PATTERN_SWITCH_ROUTINE
-all_done:
 .endscope
 .endmacro
 
@@ -535,3 +505,36 @@ positive:
         sta addr+1
 .endmacro
 
+; signed comparison of two 16 bit integers
+; both indexed by x
+; clobbers a, flags
+; negative flag set: a_table < b_table
+; negative flag clear: a_table >= b_table
+.macro scmp16_split_x a_low_table, a_high_table, b_low_table, b_high_table
+.scope
+        lda a_low_table,x
+        cmp b_low_table,x
+        lda a_high_table,x
+        sbc b_high_table,x
+        bvc skip_invert
+        eor #$80
+skip_invert:
+.endscope
+.endmacro
+
+; signed comparison of two 16 bit integers
+; both indexed by x
+; clobbers a, flags
+; negative flag set: a_table < b_table
+; negative flag clear: a_table >= b_table
+.macro scmp16_split_y a_low_table, a_high_table, b_low_table, b_high_table
+.scope
+        lda a_low_table,y
+        cmp b_low_table,y
+        lda a_high_table,y
+        sbc b_high_table,y
+        bvc skip_invert
+        eor #$80
+skip_invert:
+.endscope
+.endmacro
