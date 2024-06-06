@@ -383,8 +383,8 @@ done:
 not_triggered:
         ; was the *channel* just triggered?
         ; if so, disable ourselves
-        lda channel_status, x
-        and #CHANNEL_TRIGGERED
+        lda channel_rstatus, x
+        and #ROW_TRIGGERED
         bne disable_effect
 
 apply_effect:
@@ -430,8 +430,8 @@ done:
 not_triggered:
         ; was the *channel* just triggered?
         ; if so, disable ourselves
-        lda channel_status, x
-        and #CHANNEL_TRIGGERED
+        lda channel_rstatus, x
+        and #ROW_TRIGGERED
         bne disable_effect
 
 apply_effect:
