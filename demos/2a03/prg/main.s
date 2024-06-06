@@ -69,6 +69,11 @@ NmiCounter: .byte $00
         .include "../music/sotn_stage1.asm"
         .endproc
 
+        .segment "MUSIC_9"
+        .proc MODULE_9
+        .include "../music/tsb_67_preseason_player_2.asm"
+        .endproc
+
         .segment "CODE"
 
 ;                                Address               Bank   Track#                          Title                        Artist
@@ -82,6 +87,7 @@ song_sanctuary: music_track     MODULE_5,  <.bank(MODULE_5),      0,        "Ear
 song_gato:      music_track     MODULE_6,  <.bank(MODULE_6),      0,      "Chrono Trigger - Battle",          "Yasunori Mitsuda"
 song_simian:    music_track     MODULE_7,  <.bank(MODULE_7),      0,           "DKC - Simian Segue",           "Eveline Fischer"
 song_sotn_stg1: music_track     MODULE_8,  <.bank(MODULE_8),      0,"Shadow of the Ninja - Stage 1", "I. Mizutani, K. Yamanishi"
+song_tsb_pr_p2: music_track     MODULE_9,  <.bank(MODULE_9),      0, "Tecmo Super Bowl - Pres Plr2",    "R. Nitta, K. Yamagishi"
 
 music_track_table:
         .addr song_itt
@@ -93,8 +99,9 @@ music_track_table:
         .addr song_gato
         .addr song_simian
         .addr song_sotn_stg1
+        .addr song_tsb_pr_p2
 
-music_track_count: .byte 9
+music_track_count: .byte 10
 
 .proc player_bank_music
         pha ; preserve bank number on the stack

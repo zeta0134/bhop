@@ -35,8 +35,8 @@ tick_pulse1:
         sta $5002
 
         ; If we triggered this frame, write unconditionally
-        lda channel_status + MMC5_PULSE_1_INDEX
-        and #CHANNEL_TRIGGERED
+        lda channel_rstatus + MMC5_PULSE_1_INDEX
+        and #ROW_TRIGGERED
         bne write_pulse1
 
         ; otherwise, to avoid resetting the sequence counter, only
@@ -88,8 +88,8 @@ tick_pulse2:
         sta $5006
 
         ; If we triggered this frame, write unconditionally
-        lda channel_status + MMC5_PULSE_2_INDEX
-        and #CHANNEL_TRIGGERED
+        lda channel_rstatus + MMC5_PULSE_2_INDEX
+        and #ROW_TRIGGERED
         bne write_pulse2
 
         ; otherwise, to avoid resetting the sequence counter, only

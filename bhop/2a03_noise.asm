@@ -2,8 +2,8 @@
 ; also not having done this consistently might explain
 ; why noise arps were being weird...
 .proc fix_noise_freq
-        lda channel_status + NOISE_INDEX
-        and #CHANNEL_TRIGGERED
+        lda channel_rstatus + NOISE_INDEX
+        and #ROW_TRIGGERED
         beq done
         lda channel_base_note + NOISE_INDEX
         sta channel_base_frequency_low + NOISE_INDEX

@@ -141,8 +141,8 @@ arp_absolute:
         jmp apply_arp
 arp_relative:
         ; were we just triggered? if so, reset the relative offset
-        lda channel_status, x
-        and #CHANNEL_TRIGGERED
+        lda channel_rstatus, x
+        and #ROW_TRIGGERED
         beq not_triggered
         lda #0
         sta channel_relative_note_offset, x

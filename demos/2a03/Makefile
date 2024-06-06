@@ -20,7 +20,7 @@ O_FILES := \
 all: dir $(ROM_NAME)
 
 dir:
-	@mkdir -p build
+	-@mkdir -p build
 
 clean:
 	-@rm -rf build
