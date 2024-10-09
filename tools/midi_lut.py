@@ -84,3 +84,8 @@ pretty_print_table("vrc6_pulse_period_low", generate_vrc6_pulse_lookup_table(NTS
 pretty_print_table("vrc6_pulse_period_high", generate_vrc6_pulse_lookup_table(NTSC_CPU_FREQUENCY_HZ, ca65_high_byte_literal))
 pretty_print_table("vrc6_sawtooth_period_low", generate_vrc6_sawtooth_lookup_table(NTSC_CPU_FREQUENCY_HZ, ca65_low_byte_literal))
 pretty_print_table("vrc6_sawtooth_period_high", generate_vrc6_sawtooth_lookup_table(NTSC_CPU_FREQUENCY_HZ, ca65_high_byte_literal))
+
+pretty_print_table("rainbow_pal_pulse_period_low", generate_vrc6_pulse_lookup_table(PAL_CPU_FREQUENCY_HZ, ca65_low_byte_literal))
+pretty_print_table("rainbow_pal_pulse_period_high", generate_vrc6_pulse_lookup_table(PAL_CPU_FREQUENCY_HZ, ca65_high_byte_literal))
+pretty_print_table("rainbow_pal_sawtooth_period_low", generate_vrc6_sawtooth_lookup_table(PAL_CPU_FREQUENCY_HZ, ca65_low_byte_literal))
+pretty_print_table("rainbow_pal_sawtooth_period_high", generate_vrc6_sawtooth_lookup_table(PAL_CPU_FREQUENCY_HZ, ca65_high_byte_literal))
