@@ -1,7 +1,9 @@
 build
 *.nes
+*.nsf
 *.sav
 *.o
 *.dbg
 *.bak
 audiodump.raw
+/tools/vendor/__pycache__/*

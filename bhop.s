@@ -3,6 +3,9 @@
 .include "bhop/zsaw.asm"
 .endif
 
+BHOP_VER_MAJ = $00
+BHOP_VER_MIN = $00
+
 .scope BHOP
 .include "bhop/bhop_internal.inc"
 .include "bhop/longbranch.inc"
@@ -30,6 +33,10 @@ frame_counter: .byte $00
 frame_cmp: .byte $00
 
 module_flags: .byte $00
+
+.if ::BHOP_MULTICHIP
+expansion_flags: .byte $00
+.endif
 
 .if ::BHOP_ZSAW_ENABLED
 zsaw_relative_note: .byte $00
@@ -126,7 +133,7 @@ effect_dac_buffer: .byte $00
 
         .segment BHOP_PLAYER_SEGMENT
         ; global
-        .export bhop_init, bhop_play, bhop_mute_channel, bhop_unmute_channel, bhop_set_module_bank
+        .export bhop_init, bhop_play, bhop_mute_channel, bhop_unmute_channel, bhop_set_module_bank, bhop_set_expansion_flags
 
 .include "bhop/midi_lut.inc"
 
@@ -179,6 +186,16 @@ positive:
 .proc bhop_set_module_bank
 .if ::BHOP_PATTERN_BANKING
         sta module_bank
+.endif
+        rts
+.endproc
+
+
+; param:    expansion audio flags of module (a)
+;           format is the same as NSF expansion audio flags    
+.proc bhop_set_expansion_flags
+.if ::BHOP_MULTICHIP
+        sta expansion_flags
 .endif
         rts
 .endproc
@@ -355,8 +372,9 @@ effect_init_loop:
         sta effect_retrigger_period
         sta effect_retrigger_counter
 
-        ; if using virtual Z channels, enable by default
+        ; initialize registers
 
+        ; if using virtual Z channels, enable by default
         .if ::BHOP_ZSAW_ENABLED
         ; if Z-Saw happens to be playing, silence it
         jsr zsaw_silence
@@ -369,9 +387,15 @@ effect_init_loop:
         jsr zpcm_enable
         .endif
 
-        ; finally, enable all channels except DMC
-        lda #%00001111
-        sta $4015
+        jsr init_2a03
+
+.if ::BHOP_MMC5_ENABLED
+        jsr init_mmc5
+.endif
+
+.if ::BHOP_VRC6_ENABLED
+        jsr init_vrc6
+.endif
 
         ; enable any expansion audio chips here, if they can be disabled
         .if ::BHOP_VRC6_ENABLED
@@ -491,6 +515,11 @@ done:
         .endif
 
         .if ::BHOP_MMC5_ENABLED
+            .if ::BHOP_MULTICHIP
+            lda expansion_flags
+            and #EXPANSION_MMC5
+            beq skip_mmc5
+            .endif
         lda (bhop_ptr), y
         sta channel_pattern_ptr_low+MMC5_PULSE_1_INDEX
         iny
@@ -504,9 +533,17 @@ done:
         lda (bhop_ptr), y
         sta channel_pattern_ptr_high+MMC5_PULSE_2_INDEX
         iny
+            .if ::BHOP_MULTICHIP
+skip_mmc5:
+            .endif
         .endif
 
         .if ::BHOP_VRC6_ENABLED
+            .if ::BHOP_MULTICHIP
+            lda expansion_flags
+            and #EXPANSION_VRC6
+            beq skip_vrc6
+            .endif
         lda (bhop_ptr), y
         sta channel_pattern_ptr_low+VRC6_PULSE_1_INDEX
         iny
@@ -527,6 +564,93 @@ done:
         lda (bhop_ptr), y
         sta channel_pattern_ptr_high+VRC6_SAWTOOTH_INDEX
         iny
+            .if ::BHOP_MULTICHIP
+skip_vrc6:
+            .endif
+        .endif
+
+        .if ::BHOP_N163_ENABLED
+            .if ::BHOP_MULTICHIP
+            lda expansion_flags
+            and #EXPANSION_N163
+            beq skip_n163
+            .endif
+        ; TODO: implement N163
+        iny
+        iny
+        iny
+        iny
+        iny
+        iny
+        iny
+        iny
+        iny
+        iny
+        iny
+        iny
+        iny
+        iny
+        iny
+        iny
+            .if ::BHOP_MULTICHIP
+skip_n163:
+            .endif
+        .endif
+
+        .if ::BHOP_FDS_ENABLED
+            .if ::BHOP_MULTICHIP
+            lda expansion_flags
+            and #EXPANSION_FDS
+            beq skip_fds
+            .endif
+        ; TODO: implement FDS
+        iny
+        iny
+            .if ::BHOP_MULTICHIP
+skip_fds:
+            .endif
+        .endif
+
+        .if ::BHOP_S5B_ENABLED
+            .if ::BHOP_MULTICHIP
+            lda expansion_flags
+            and #EXPANSION_S5B
+            beq skip_s5b
+            .endif
+        ; TODO: implement S5B
+        iny
+        iny
+        iny
+        iny
+        iny
+        iny
+            .if ::BHOP_MULTICHIP
+skip_s5b:
+            .endif
+        .endif
+
+        .if ::BHOP_VRC7_ENABLED
+            .if ::BHOP_MULTICHIP
+            lda expansion_flags
+            and #EXPANSION_VRC7
+            beq skip_vrc7
+            .endif
+        ; TODO: implement VRC7
+        iny
+        iny
+        iny
+        iny
+        iny
+        iny
+        iny
+        iny
+        iny
+        iny
+        iny
+        iny
+            .if ::BHOP_MULTICHIP
+skip_vrc7:
+            .endif
         .endif
 
         ; DPCM
@@ -554,20 +678,36 @@ done:
         lda (bhop_ptr), y
         sta channel_pattern_bank+NOISE_INDEX
         iny
+
         .if ::BHOP_ZSAW_ENABLED
         lda (bhop_ptr), y
         sta channel_pattern_bank+ZSAW_INDEX
         iny
         .endif
+
         .if ::BHOP_MMC5_ENABLED
+            .if ::BHOP_MULTICHIP
+            lda expansion_flags
+            and #EXPANSION_MMC5
+            beq skip_mmc5_bank
+            .endif
         lda (bhop_ptr), y
         sta channel_pattern_bank+MMC5_PULSE_1_INDEX
         iny
         lda (bhop_ptr), y
         sta channel_pattern_bank+MMC5_PULSE_2_INDEX
         iny
+            .if ::BHOP_MULTICHIP
+skip_mmc5_bank:
+            .endif
         .endif
+
         .if ::BHOP_VRC6_ENABLED
+            .if ::BHOP_MULTICHIP
+            lda expansion_flags
+            and #EXPANSION_VRC6
+            beq skip_vrc6_bank
+            .endif
         lda (bhop_ptr), y
         sta channel_pattern_bank+VRC6_PULSE_1_INDEX
         iny
@@ -577,7 +717,77 @@ done:
         lda (bhop_ptr), y
         sta channel_pattern_bank+VRC6_SAWTOOTH_INDEX
         iny
+            .if ::BHOP_MULTICHIP
+skip_vrc6_bank:
+            .endif
         .endif
+
+        .if ::BHOP_N163_ENABLED
+            .if ::BHOP_MULTICHIP
+            lda expansion_flags
+            and #EXPANSION_N163
+            beq skip_n163_bank
+            .endif
+        ; TODO: implement N163
+        iny
+        iny
+        iny
+        iny
+        iny
+        iny
+        iny
+        iny
+            .if ::BHOP_MULTICHIP
+skip_n163_bank:
+            .endif
+        .endif
+
+        .if ::BHOP_FDS_ENABLED
+            .if ::BHOP_MULTICHIP
+            lda expansion_flags
+            and #EXPANSION_FDS
+            beq skip_fds_bank
+            .endif
+        ; TODO: implement FDS
+        iny
+            .if ::BHOP_MULTICHIP
+skip_fds_bank:
+            .endif
+        .endif
+
+        .if ::BHOP_S5B_ENABLED
+            .if ::BHOP_MULTICHIP
+            lda expansion_flags
+            and #EXPANSION_S5B
+            beq skip_s5b_bank
+            .endif
+        ; TODO: implement S5B
+        iny
+        iny
+        iny
+            .if ::BHOP_MULTICHIP
+skip_s5b_bank:
+            .endif
+        .endif
+
+        .if ::BHOP_VRC7_ENABLED
+            .if ::BHOP_MULTICHIP
+            lda expansion_flags
+            and #EXPANSION_VRC7
+            beq skip_vrc7_bank
+            .endif
+        ; TODO: implement VRC7
+        iny
+        iny
+        iny
+        iny
+        iny
+        iny
+            .if ::BHOP_MULTICHIP
+skip_vrc7_bank:
+            .endif
+        .endif
+
         lda (bhop_ptr), y
         sta channel_pattern_bank+DPCM_INDEX
         iny
@@ -590,18 +800,48 @@ banking_not_enabled:
         sta channel_pattern_bank + PULSE_2_INDEX
         sta channel_pattern_bank + TRIANGLE_INDEX
         sta channel_pattern_bank + NOISE_INDEX
+
         .if ::BHOP_ZSAW_ENABLED
         sta channel_pattern_bank + ZSAW_INDEX
         .endif
+
         .if ::BHOP_MMC5_ENABLED
+            .if ::BHOP_MULTICHIP
+            pha
+            lda expansion_flags
+            and #EXPANSION_MMC5
+            beq skip_mmc5_bank_disable
+            pla
+            .endif
         sta channel_pattern_bank + MMC5_PULSE_1_INDEX
         sta channel_pattern_bank + MMC5_PULSE_2_INDEX
+            .if ::BHOP_MULTICHIP
+            jmp done_mmc5_bank_disable
+skip_mmc5_bank_disable:
+            pla
+done_mmc5_bank_disable:
+            .endif
         .endif
+
         .if ::BHOP_VRC6_ENABLED
+            .if ::BHOP_MULTICHIP
+            pha
+            lda expansion_flags
+            and #EXPANSION_VRC6
+            beq skip_vrc6_bank_disable
+            pla
+            .endif
         sta channel_pattern_bank + VRC6_PULSE_1_INDEX
         sta channel_pattern_bank + VRC6_PULSE_2_INDEX
         sta channel_pattern_bank + VRC6_SAWTOOTH_INDEX
+            .if ::BHOP_MULTICHIP
+            jmp done_vrc6_bank_disable
+skip_vrc6_bank_disable:
+            pla
+done_vrc6_bank_disable:
+            .endif
         .endif
+
         sta channel_pattern_bank + DPCM_INDEX
 done_with_banks:
 .endif
@@ -612,18 +852,48 @@ done_with_banks:
         sta channel_row_delay_counter + PULSE_2_INDEX
         sta channel_row_delay_counter + TRIANGLE_INDEX
         sta channel_row_delay_counter + NOISE_INDEX
+
         .if ::BHOP_ZSAW_ENABLED
         sta channel_row_delay_counter + ZSAW_INDEX
         .endif
+
         .if ::BHOP_MMC5_ENABLED
+            .if ::BHOP_MULTICHIP
+            pha
+            lda expansion_flags
+            and #EXPANSION_MMC5
+            beq skip_mmc5_row_reset
+            pla
+            .endif
         sta channel_row_delay_counter + MMC5_PULSE_1_INDEX
         sta channel_row_delay_counter + MMC5_PULSE_2_INDEX
+            .if ::BHOP_MULTICHIP
+            jmp done_mmc5_row_reset
+skip_mmc5_row_reset:
+            pla
+done_mmc5_row_reset:
+            .endif
         .endif
+
         .if ::BHOP_VRC6_ENABLED
+            .if ::BHOP_MULTICHIP
+            pha
+            lda expansion_flags
+            and #EXPANSION_VRC6
+            beq skip_vrc6_row_reset
+            pla
+            .endif
         sta channel_row_delay_counter + VRC6_PULSE_1_INDEX
         sta channel_row_delay_counter + VRC6_PULSE_2_INDEX
         sta channel_row_delay_counter + VRC6_SAWTOOTH_INDEX
+            .if ::BHOP_MULTICHIP
+            jmp done_vrc6_row_reset
+skip_vrc6_row_reset:
+            pla
+done_vrc6_row_reset:
+            .endif
         .endif
+
         sta channel_row_delay_counter + DPCM_INDEX
 
         rts
@@ -1057,6 +1327,11 @@ done:
 
         .if ::BHOP_MMC5_ENABLED
         ; MMC5
+            .if ::BHOP_MULTICHIP
+            lda expansion_flags
+            and #EXPANSION_MMC5
+            beq skip_mmc5
+            .endif
         lda #MMC5_PULSE_1_INDEX
         sta channel_index
         jsr advance_channel_row
@@ -1064,10 +1339,18 @@ done:
         lda #MMC5_PULSE_2_INDEX
         sta channel_index
         jsr advance_channel_row
+            .if ::BHOP_MULTICHIP
+skip_mmc5:
+            .endif
         .endif
 
         .if ::BHOP_VRC6_ENABLED
         ; VRC6
+            .if ::BHOP_MULTICHIP
+            lda expansion_flags
+            and #EXPANSION_VRC6
+            beq skip_vrc6
+            .endif
         lda #VRC6_PULSE_1_INDEX
         sta channel_index
         jsr advance_channel_row
@@ -1079,6 +1362,9 @@ done:
         lda #VRC6_SAWTOOTH_INDEX
         sta channel_index
         jsr advance_channel_row
+            .if ::BHOP_MULTICHIP
+skip_vrc6:
+            .endif
         .endif
 
         ; DPCM
@@ -1133,6 +1419,11 @@ done:
 
         .if ::BHOP_MMC5_ENABLED
         ; MMC5
+            .if ::BHOP_MULTICHIP
+            lda expansion_flags
+            and #EXPANSION_MMC5
+            beq skip_mmc5
+            .endif
         lda #MMC5_PULSE_1_INDEX
         sta channel_index
         jsr skip_channel_row
@@ -1140,10 +1431,18 @@ done:
         lda #MMC5_PULSE_2_INDEX
         sta channel_index
         jsr skip_channel_row
+            .if ::BHOP_MULTICHIP
+skip_mmc5:
+            .endif
         .endif
 
         .if ::BHOP_VRC6_ENABLED
-        ; MMC5
+        ; VRC6
+            .if ::BHOP_MULTICHIP
+            lda expansion_flags
+            and #EXPANSION_VRC6
+            beq skip_vrc6
+            .endif
         lda #VRC6_PULSE_1_INDEX
         sta channel_index
         jsr skip_channel_row
@@ -1155,6 +1454,9 @@ done:
         lda #VRC6_SAWTOOTH_INDEX
         sta channel_index
         jsr skip_channel_row
+            .if ::BHOP_MULTICHIP
+skip_vrc6:
+            .endif
         .endif
 
         ; DPCM
@@ -1313,6 +1615,11 @@ done_with_delays:
 .endif
 
 .if ::BHOP_MMC5_ENABLED
+            .if ::BHOP_MULTICHIP
+            lda expansion_flags
+            and #EXPANSION_MMC5
+            jeq skip_mmc5
+            .endif
         lda #MMC5_PULSE_1_INDEX
         sta channel_index
         jsr tick_delayed_effects
@@ -1340,9 +1647,17 @@ done_with_delays:
         initialize_detuned_frequency
         jsr update_vibrato
         jsr update_tuning
+            .if ::BHOP_MULTICHIP
+skip_mmc5:
+            .endif
 .endif
 
 .if ::BHOP_VRC6_ENABLED
+            .if ::BHOP_MULTICHIP
+            lda expansion_flags
+            and #EXPANSION_VRC6
+            jeq skip_vrc6
+            .endif
         lda #VRC6_PULSE_1_INDEX
         sta channel_index
         jsr tick_delayed_effects
@@ -1384,6 +1699,9 @@ done_with_delays:
         initialize_detuned_frequency
         jsr update_vibrato
         jsr update_tuning
+            .if ::BHOP_MULTICHIP
+skip_vrc6:
+            .endif
 .endif
 
         rts
@@ -1534,11 +1852,19 @@ done_loading_sequences:
         sta bhop_ptr + 1
 
 .if ::BHOP_VRC6_ENABLED
+            .if ::BHOP_MULTICHIP
+            lda expansion_flags
+            and #EXPANSION_VRC6
+            beq skip_vrc6
+            .endif
         ; grab and stash the mode byte, which some expansion instruments need
         ldy #SequenceHeader::mode
         lda (bhop_ptr), y
         ldy channel_index
         sta channel_volume_mode, y
+            .if ::BHOP_MULTICHIP
+skip_vrc6:
+            .endif
 .endif
 
         ; read the current sequence byte, and set instrument_volume to this
@@ -2140,14 +2466,33 @@ noise_muted:
 
 tick_dpcm:
         jsr play_dpcm_samples
+
 .if ::BHOP_ZSAW_ENABLED
         jsr play_zsaw
 .endif
+
 .if ::BHOP_MMC5_ENABLED
+            .if ::BHOP_MULTICHIP
+            lda expansion_flags
+            and #EXPANSION_MMC5
+            beq skip_mmc5
+            .endif
         jsr play_mmc5
+            .if ::BHOP_MULTICHIP
+skip_mmc5:
+            .endif
 .endif
+
 .if ::BHOP_VRC6_ENABLED
+            .if ::BHOP_MULTICHIP
+            lda expansion_flags
+            and #EXPANSION_VRC6
+            beq skip_vrc6
+            .endif
         jsr play_vrc6
+            .if ::BHOP_MULTICHIP
+skip_vrc6:
+            .endif
 .endif
 
 cleanup:
@@ -2175,6 +2520,11 @@ cleanup:
         .endif
 
         .if ::BHOP_MMC5_ENABLED
+            .if ::BHOP_MULTICHIP
+            lda expansion_flags
+            and #EXPANSION_MMC5
+            beq skip_mmc5_trigger_reset
+            .endif
         lda channel_status + MMC5_PULSE_1_INDEX
         and #($FF - CHANNEL_TRIGGERED)
         sta channel_status + MMC5_PULSE_1_INDEX
@@ -2182,9 +2532,17 @@ cleanup:
         lda channel_status + MMC5_PULSE_2_INDEX
         and #($FF - CHANNEL_TRIGGERED)
         sta channel_status + MMC5_PULSE_2_INDEX
+            .if ::BHOP_MULTICHIP
+skip_mmc5_trigger_reset:
+            .endif
         .endif
 
         .if ::BHOP_VRC6_ENABLED
+            .if ::BHOP_MULTICHIP
+            lda expansion_flags
+            and #EXPANSION_VRC6
+            beq skip_vrc6_trigger_reset
+            .endif
         lda channel_status + VRC6_PULSE_1_INDEX
         and #($FF - CHANNEL_TRIGGERED)
         sta channel_status + VRC6_PULSE_1_INDEX
@@ -2196,6 +2554,9 @@ cleanup:
         lda channel_status + VRC6_SAWTOOTH_INDEX
         and #($FF - CHANNEL_TRIGGERED)
         sta channel_status + VRC6_SAWTOOTH_INDEX
+            .if ::BHOP_MULTICHIP
+skip_vrc6_trigger_reset:
+            .endif
         .endif
 
         lda channel_status + DPCM_INDEX
@@ -2528,6 +2889,34 @@ check_pulse_2:
         lda #$FF
         sta shadow_pulse2_freq_hi
 done:
+        rts
+.endproc
+
+.proc init_2a03
+        ; if the channel is muted, little else matters, but ensure
+        ; we set the volume to 0
+        lda #%00110000
+        sta $4000
+        sta $4004
+        sta $400C
+
+        ; since triangle has no volume, we'll instead choose to mute it by
+        ; setting the length counter to 0 and forcing an immediate reload.
+        ; This will delay the mute by up to 1/4 of a frame, but this is the
+        ; best we can do without conflicting with the DMC channel
+        lda #$80
+        sta $4008
+
+        ; disable unusual IRQ sources
+        lda #%01000000
+        sta $4017 ; APU frame counter
+        lda #0
+        sta $4010 ; DMC DMA
+        sta $4011 ; regain full volume for TN
+
+        ; disable DPCM channel
+        lda #%00001111
+        sta $4015
         rts
 .endproc
 

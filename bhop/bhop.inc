@@ -4,4 +4,5 @@
 
 .import bhop_init, bhop_play
 .import bhop_set_module_bank
+.import bhop_set_expansion_flags
 .import bhop_mute_channel, bhop_unmute_channel, blarggsaw_irq, zetasaw_irq
