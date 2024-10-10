@@ -1758,7 +1758,7 @@ done:
         ldy channel_index
         lda sequences_active, y
         and #SEQUENCE_PITCH
-        beq done ; if sequence isn't enabled, bail fast
+        jeq done ; if sequence isn't enabled, bail fast
 
         ; prepare the pitch pointer for reading
         lda pitch_sequence_ptr_low, y
@@ -1800,7 +1800,8 @@ relative_pitch_mode:
         ; add this data to relative_pitch
         ldy channel_index
         sadd16_split_y channel_relative_frequency_low, channel_relative_frequency_high, scratch_byte
-        ; TODO: if we were to implement bounds checks, they would go here
+        ; clamp pitch within range
+        clamp_detune_pitch_split_y channel_relative_frequency_low, channel_relative_frequency_high
 
 done_applying_pitch:
         ; tick the sequence counter and exit
@@ -2568,6 +2569,129 @@ volume_table:
         .byte $0, $1, $1, $2, $3, $4, $5, $6, $6, $7, $8, $9, $A, $B, $C, $D
         .byte $0, $1, $1, $2, $3, $4, $5, $6, $7, $8, $9, $A, $B, $C, $D, $E
         .byte $0, $1, $2, $3, $4, $5, $6, $7, $8, $9, $A, $B, $C, $D, $E, $F
+
+
+.if ::BHOP_PITCH_DETUNE_CLAMP_ENABLED
+channel_min_frequency_low:
+        ; PULSE_1_INDEX
+        .byte <FREQUENCY_MIN_2A03
+        ; PULSE_2_INDEX
+        .byte <FREQUENCY_MIN_2A03
+        ; TRIANGLE_INDEX
+        .byte <FREQUENCY_MIN_2A03
+        ; NOISE_INDEX
+        .byte 0
+.if ::BHOP_ZSAW_ENABLED
+        ; ZSAW_INDEX
+        .byte 0     ; Z-Saw doesn't support pitch bends
+.endif
+.if ::BHOP_MMC5_ENABLED
+        ; MMC5_PULSE_1_INDEX
+        .byte <FREQUENCY_MIN_2A03
+        ; MMC5_PULSE_2_INDEX
+        .byte <FREQUENCY_MIN_2A03
+.endif
+.if ::BHOP_VRC6_ENABLED
+        ; VRC6_PULSE_1_INDEX
+        .byte <FREQUENCY_MIN_VRC6
+        ; VRC6_PULSE_2_INDEX
+        .byte <FREQUENCY_MIN_VRC6
+        ; VRC6_SAWTOOTH_INDEX
+        .byte <FREQUENCY_MIN_VRC6
+.endif
+        ; DPCM_INDEX
+        .byte 0
+
+channel_min_frequency_high:
+        ; PULSE_1_INDEX
+        .byte >FREQUENCY_MIN_2A03
+        ; PULSE_2_INDEX
+        .byte >FREQUENCY_MIN_2A03
+        ; TRIANGLE_INDEX
+        .byte >FREQUENCY_MIN_2A03
+        ; NOISE_INDEX
+        .byte 0
+.if ::BHOP_ZSAW_ENABLED
+        ; ZSAW_INDEX
+        .byte 0     ; Z-Saw doesn't support pitch bends
+.endif
+.if ::BHOP_MMC5_ENABLED
+        ; MMC5_PULSE_1_INDEX
+        .byte >FREQUENCY_MIN_2A03
+        ; MMC5_PULSE_2_INDEX
+        .byte >FREQUENCY_MIN_2A03
+.endif
+.if ::BHOP_VRC6_ENABLED
+        ; VRC6_PULSE_1_INDEX
+        .byte >FREQUENCY_MIN_VRC6
+        ; VRC6_PULSE_2_INDEX
+        .byte >FREQUENCY_MIN_VRC6
+        ; VRC6_SAWTOOTH_INDEX
+        .byte >FREQUENCY_MIN_VRC6
+.endif
+        ; DPCM_INDEX
+        .byte 0
+
+channel_max_frequency_low:
+        ; PULSE_1_INDEX
+        .byte <FREQUENCY_MAX_2A03
+        ; PULSE_2_INDEX
+        .byte <FREQUENCY_MAX_2A03
+        ; TRIANGLE_INDEX
+        .byte <FREQUENCY_MAX_2A03
+        ; NOISE_INDEX
+        .byte $FF
+.if ::BHOP_ZSAW_ENABLED
+        ; ZSAW_INDEX
+        .byte $FF   ; Z-Saw doesn't support pitch bends
+.endif
+.if ::BHOP_MMC5_ENABLED
+        ; MMC5_PULSE_1_INDEX
+        .byte <FREQUENCY_MAX_2A03
+        ; MMC5_PULSE_2_INDEX
+        .byte <FREQUENCY_MAX_2A03
+.endif
+.if ::BHOP_VRC6_ENABLED
+        ; VRC6_PULSE_1_INDEX
+        .byte <FREQUENCY_MAX_VRC6
+        ; VRC6_PULSE_2_INDEX
+        .byte <FREQUENCY_MAX_VRC6
+        ; VRC6_SAWTOOTH_INDEX
+        .byte <FREQUENCY_MAX_VRC6
+.endif
+        ; DPCM_INDEX
+        .byte $FF
+
+channel_max_frequency_high:
+        ; PULSE_1_INDEX
+        .byte >FREQUENCY_MAX_2A03
+        ; PULSE_2_INDEX
+        .byte >FREQUENCY_MAX_2A03
+        ; TRIANGLE_INDEX
+        .byte >FREQUENCY_MAX_2A03
+        ; NOISE_INDEX
+        .byte $7F
+.if ::BHOP_ZSAW_ENABLED
+        ; ZSAW_INDEX
+        .byte $7F   ; Z-Saw doesn't support pitch bends
+.endif
+.if ::BHOP_MMC5_ENABLED
+        ; MMC5_PULSE_1_INDEX
+        .byte >FREQUENCY_MAX_2A03
+        ; MMC5_PULSE_2_INDEX
+        .byte >FREQUENCY_MAX_2A03
+.endif
+.if ::BHOP_VRC6_ENABLED
+        ; VRC6_PULSE_1_INDEX
+        .byte >FREQUENCY_MAX_VRC6
+        ; VRC6_PULSE_2_INDEX
+        .byte >FREQUENCY_MAX_VRC6
+        ; VRC6_SAWTOOTH_INDEX
+        .byte >FREQUENCY_MAX_VRC6
+.endif
+        ; DPCM_INDEX
+        .byte $7F
+.endif
 
 .endscope
 

@@ -38,6 +38,8 @@ BHOP_DPCM_SWITCH_ROUTINE = bhop_apply_dpcm_bank
 
 BHOP_DELAYED_RELEASE_ENABLED = 1
 
+BHOP_PITCH_DETUNE_CLAMP_ENABLED = 1
+
 ; Toggle the following flags to enable various expansion channel types
 
 BHOP_MMC5_ENABLED = 0

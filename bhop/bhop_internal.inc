@@ -66,6 +66,15 @@ _channel_index .set (_channel_index+1)
 
 NUM_CHANNELS = _channel_index
 
+.if ::BHOP_PITCH_DETUNE_CLAMP_ENABLED
+; detune clamping constants
+FREQUENCY_MIN_2A03 = $07FF
+FREQUENCY_MAX_2A03 = $0000
+
+FREQUENCY_MIN_VRC6 = $0FFF
+FREQUENCY_MAX_VRC6 = $0000
+.endif
+
 ; various status flags
 CHANNEL_MUTED                 = %10000000
 CHANNEL_GLOBAL_DURATION       = %01000000
@@ -143,6 +152,88 @@ done:
         sta current_music_bank
         jsr BHOP_PATTERN_SWITCH_ROUTINE
 all_done:
+.endscope
+.endmacro
+
+; clamps pitch between min and max
+; both indexed by x
+; clobbers a, flags
+; min <= pitch <= max
+.macro clamp_detune_pitch_split_x low_pitch, high_pitch
+.scope
+.if ::BHOP_PITCH_DETUNE_CLAMP_ENABLED
+        ; quit if the index isn't a supported channel
+        cpx #NOISE_INDEX
+        beq end_clamp
+.if ::BHOP_ZSAW_ENABLED
+        cpx #ZSAW_INDEX
+        beq end_clamp
+.endif
+        cpx #DPCM_INDEX
+        beq end_clamp
+
+        ; check min <= pitch
+        scmp16_split_x low_pitch, high_pitch, channel_min_frequency_low, channel_min_frequency_high
+        bpl clamp_min
+        ; check pitch <= max
+        scmp16_split_x channel_max_frequency_low, channel_max_frequency_high, low_pitch, high_pitch
+        bpl clamp_max
+        jmp end_clamp
+clamp_min:
+        lda channel_min_frequency_low, x
+        sta low_pitch, x
+        lda channel_min_frequency_high, x
+        sta high_pitch, x
+        jmp end_clamp
+clamp_max:
+        lda channel_max_frequency_low, x
+        sta low_pitch, x
+        lda channel_max_frequency_high, x
+        sta high_pitch, x
+        ; fall through
+end_clamp:
+.endif
+.endscope
+.endmacro
+
+; clamps pitch between min and max
+; both indexed by y
+; clobbers a, flags
+; min <= pitch <= max
+.macro clamp_detune_pitch_split_y low_pitch, high_pitch
+.scope
+.if ::BHOP_PITCH_DETUNE_CLAMP_ENABLED
+        ; quit if the index isn't a supported channel
+        cpy #NOISE_INDEX
+        beq end_clamp
+.if ::BHOP_ZSAW_ENABLED
+        cpy #ZSAW_INDEX
+        beq end_clamp
+.endif
+        cpy #DPCM_INDEX
+        beq end_clamp
+
+        ; check min <= pitch
+        scmp16_split_y low_pitch, high_pitch, channel_min_frequency_low, channel_min_frequency_high
+        bpl clamp_min
+        ; check pitch <= max
+        scmp16_split_y channel_max_frequency_low, channel_max_frequency_high, low_pitch, high_pitch
+        bpl clamp_max
+        jmp end_clamp
+clamp_min:
+        lda channel_min_frequency_low, y
+        sta low_pitch, y
+        lda channel_min_frequency_high, y
+        sta high_pitch, y
+        jmp end_clamp
+clamp_max:
+        lda channel_max_frequency_low, y
+        sta low_pitch, y
+        lda channel_max_frequency_high, y
+        sta high_pitch, y
+        ; fall through
+end_clamp:
+.endif
 .endscope
 .endmacro
 
@@ -414,3 +505,36 @@ positive:
         sta addr+1
 .endmacro
 
+; signed comparison of two 16 bit integers
+; both indexed by x
+; clobbers a, flags
+; negative flag set: a_table < b_table
+; negative flag clear: a_table >= b_table
+.macro scmp16_split_x a_low_table, a_high_table, b_low_table, b_high_table
+.scope
+        lda a_low_table,x
+        cmp b_low_table,x
+        lda a_high_table,x
+        sbc b_high_table,x
+        bvc skip_invert
+        eor #$80
+skip_invert:
+.endscope
+.endmacro
+
+; signed comparison of two 16 bit integers
+; both indexed by x
+; clobbers a, flags
+; negative flag set: a_table < b_table
+; negative flag clear: a_table >= b_table
+.macro scmp16_split_y a_low_table, a_high_table, b_low_table, b_high_table
+.scope
+        lda a_low_table,y
+        cmp b_low_table,y
+        lda a_high_table,y
+        sbc b_high_table,y
+        bvc skip_invert
+        eor #$80
+skip_invert:
+.endscope
+.endmacro

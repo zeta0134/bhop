@@ -201,4 +201,38 @@ positive:
         sta addr+1
 .endmacro
 
+; signed comparison of two 16 bit integers
+; both indexed by x
+; clobbers a, flags
+; negative flag set: a_table < b_table
+; negative flag clear: a_table >= b_table
+.macro scmp16_split_x a_low_table, a_high_table, b_low_table, b_high_table
+.scope
+        lda a_low_table,x
+        cmp b_low_table,x
+        lda a_high_table,x
+        sbc b_high_table,x
+        bvc skip_invert
+        eor #$80
+skip_invert:
+.endscope
+.endmacro
+
+; signed comparison of two 16 bit integers
+; both indexed by x
+; clobbers a, flags
+; negative flag set: a_table < b_table
+; negative flag clear: a_table >= b_table
+.macro scmp16_split_y a_low_table, a_high_table, b_low_table, b_high_table
+.scope
+        lda a_low_table,y
+        cmp b_low_table,y
+        lda a_high_table,y
+        sbc b_high_table,y
+        bvc skip_invert
+        eor #$80
+skip_invert:
+.endscope
+.endmacro
+
 .endif

@@ -82,6 +82,7 @@ invert_read:
         jsr read_vibrato_lut ; does not clobber x
         sta scratch_byte
         sadd16_split_x channel_detuned_frequency_low, channel_detuned_frequency_high, scratch_byte
+        clamp_detune_pitch_split_x channel_detuned_frequency_low, channel_detuned_frequency_high
 done:
         rts
 .endproc
@@ -91,6 +92,7 @@ done:
         lda channel_tuning, x
         sta scratch_byte
         sadd16_split_x channel_detuned_frequency_low, channel_detuned_frequency_high, scratch_byte
+        clamp_detune_pitch_split_x channel_detuned_frequency_low, channel_detuned_frequency_high
         rts
 .endproc
 
