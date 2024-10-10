@@ -9,7 +9,7 @@
 
         .include "../../../bhop/zsaw.inc"
 
-        .include "mmc3.inc"
+        .include "s5b.inc"
 
         .zeropage
 
@@ -39,21 +39,23 @@ music_track_table:
 
 music_track_count: .byte 1
 
+; Music bank in A
 .proc player_bank_music
         pha ; preserve bank number on the stack
-        lda #(MMC3_BANKING_MODE + $7)
-        sta MMC3_BANK_SELECT
-        pla ; restore bank number
-        sta MMC3_BANK_DATA
+        lda #S5B_COMMAND_PRG_A000
+        sta S5B_COMMAND_REG
+        pla
+        sta S5B_COMMAND_DATA
         rts
 .endproc
 
+; Sample bank in A
 .proc player_bank_samples
         pha ; preserve bank number on the stack
-        lda #(MMC3_BANKING_MODE + $6)
-        sta MMC3_BANK_SELECT
-        pla ; restore bank number
-        sta MMC3_BANK_DATA
+        lda #S5B_COMMAND_PRG_C000
+        sta S5B_COMMAND_REG
+        pla
+        sta S5B_COMMAND_DATA
         rts
 .endproc
 
@@ -76,7 +78,7 @@ loop:
         lda #0
         sta $4010 ; DMC DMA
 
-        jsr initialize_mmc3
+        jsr initialize_s5b
 
         ; player init
         jsr player_init
