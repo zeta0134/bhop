@@ -617,12 +617,25 @@ skip_fds:
             and #EXPANSION_S5B
             beq skip_s5b
             .endif
-        ; TODO: implement S5B
+        lda (bhop_ptr), y
+        sta channel_pattern_ptr_low+S5B_PULSE_1_INDEX
         iny
+        lda (bhop_ptr), y
+        sta channel_pattern_ptr_high+S5B_PULSE_1_INDEX
         iny
+
+        lda (bhop_ptr), y
+        sta channel_pattern_ptr_low+S5B_PULSE_2_INDEX
         iny
+        lda (bhop_ptr), y
+        sta channel_pattern_ptr_high+S5B_PULSE_2_INDEX
         iny
+
+        lda (bhop_ptr), y
+        sta channel_pattern_ptr_low+S5B_PULSE_3_INDEX
         iny
+        lda (bhop_ptr), y
+        sta channel_pattern_ptr_high+S5B_PULSE_3_INDEX
         iny
             .if ::BHOP_MULTICHIP
 skip_s5b:
@@ -760,10 +773,15 @@ skip_fds_bank:
             lda expansion_flags
             and #EXPANSION_S5B
             beq skip_s5b_bank
-            .endif
-        ; TODO: implement S5B
+            .endif        
+        lda (bhop_ptr), y
+        sta channel_pattern_bank+S5B_PULSE_1_INDEX
         iny
+        lda (bhop_ptr), y
+        sta channel_pattern_bank+S5B_PULSE_2_INDEX
         iny
+        lda (bhop_ptr), y
+        sta channel_pattern_bank+S5B_PULSE_3_INDEX
         iny
             .if ::BHOP_MULTICHIP
 skip_s5b_bank:
@@ -1367,6 +1385,29 @@ skip_vrc6:
             .endif
         .endif
 
+        .if ::BHOP_S5B_ENABLED
+        ; S5B
+            .if ::BHOP_MULTICHIP
+            lda expansion_flags
+            and #EXPANSION_S5B
+            beq skip_s5b
+            .endif
+        lda #S5B_PULSE_1_INDEX
+        sta channel_index
+        jsr advance_channel_row
+
+        lda #S5B_PULSE_2_INDEX
+        sta channel_index
+        jsr advance_channel_row
+
+        lda #S5B_PULSE_3_INDEX
+        sta channel_index
+        jsr advance_channel_row
+            .if ::BHOP_MULTICHIP
+skip_s5b:
+            .endif
+        .endif
+
         ; DPCM
         lda #DPCM_INDEX
         sta channel_index
@@ -1456,6 +1497,29 @@ skip_mmc5:
         jsr skip_channel_row
             .if ::BHOP_MULTICHIP
 skip_vrc6:
+            .endif
+        .endif
+
+        .if ::BHOP_S5B_ENABLED
+        ; S5B
+            .if ::BHOP_MULTICHIP
+            lda expansion_flags
+            and #EXPANSION_S5B
+            beq skip_s5b
+            .endif
+        lda #S5B_PULSE_1_INDEX
+        sta channel_index
+        jsr skip_channel_row
+
+        lda #S5B_PULSE_2_INDEX
+        sta channel_index
+        jsr skip_channel_row
+
+        lda #S5B_PULSE_3_INDEX
+        sta channel_index
+        jsr skip_channel_row
+            .if ::BHOP_MULTICHIP
+skip_s5b:
             .endif
         .endif
 
