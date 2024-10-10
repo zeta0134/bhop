@@ -665,12 +665,11 @@ dxx_loop:
         jmp no_frame_advance
 
 no_skip_requested:
-        inc row_counter
         ; first off, have we reached the end of this pattern?
         ; if so, advance to the next frame here:
         lda row_counter
         cmp row_cmp
-        bne no_frame_advance
+        bcc no_frame_advance
         jsr advance_frame
         lda #0
         sta row_counter
@@ -685,6 +684,8 @@ no_frame_advance:
         sta tempo_counter+1
         ; process the bytecode for the next pattern row
         jsr advance_pattern_rows
+        ; advance the row counter *after* running the bytecode
+        inc row_counter
 done_advancing_rows:
         rts
 .endproc
