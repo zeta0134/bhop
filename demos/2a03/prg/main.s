@@ -71,7 +71,7 @@ NmiCounter: .byte $00
 
         .segment "CODE"
 
-;                                Address               Bank   Track#                          Title                        Artist
+;                                Address               Bank   Track#         Title (limit 28 chars)       Artist (limit 28 chars)
 ;                               --------                ---      ---   ----------------------------  ----------------------------
 song_itt:       music_track     MODULE_0,  <.bank(MODULE_0),      0,  "Ikenfell - In This Together",           "aivi & surasshu"
 song_virus:     music_track     MODULE_1,  <.bank(MODULE_1),      0,        "MMBN. - Virus Busting",              "Yoshino Aoki"
@@ -81,7 +81,7 @@ song_nsmb:      music_track     MODULE_4,  <.bank(MODULE_4),      0,   "New Supe
 song_sanctuary: music_track     MODULE_5,  <.bank(MODULE_5),      0,        "Earthbound - Guardian",      "K. Suzuki, H. Tanaka"
 song_gato:      music_track     MODULE_6,  <.bank(MODULE_6),      0,      "Chrono Trigger - Battle",          "Yasunori Mitsuda"
 song_simian:    music_track     MODULE_7,  <.bank(MODULE_7),      0,           "DKC - Simian Segue",           "Eveline Fischer"
-song_sotn_stg1: music_track     MODULE_8,  <.bank(MODULE_8),      0,"Shadow of the Ninja - Stage 1", "I. Mizutani, K. Yamanishi"
+song_sotn_stg1: music_track     MODULE_8,  <.bank(MODULE_8),      0,  "Shadow of the Ninja - Stg 1", "I. Mizutani, K. Yamanishi"
 
 music_track_table:
         .addr song_itt
