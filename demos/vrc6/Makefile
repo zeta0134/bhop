@@ -28,7 +28,7 @@ clean:
 	-@rm -f $(DBG_NAME)
 
 run: dir $(ROM_NAME)
-	rusticnes-sdl $(ROM_NAME)
+	rustico-sdl $(ROM_NAME)
 
 beta: dir $(ROM_NAME)
 	/home/zeta0134/Downloads/MesenBeta/Mesen $(ROM_NAME)
