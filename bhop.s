@@ -130,6 +130,13 @@ effect_dpcm_offset: .byte $00
 ; Zxx
 effect_dac_buffer: .byte $00
 
+.if ::BHOP_S5B_ENABLED
+; S5B needs to compose some shared channel state, and these scratch bytes
+; help to manage that
+s5b_noise_period: .byte $00
+s5b_noise_tone_scratch: .byte $00
+.endif
+
 
         .segment BHOP_PLAYER_SEGMENT
         ; global
@@ -389,15 +396,20 @@ effect_init_loop:
 
         jsr init_2a03
 
-.if ::BHOP_MMC5_ENABLED
+        .if ::BHOP_MMC5_ENABLED
         jsr init_mmc5
-.endif
+        .endif
 
-.if ::BHOP_VRC6_ENABLED
+        .if ::BHOP_VRC6_ENABLED
         jsr init_vrc6
-.endif
+        .endif
+
+        .if ::BHOP_S5B_ENABLED
+        jsr init_s5b
+        .endif
 
         ; enable any expansion audio chips here, if they can be disabled
+        ; TODO: why is this separate from the other thing?
         .if ::BHOP_VRC6_ENABLED
         jsr bhop_vrc6_init
         .endif
@@ -860,6 +872,25 @@ done_vrc6_bank_disable:
             .endif
         .endif
 
+        .if ::BHOP_S5B_ENABLED
+            .if ::BHOP_MULTICHIP
+            pha
+            lda expansion_flags
+            and #EXPANSION_S5B
+            beq skip_s5b_bank_disable
+            pla
+            .endif
+        sta channel_pattern_bank + S5B_PULSE_1_INDEX
+        sta channel_pattern_bank + S5B_PULSE_2_INDEX
+        sta channel_pattern_bank + S5B_PULSE_3_INDEX
+            .if ::BHOP_MULTICHIP
+            jmp done_s5b_bank_disable
+skip_s5b_bank_disable:
+            pla
+done_s5b_bank_disable:
+            .endif
+        .endif
+
         sta channel_pattern_bank + DPCM_INDEX
 done_with_banks:
 .endif
@@ -909,6 +940,25 @@ done_mmc5_row_reset:
 skip_vrc6_row_reset:
             pla
 done_vrc6_row_reset:
+            .endif
+        .endif
+
+        .if ::BHOP_S5B_ENABLED
+            .if ::BHOP_MULTICHIP
+            pha
+            lda expansion_flags
+            and #EXPANSION_S5B
+            beq skip_s5b_row_reset
+            pla
+            .endif
+        sta channel_row_delay_counter + S5B_PULSE_1_INDEX
+        sta channel_row_delay_counter + S5B_PULSE_2_INDEX
+        sta channel_row_delay_counter + S5B_PULSE_3_INDEX
+            .if ::BHOP_MULTICHIP
+            jmp done_s5b_row_reset
+skip_s5b_row_reset:
+            pla
+done_s5b_row_reset:
             .endif
         .endif
 
@@ -1768,6 +1818,59 @@ skip_vrc6:
             .endif
 .endif
 
+.if ::BHOP_S5B_ENABLED
+            .if ::BHOP_MULTICHIP
+            lda expansion_flags
+            and #EXPANSION_S5B
+            jeq skip_s5b
+            .endif
+        lda #S5B_PULSE_1_INDEX
+        sta channel_index
+        jsr tick_delayed_effects
+        jsr tick_volume_envelope
+        jsr tick_duty_envelope
+        jsr update_arp
+        jsr update_pitch_effects
+        jsr update_volume_effects
+        jsr tick_arp_envelope
+        jsr tick_pitch_envelope
+        initialize_detuned_frequency
+        jsr update_vibrato
+        jsr update_tuning
+
+        lda #S5B_PULSE_2_INDEX
+        sta channel_index
+        jsr tick_delayed_effects
+        jsr tick_volume_envelope
+        jsr tick_duty_envelope
+        jsr update_arp
+        jsr update_pitch_effects
+        jsr update_volume_effects
+        jsr tick_arp_envelope
+        jsr tick_pitch_envelope
+        initialize_detuned_frequency
+        jsr update_vibrato
+        jsr update_tuning
+
+        lda #S5B_PULSE_3_INDEX
+        sta channel_index
+        jsr tick_delayed_effects
+        jsr tick_volume_envelope
+        jsr tick_duty_envelope
+        jsr update_arp
+        jsr update_pitch_effects
+        jsr update_volume_effects
+        jsr tick_arp_envelope
+        jsr tick_pitch_envelope
+        initialize_detuned_frequency
+        jsr update_vibrato
+        jsr update_tuning
+
+            .if ::BHOP_MULTICHIP
+skip_s5b:
+            .endif
+.endif
+
         rts
 .endproc
 
@@ -2559,6 +2662,18 @@ skip_vrc6:
             .endif
 .endif
 
+.if ::BHOP_S5B_ENABLED
+            .if ::BHOP_MULTICHIP
+            lda expansion_flags
+            and #EXPANSION_S5B
+            beq skip_s5b
+            .endif
+        jsr play_s5b
+            .if ::BHOP_MULTICHIP
+skip_s5b:
+            .endif
+.endif
+
 cleanup:
         ; clear the triggered flag from every instrument
         lda channel_status + PULSE_1_INDEX
@@ -2620,6 +2735,28 @@ skip_mmc5_trigger_reset:
         sta channel_status + VRC6_SAWTOOTH_INDEX
             .if ::BHOP_MULTICHIP
 skip_vrc6_trigger_reset:
+            .endif
+        .endif
+
+.if ::BHOP_S5B_ENABLED
+            .if ::BHOP_MULTICHIP
+            lda expansion_flags
+            and #EXPANSION_S5B
+            beq skip_s5b_trigger_reset
+            .endif
+        lda channel_status + S5B_PULSE_1_INDEX
+        and #($FF - CHANNEL_TRIGGERED)
+        sta channel_status + S5B_PULSE_1_INDEX
+
+        lda channel_status + S5B_PULSE_2_INDEX
+        and #($FF - CHANNEL_TRIGGERED)
+        sta channel_status + S5B_PULSE_2_INDEX
+
+        lda channel_status + S5B_PULSE_3_INDEX
+        and #($FF - CHANNEL_TRIGGERED)
+        sta channel_status + S5B_PULSE_3_INDEX
+            .if ::BHOP_MULTICHIP
+skip_s5b_trigger_reset:
             .endif
         .endif
 
@@ -3004,7 +3141,9 @@ done:
 .if ::BHOP_VRC6_ENABLED
 .include "bhop/vrc6.asm"
 .endif
-
+.if ::BHOP_S5B_ENABLED
+.include "bhop/s5b.asm"
+.endif
 
 volume_table:
         .byte $0, $0, $0, $0, $0, $0, $0, $0, $0, $0, $0, $0, $0, $0, $0, $0
@@ -3053,6 +3192,14 @@ channel_min_frequency_low:
         ; VRC6_SAWTOOTH_INDEX
         .byte <FREQUENCY_MIN_VRC6
 .endif
+.if ::BHOP_S5B_ENABLED
+        ; VRC6_PULSE_1_INDEX
+        .byte <FREQUENCY_MIN_S5B
+        ; VRC6_PULSE_2_INDEX
+        .byte <FREQUENCY_MIN_S5B
+        ; VRC6_SAWTOOTH_INDEX
+        .byte <FREQUENCY_MIN_S5B
+.endif
         ; DPCM_INDEX
         .byte 0
 
@@ -3082,6 +3229,14 @@ channel_min_frequency_high:
         .byte >FREQUENCY_MIN_VRC6
         ; VRC6_SAWTOOTH_INDEX
         .byte >FREQUENCY_MIN_VRC6
+.endif
+.if ::BHOP_S5B_ENABLED
+        ; VRC6_PULSE_1_INDEX
+        .byte >FREQUENCY_MIN_S5B
+        ; VRC6_PULSE_2_INDEX
+        .byte >FREQUENCY_MIN_S5B
+        ; VRC6_SAWTOOTH_INDEX
+        .byte >FREQUENCY_MIN_S5B
 .endif
         ; DPCM_INDEX
         .byte 0
@@ -3113,6 +3268,14 @@ channel_max_frequency_low:
         ; VRC6_SAWTOOTH_INDEX
         .byte <FREQUENCY_MAX_VRC6
 .endif
+.if ::BHOP_S5B_ENABLED
+        ; VRC6_PULSE_1_INDEX
+        .byte <FREQUENCY_MAX_S5B
+        ; VRC6_PULSE_2_INDEX
+        .byte <FREQUENCY_MAX_S5B
+        ; VRC6_SAWTOOTH_INDEX
+        .byte <FREQUENCY_MAX_S5B
+.endif
         ; DPCM_INDEX
         .byte $FF
 
@@ -3142,6 +3305,14 @@ channel_max_frequency_high:
         .byte >FREQUENCY_MAX_VRC6
         ; VRC6_SAWTOOTH_INDEX
         .byte >FREQUENCY_MAX_VRC6
+.endif
+.if ::BHOP_S5B_ENABLED
+        ; S5B_PULSE_1_INDEX
+        .byte >FREQUENCY_MAX_S5B
+        ; S5B_PULSE_2_INDEX
+        .byte >FREQUENCY_MAX_S5B
+        ; S5B_PULSE_3_INDEX
+        .byte >FREQUENCY_MAX_S5B
 .endif
         ; DPCM_INDEX
         .byte $7F
