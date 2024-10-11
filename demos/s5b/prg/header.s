@@ -7,12 +7,13 @@
         .byte "NES", $1a
         .byte $10               ; 16x 16KB PRG-ROM banks = 256 KB total
         .byte $01               ; 1x 8KB CHR-ROM banks = 8 KB total
-        .byte $50, $40          ; Mapper 69 (S5B) 
+        .byte $50, $4B          ; Mapper 69 (S5B) 
         .byte $00               ; 8k of PRG RAM
         .byte $00               ;
         .byte $00
         .byte $00
         .byte $00
+        .byte $04               ; System Type: NES+EPSM
         .byte $00
         .byte $00
-        .byte $00
+

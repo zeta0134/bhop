@@ -70,12 +70,20 @@ BHOP_ZPCM_ENABLED = 0   ; outputs expansion audio to DPCM via inc $4011
     BHOP_ZPCM_DISABLE_ROUTINE = bhop_disable_zpcm
     .endif
 
+BHOP_S5B_ENABLED = 0
+    ; The EPSM module has 3 channels that are quite similar to Sunsoft 5B in capability,
+    ; but which require a separate tuning table due to a different clockspeed. If you set
+    ; this option, bhop will include that tuning table (+256 bytes) and attempt to drive
+    ; the Sunsoft 5B expansion audio through the EPSM instead of the typical FME-7. Note
+    ; that this carries a significant performance penalty!
+    BHOP_S5B_ON_EPSM = 0
+    .define BHOP_EPSM_DRIVER_SEGMENT "PRG_8000"
+
 ; The following chips below are not yet implemented
 ; if you enable them, they will not read nor write any data associated
 
 BHOP_N163_ENABLED = 0
 BHOP_FDS_ENABLED = 0
-BHOP_S5B_ENABLED = 0
 BHOP_VRC7_ENABLED = 0
 
 ; Toggle to enable multiple expansion audio chips at once

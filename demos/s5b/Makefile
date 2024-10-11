@@ -33,6 +33,9 @@ run: dir $(ROM_NAME)
 beta: dir $(ROM_NAME)
 	/home/zeta0134/Downloads/MesenBeta/Mesen $(ROM_NAME)
 
+everdrive: dir $(ROM_NAME)
+	mono vendor/edlink-n8.exe $(ROM_NAME)
+
 $(ROM_NAME): $(SOURCEDIR)/s5b.cfg $(O_FILES)
 	ld65 -m $(BUILDDIR)/map.txt --dbgfile $(DBG_NAME) -o $@ -C $^
 

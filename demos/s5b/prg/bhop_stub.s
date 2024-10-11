@@ -1,2 +1,2 @@
-.include "bhop_mmc3_config.inc"
+.include "bhop_s5b_config.inc"
 .include "../../../bhop.s"

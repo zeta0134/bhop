@@ -22,6 +22,10 @@ pattern_ptr: .word $0000
 channel_index: .byte $00
 scratch_byte: .byte $00
 
+.if ::BHOP_S5B_ON_EPSM
+epsm_safe_write_byte: .byte $00
+.endif
+
         .segment BHOP_RAM_SEGMENT
 music_header_ptr: .word $0000
 tempo_counter: .word $0000
@@ -135,6 +139,13 @@ effect_dac_buffer: .byte $00
 ; help to manage that
 s5b_noise_period: .byte $00
 s5b_noise_tone_scratch: .byte $00
+
+.if ::BHOP_S5B_ON_EPSM
+s5b_registers_desired: .res 14
+s5b_registers_written: .res 14
+s5b_registers_dirty: .res 14
+.endif
+
 .endif
 
 

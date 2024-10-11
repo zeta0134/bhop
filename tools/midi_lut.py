@@ -77,7 +77,7 @@ def s5b_epsm_pulse_period(note_frequency):
 
   Taken from https://www.nesdev.org/wiki/Sunsoft_5B_audio
   """
-  desired_period = EPSM_S5B_FREQUENCY_HZ / (16 * note_frequency)
+  desired_period = EPSM_S5B_FREQUENCY_HZ / (32 * note_frequency)
   integer_period = round(desired_period)
   clamped_period = min(max(integer_period, 0), 4095)
   return clamped_period
@@ -131,5 +131,5 @@ pretty_print_table("s5b_ntsc_period_low", generate_s5b_pulse_lookup_table(NTSC_C
 pretty_print_table("s5b_ntsc_period_high", generate_s5b_pulse_lookup_table(NTSC_CPU_FREQUENCY_HZ, ca65_high_byte_literal))
 pretty_print_table("s5b_pal_period_low", generate_s5b_pulse_lookup_table(PAL_CPU_FREQUENCY_HZ, ca65_low_byte_literal))
 pretty_print_table("s5b_pal_period_high", generate_s5b_pulse_lookup_table(PAL_CPU_FREQUENCY_HZ, ca65_high_byte_literal))
-pretty_print_table("s5b_epsm_pal_period_low", generate_s5b_epsm_pulse_lookup_table(ca65_low_byte_literal))
+pretty_print_table("s5b_epsm_period_low", generate_s5b_epsm_pulse_lookup_table(ca65_low_byte_literal))
 pretty_print_table("s5b_epsm_period_high", generate_s5b_epsm_pulse_lookup_table(ca65_high_byte_literal))

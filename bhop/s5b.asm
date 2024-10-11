@@ -1,3 +1,9 @@
+.if ::BHOP_S5B_ON_EPSM
+.segment BHOP_EPSM_DRIVER_SEGMENT
+.include "epsm.asm"
+.segment BHOP_PLAYER_SEGMENT
+.endif
+
 S5B_AUDIO_REG  = $C000
 S5B_AUDIO_DATA = $E000
 
@@ -28,19 +34,28 @@ S5B_PULSE_1_NOISE_DISABLED = %00001000
 S5B_PULSE_2_NOISE_DISABLED = %00010000
 S5B_PULSE_3_NOISE_DISABLED = %00100000
 
-; TODO: if we can make an EPSM-specific command macro, supporting it should be cake?
-; ... very SLOW cake, but cake all the same
 .macro s5b_command command_byte, data_byte
-    lda command_byte
-    sta S5B_AUDIO_REG
-    lda data_byte
-    sta S5B_AUDIO_DATA
+.if ::BHOP_S5B_ON_EPSM
+        ldx command_byte
+        lda data_byte
+        sta s5b_registers_desired, x
+.else
+        lda command_byte
+        sta S5B_AUDIO_REG
+        lda data_byte
+        sta S5B_AUDIO_DATA
+.endif
 .endmacro
 
 .macro s5b_command_a command_byte
-    ldx command_byte
-    stx S5B_AUDIO_REG
-    sta S5B_AUDIO_DATA
+.if ::BHOP_S5B_ON_EPSM
+        ldx command_byte
+        sta s5b_registers_desired, x
+.else
+        ldx command_byte
+        stx S5B_AUDIO_REG
+        sta S5B_AUDIO_DATA
+.endif
 .endmacro
 
 .proc init_s5b
@@ -49,10 +64,25 @@ S5B_PULSE_3_NOISE_DISABLED = %00100000
         s5b_command_a #S5B_AUDIO_CMD_PULSE_1_ENV_VOL
         s5b_command_a #S5B_AUDIO_CMD_PULSE_2_ENV_VOL
         s5b_command_a #S5B_AUDIO_CMD_PULSE_3_ENV_VOL
+
+        .if ::BHOP_S5B_ON_EPSM
+        ldy #0
+loop:
+        lda #0
+        sta s5b_registers_desired, x
+        lda #1
+        sta s5b_registers_dirty, x
+        iny
+        cpy #14
+        bne loop
+        .endif
+
         rts
 .endproc
 
 .proc play_s5b
+        
+
         lda #0
         sta s5b_noise_tone_scratch
 
@@ -221,5 +251,32 @@ apply_global_writes:
         sbc s5b_noise_period
         s5b_command_a #S5B_AUDIO_CMD_NOISE_PERIOD
 
+.if ::BHOP_S5B_ON_EPSM
+        jsr write_s5b_registers_to_epsm
+.endif
+
         rts
 .endproc
+
+.if ::BHOP_S5B_ON_EPSM
+.proc write_s5b_registers_to_epsm
+        .repeat 14, i
+        .scope
+        lda s5b_registers_dirty+i
+        bne perform_write
+        lda s5b_registers_desired+i
+        cmp s5b_registers_written+i
+        beq done_with_write
+perform_write:
+        sta s5b_registers_written+i
+        lda #0
+        sta s5b_registers_dirty+i
+        write_epsm_reg_const i ; will range from $00 - $0D, corresponding to the SSG region in A1=0
+        write_epsm_data_byte s5b_registers_desired+i
+done_with_write:
+        .endscope
+        .endrepeat
+
+        rts
+.endproc
+.endif
