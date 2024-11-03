@@ -7,7 +7,7 @@ command_table:
 ;         bhop handler              bytecode    FT enum equivalent          Description
 ;         ------------------------  -----       ------------------------    ----
     .word cmd_instrument           ;($80)       CMD_INSTRUMENT              instrument change command
-    .word cmd_unimplemented_short  ;($81)       CMD_HOLD                    && instrument
+    .word cmd_hold_instrument      ;($81)       CMD_HOLD                    && instrument
     .word cmd_set_duration         ;($82)       CMD_SET_DURATION            enable compressed durations, determines length of space between notes
     .word cmd_reset_duration       ;($83)       CMD_RESET_DURATION          disable compressed durations, determines length of space between notes
     .word cmd_eff_speed            ;($84)       CMD_EFF_SPEED               Fxx, EffParam ? EffParam : 1
@@ -193,6 +193,14 @@ no_parameter_byte:
         rts
 .endproc
 
+.proc cmd_hold_instrument
+        lda channel_rstatus, x
+        ora #ROW_HOLD_INSTRUMENT
+        sta channel_rstatus, x
+        
+        rts
+.endproc
+
 ; Gxx
 .proc cmd_eff_delay
         fetch_pattern_byte
@@ -240,9 +248,9 @@ done:
         clc
         adc #1
         sta effect_cut_delay, x
-        lda channel_status, x
-        ora #CHANNEL_FRESH_DELAYED_CUT
-        sta channel_status, x
+        lda channel_rstatus, x
+        ora #ROW_FRESH_DELAYED_CUT
+        sta channel_rstatus, x
         rts
 .endproc
 
@@ -252,9 +260,9 @@ done:
         clc
         adc #1
         sta effect_release_delay, x
-        lda channel_status, x
-        ora #CHANNEL_FRESH_DELAYED_RELEASE
-        sta channel_status, x
+        lda channel_rstatus, x
+        ora #ROW_FRESH_DELAYED_RELEASE
+        sta channel_rstatus, x
         rts
 .endproc
 .else
