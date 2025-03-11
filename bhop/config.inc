@@ -1,12 +1,20 @@
 .ifndef __BHOP_CONFIG
 __BHOP_CONFIG = 1
 
+.include "option_util.inc"
+
 ; Configuration variables, adjust these to taste for your specific project
 
 ; Where should BHOP live?
+.if .xmatch(BHOP_PLAYER_SEGMENT, "BHOP_PLAYER_SEGMENT")
 .define BHOP_PLAYER_SEGMENT "PRG_8000"
+.endif
+.if .xmatch(BHOP_RAM_SEGMENT, "BHOP_RAM_SEGMENT")
 .define BHOP_RAM_SEGMENT "RAM"
+.endif
+.if .xmatch(BHOP_ZP_SEGMENT, "BHOP_ZP_SEGMENT")
 .define BHOP_ZP_SEGMENT "ZEROPAGE"
+.endif
 
 ; Note: bhop currently requires just 6 bytes of zeropage. ALL of these bytes
 ; are temporary, so feel free to allocate them in your scratch region and
@@ -14,7 +22,7 @@ __BHOP_CONFIG = 1
 
 ; Banking support. Disabled by default, as the relevant
 ; mapper code is project specific.
-BHOP_PATTERN_BANKING = 0
+__bool_option BHOP_PATTERN_BANKING
 
 .if ::BHOP_PATTERN_BANKING
 .import bhop_apply_music_bank
@@ -27,7 +35,7 @@ BHOP_PATTERN_SWITCH_ROUTINE = bhop_apply_music_bank
 ; A register before calling. It does not expect any registers
 ; or flags to be preserved.
 
-BHOP_DPCM_BANKING = 0
+__bool_option BHOP_DPCM_BANKING
 
 .if ::BHOP_DPCM_BANKING
 .import bhop_apply_dpcm_bank
@@ -36,33 +44,33 @@ BHOP_DPCM_SWITCH_ROUTINE = bhop_apply_dpcm_bank
 
 ; Options for different features that can be disabled to save space
 
-BHOP_DELAYED_RELEASE_ENABLED = 1
+__bool_option BHOP_DELAYED_RELEASE_ENABLED, 1
 
-BHOP_PITCH_DETUNE_CLAMP_ENABLED = 1
+__bool_option BHOP_PITCH_DETUNE_CLAMP_ENABLED, 1
 
 ; Toggle the following flags to enable various expansion channel types
 
-BHOP_MMC5_ENABLED = 0
+__bool_option BHOP_MMC5_ENABLED
 
-BHOP_VRC6_ENABLED = 0
+__bool_option BHOP_VRC6_ENABLED
     ; VRC6 variants for compatible mappers
     ; Only enable one of these at a time
-    BHOP_VRC6_MAPPER24 = 0
-    BHOP_VRC6_RAINBOW = 0
+    __bool_option BHOP_VRC6_MAPPER24
+    __bool_option BHOP_VRC6_RAINBOW
 
 ; virtual Z channel audio, mutually exclusive from DPCM sample playback
 ; concurrent Z-Saw and ZPCM is not supported (yet?).
 
-BHOP_ZSAW_ENABLED = 0   ; generates custom waveforms using looping DPCM samples
+__bool_option BHOP_ZSAW_ENABLED   ; generates custom waveforms using looping DPCM samples
 
-BHOP_ZPCM_ENABLED = 0   ; outputs expansion audio to DPCM via inc $4011
+__bool_option BHOP_ZPCM_ENABLED   ; outputs expansion audio to DPCM via inc $4011
     ; If using an advanced mapper that supports ZPCM, normally the DPCM channel is
     ; suppressed by the ZPCM activity. If you want to play DPCM samples, ZPCM must
     ; be temporarily disabled. Enable this feature if you want bhop to support this
     ; behavior, and provide your project-specific mechanism to temporarily disable
     ; and enable ZPCM updates by exporting the two symbols below. These routines
     ; will accept no arguments, and may clobber any registers.
-    BHOP_ZPCM_CONFLICT_AVOIDANCE = 0
+    __bool_option BHOP_ZPCM_CONFLICT_AVOIDANCE
 
     .if ::BHOP_ZPCM_CONFLICT_AVOIDANCE
     .import bhop_enable_zpcm, bhop_disable_zpcm
@@ -73,14 +81,14 @@ BHOP_ZPCM_ENABLED = 0   ; outputs expansion audio to DPCM via inc $4011
 ; The following chips below are not yet implemented
 ; if you enable them, they will not read nor write any data associated
 
-BHOP_N163_ENABLED = 0
-BHOP_FDS_ENABLED = 0
-BHOP_S5B_ENABLED = 0
-BHOP_VRC7_ENABLED = 0
+__bool_option BHOP_N163_ENABLED
+__bool_option BHOP_FDS_ENABLED
+__bool_option BHOP_S5B_ENABLED
+__bool_option BHOP_VRC7_ENABLED
 
 ; Toggle to enable multiple expansion audio chips at once
 ; at the cost of needing a byte in bss to determine which expansion audio types are used
 
-BHOP_MULTICHIP = 0
+__bool_option BHOP_MULTICHIP
 
 .endif ; __BHOP_CONFIG
