@@ -25,7 +25,9 @@ __BHOP_CONFIG = 1
 __bool_option BHOP_PATTERN_BANKING
 
 .if ::BHOP_PATTERN_BANKING
+.ifndef bhop_apply_music_bank
 .import bhop_apply_music_bank
+.endif
 BHOP_PATTERN_SWITCH_ROUTINE = bhop_apply_music_bank
 .endif
 
@@ -38,7 +40,9 @@ BHOP_PATTERN_SWITCH_ROUTINE = bhop_apply_music_bank
 __bool_option BHOP_DPCM_BANKING
 
 .if ::BHOP_DPCM_BANKING
+.ifndef bhop_apply_dpcm_bank
 .import bhop_apply_dpcm_bank
+.endif
 BHOP_DPCM_SWITCH_ROUTINE = bhop_apply_dpcm_bank
 .endif
 
