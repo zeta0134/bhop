@@ -22,6 +22,7 @@ TEXT_STATE_RESET = 1
 TEXT_STATE_DRAWING = 2
 
         .zeropage
+IsPaused: .res 1
 CurrentTrack: .res 1
 TrackPtr: .res 2
 
@@ -123,8 +124,24 @@ ARTIST_Y = 193
         .byte ARTIST_Y, $46, $03, ARTIST_X + 16
         .byte ARTIST_Y, $47, $03, ARTIST_X + 24
         .byte ARTIST_Y, $48, $03, ARTIST_X + 32
+
+PAUSE_SPRITE_INDEX = * - bnuuy_sprite_layout
+PAUSE_X = 220
+PAUSE_Y = 18
+        ; These sprites start offscreen since the player auto plays
+        .byte $f8, $3c, $00, PAUSE_X + 0
+        .byte $f8, $3d, $00, PAUSE_X + 8
+        .byte $f8, $4c, $00, PAUSE_X + 0
+        .byte $f8, $4d, $00, PAUSE_X + 8
+
+        ; empty sprites moved offscreen
+        .byte $f8, $f8, $f8, $f8
+        .byte $f8, $f8, $f8, $f8
+        .byte $f8, $f8, $f8, $f8
+
 bnuuy_sprite_layout_end:
 bnuuy_oam_length = (bnuuy_sprite_layout_end - bnuuy_sprite_layout)
+.assert bnuuy_oam_length = 256, error, "OAM is not complete"
 
 hello_world_str:
         .asciiz "Hello World!"
@@ -173,6 +190,7 @@ FancyTextPtr := ScratchPtr
 FancyTextPtr := ScratchPtr
         jsr bhop_play
         jsr poll_input
+        jsr handle_pausing
         jsr handle_track_switching
         jsr handle_palette_fade
 
@@ -226,6 +244,44 @@ FancyTextPtr := ScratchPtr
         tay ; hi ptr for the module address
         pla
         jsr bhop_init
+        lda #0
+        sta IsPaused
+        rts
+.endproc
+
+.proc handle_pausing
+        lda #KEY_START
+        bit ButtonsDown
+        beq handle_sprite
+        lda IsPaused
+        beq not_paused
+        jsr bhop_unpause
+        lda #0
+        sta IsPaused
+        beq handle_sprite ; unconditional
+not_paused:
+        jsr bhop_pause
+        inc IsPaused
+handle_sprite:
+        ldx #PAUSE_SPRITE_INDEX
+        lda IsPaused
+        beq hide_pause_sprite
+show_pause_sprite:
+        lda #PAUSE_Y
+        sta $200 + 0, x
+        sta $200 + 4, x
+        clc
+        adc #8
+        sta $200 + 8, x
+        sta $200 +12, x
+        bne exit ; unconditional
+hide_pause_sprite:
+        lda #$f8
+        sta $200 + 0, x
+        sta $200 + 4, x
+        sta $200 + 8, x
+        sta $200 +12, x
+exit:
         rts
 .endproc
 
@@ -352,7 +408,6 @@ loop:
         lda bnuuy_sprite_layout, x
         sta $200, x
         inx
-        cpx #bnuuy_oam_length
         bne loop
         rts
 .endproc
