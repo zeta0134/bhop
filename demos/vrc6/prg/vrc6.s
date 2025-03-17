@@ -27,8 +27,10 @@
 
 	; map the non-fixed program memory into place, so we have a solid 32k
 	; of memory at start
-
-	
+	lda #0
+	sta VRC6_PRG_SELECT_AT_8000
+	lda #2
+	sta VRC6_PRG_SELECT_AT_C000
 
 	rts
 .endproc
