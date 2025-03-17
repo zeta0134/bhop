@@ -13,7 +13,7 @@ BHOP_VER_MIN = $00
 .include "bhop/commands.asm"
 .include "bhop/effects.asm"
 
-        .segment BHOP_ZP_SEGMENT
+        .segment BHOP_ZP_SEGMENT : zeropage
 ; scratch ptr, used for all sorts of indirect reads
 bhop_ptr: .word $0000
 ; pattern pointers, read repeatedly when updating
@@ -130,10 +130,12 @@ effect_dpcm_offset: .byte $00
 ; Zxx
 effect_dac_buffer: .byte $00
 
+; holds the previous tempo while paused
+pause_tempo: .byte $00
 
         .segment BHOP_PLAYER_SEGMENT
         ; global
-        .export bhop_init, bhop_play, bhop_mute_channel, bhop_unmute_channel, bhop_set_module_bank, bhop_set_expansion_flags
+        .export bhop_init, bhop_play, bhop_pause, bhop_unpause, bhop_mute_channel, bhop_unmute_channel, bhop_set_module_bank, bhop_set_expansion_flags
 
 .include "bhop/midi_lut.inc"
 
@@ -2889,6 +2891,34 @@ check_pulse_2:
         lda #$FF
         sta shadow_pulse2_freq_hi
 done:
+        rts
+.endproc
+
+.proc bhop_pause
+        lda tempo
+        sta pause_tempo
+        lda #0
+        sta tempo
+        ldx #NUM_CHANNELS-1
+loop:
+        lda #(CHANNEL_MUTED)
+        ora channel_status, x
+        sta channel_status, x
+        dex
+        bpl loop
+        rts
+.endproc
+
+.proc bhop_unpause
+        lda pause_tempo
+        sta tempo
+        ldx #NUM_CHANNELS-1
+loop:
+        lda #<~CHANNEL_MUTED
+        and channel_status, x
+        sta channel_status, x
+        dex
+        bpl loop
         rts
 .endproc
 
