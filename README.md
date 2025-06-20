@@ -10,7 +10,7 @@ There is a live demo here: https://rusticnes.reploid.cafe/wasm/?cartridge=bhop-2
 ## Implemented
 - Bytecode reading, basic module playback, NTSC configuration
 - Volume, Arpeggio, Pitch, and Duty envelopes
-- Effects: `0xy`, `1xx`, `2xx`, `3xx`, `4xy`, `7xy`, `Axy`, `Bxx`, `Cxx`, `Dxx`, `Fxx`, `Gxx`, `Pxx`, `Qxy`, `Rxy`, `Sxx`, `Yxx`, `Zxx`
+- Effects: `0xy`, `1xx`, `2xx`, `3xx`, `4xy`, `7xy`, `Axy`, `Bxx`, `Cxx`, `Dxx`, `Fxx`, `Gxx`, `Lxx`, `Oxx`, `Pxx`, `Qxy`, `Rxy`, `Sxx`, `Vxx`, `Wxx`, `Xxx`, `Yxx`, `Zxx`, `=xx`
 - Register pitch mode
 - DPCM Sample playback, with rudimentary bank switching support
 - MMC5 Expansion audio
